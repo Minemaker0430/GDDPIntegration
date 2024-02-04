@@ -11,5 +11,13 @@
         "sprites": [
             "resources/*.png"
         ]
-    }
+    },
+	
+	"dependencies": [
+        {
+            "id": "geode.node-ids",
+            "version": ">=v1.1.4",
+            "importance": "required"
+        }
+    ]
 }
