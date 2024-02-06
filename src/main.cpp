@@ -24,6 +24,7 @@
 
 #include <Geode/utils/web.hpp>
 #include <Geode/utils/JsonValidation.hpp>
+#include <Geode/utils/string.hpp>
 
 //dplayer callback
 #include "DPLayer.hpp"
@@ -142,7 +143,7 @@ class $modify(CreatorLayer) {
 		}
 		
 		if (Loader::get()->isModLoaded("cvolton.betterinfo")) {
-			geode::log::info("{}", "BetterInfo Detected. Moved Button.");
+			log::info("{}", "BetterInfo Detected. Moved Button.");
 			this->getChildByID("cvolton.betterinfo/center-right-menu")->setPositionY(260);
 		}
 
@@ -187,25 +188,152 @@ void DPLayer::soonCallback(CCObject*) {
 	FLAlertLayer::create("Coming Soon!", "This feature hasn't been implemented yet but will be in the future!", "OK")->show();
 }
 
+std::vector<std::string> getWords(std::string s, std::string d) {
+	std::vector<std::string> res;
+	std::string delim = d;
+	std::string token = "";
+	for (int i = 0; i < s.size(); i++) {
+		bool flag = true;
+		for (int j = 0; j < delim.size(); j++) {
+			if (s[i + j] != delim[j]) flag = false;
+		}
+		if (flag) {
+			if (token.size() > 0) {
+				res.push_back(token);
+				token = "";
+				i += delim.size() - 1;
+			}
+		}
+		else {
+			token += s[i];
+		}
+	}
+	res.push_back(token);
+	return res;
+}
+
 void DPLayer::openList(CCObject* sender) {
 	//FLAlertLayer::create("the", "bingle bong", "OK")->show();
 	auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
 	auto id = btn->getTag();
 
-	auto searchObj = GJSearchObject::create(SearchType::LevelListsOnClick, std::to_string(id));
+	auto glm = GameLevelManager::sharedState();
+	std::string const& url = "https://www.boomlings.com/database/getGJLevelLists.php";
+	std::string const& fields = "secret=Wmfd2893gb7&type=0&diff=-&len=-&count=1&str=" + std::to_string(id); //thank you gd cologne :pray:
+	web::AsyncWebRequest()
+		.bodyRaw(fields)
+		.postRequest()
+		.fetch(url).text()
+		.then([&](std::string& response) {
+		std::cout << response << std::endl;
+		if (response != "-1") {
+			auto scene = CCScene::create();
+			//auto dict = glm->responseToDict(gd::string(response), false);
+
+			/*
+			Response IDs:
+			1 - List ID (int)
+			2 - Name (str)
+			3 - Description? (encoded with Base64)
+			4 - ???
+			5 - Version (int)
+			7 - ??? (int)
+			10 - Downloads (int)
+			14 - Likes (int)
+			19 - ??? (empty)
+			49 - ??? (int)
+			50 - Account Name (str)
+			51 - ID List (ints)
+			55 - ??? (int)
+			56 - ??? (int)
+
+			Example:
+			1:25409:2:GDDP Beginner Tier:3:WW91IGhhdmUgbm93IG9mZmljaWFsbHkgc3RhcnRlZCB5b3VyIEdlb21ldHJ5IERhc2ggZ3JpbmQhIEJ5IGJlYXRpbmcgdGhlc2UgbGV2ZWxzLCB5b3UgYXJlIHdlbGwgcHJlcGFyZWQgdG8gZ3JpbmQgZG93biB0aGUgbGlzdCEgKENvbXBsZXRlIDEzIGRlbW9ucyB0byBhY2hpZXZlIHRoaXMgcmFuayk=:5:1:49:24160219:50:GDDPOfficial:10:8109:7:6:14:618:19::51:65765662,3543219,56587109,57307363,63087691,97557632,80433444,97557638,68061608,75603568,17235008,72184562,76799716,59331033,27143567,58356766,38514054,67904095,8660411,7116121,3081555,15619194,2997354,81742215,27912428:55:0:56:0:28:1703152089:29:0#214900747:GDDPOfficial:24160219#9999:0:1#f5da5823d94bbe7208dd83a30ff427c7d88fdb99
+			
+			(i'll probably only use 1, 2, 3, and 51)
+			*/
+
+			auto data = getWords(response, ":");
+			log::info("{}", data);
+
+			gd::vector<std::string> levelIDstr = getWords(data[20], ",");
+			log::info("{}", levelIDstr);
+
+			std::vector<int> IDs;
+			for (int i = 0; i < levelIDstr.size(); i++)
+			{
+				int num = atoi(levelIDstr.at(i).c_str());
+				IDs.push_back(num);
+			}
+
+			//gd::string desc = ZipUtils::base64URLDecode(data[5]);
+
+			auto list = GJLevelList::create();
+			list->m_listID = std::stoi(data[1]);
+			list->m_listName = data[3];
+			list->m_levels = IDs;
+			//list->m_listDesc = desc;
+
+			auto layer = LevelListLayer::create(list);
+			auto layerChildren = layer->getChildren();
+
+			auto bg = typeinfo_cast<CCSprite*>(layerChildren->objectAtIndex(0));
+			bg->setColor({18, 18, 86});
+
+			auto menu = typeinfo_cast<CCMenu*>(layerChildren->objectAtIndex(4));
+			/*auto menuChildren = menu->getChildren();
+
+			auto commentBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(3));
+			auto rateBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(4));
+			auto copyBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(5));
+			auto infoBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(6));
+			auto favBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(7));*/
+
+			/*commentBtn->setVisible(false);
+			rateBtn->setVisible(false);
+			copyBtn->setVisible(false);
+			infoBtn->setVisible(false);
+			favBtn->setVisible(false);*/
+
+			auto downloadIcon = typeinfo_cast<CCSprite*>(layerChildren->objectAtIndex(6));
+			auto downloadText = typeinfo_cast<CCLabelBMFont*>(layerChildren->objectAtIndex(7));
+			auto likeIcon = typeinfo_cast<CCSprite*>(layerChildren->objectAtIndex(8));
+			auto likeText = typeinfo_cast<CCLabelBMFont*>(layerChildren->objectAtIndex(9));
+
+			downloadIcon->setVisible(false);
+			//downloadText->setVisible(false);
+			likeIcon->setVisible(false);
+			//likeText->setVisible(false);
+
+			auto diffIcon = typeinfo_cast<CCSprite*>(layerChildren->objectAtIndex(10));
+			//diffIcon->setVisible(false);
+
+			//auto dpIcon = CCSprite::create();
+
+			scene->addChild(layer);
+			CCDirector::sharedDirector()->pushScene(cocos2d::CCTransitionFade::create(0.5f, scene));
+		}
+		else {
+			FLAlertLayer::create("ERROR", "This list doesn't exist! This is probably the mod developer's fault.", "OK")->show();
+		}
+		}).expect([](std::string const& error) {
+			FLAlertLayer::create("ERROR", "Something went wrong! (" + error + ")", "OK")->show();
+		});
+
+	/*auto searchObj = GJSearchObject::create(SearchType::LevelListsOnClick, std::to_string(id));
 
 	auto scene = CCScene::create();
 	//scene->addChild(LevelListLayer::create(list));
 	scene->addChild(LevelBrowserLayer::create(searchObj));
 	CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, scene)); // push transition
 	//auto list = GJLevelList::create();
-	//list->m_listID = id;
+	//list->m_listID = id;*/
 }
 
 bool DPLayer::init() {
 	if (!CCLayer::init()) return false;
 
-        geode::log::info("{}", "Opened the Demon Progression menu.");
+        log::info("{}", "Opened the Demon Progression menu.");
 
         //auto testMenu = CCMenu::create();
 
@@ -214,6 +342,7 @@ bool DPLayer::init() {
 	    auto size = director->getWinSize();
 
 	    auto bg = createLayerBG();
+		bg->setColor({18, 18, 86});
         this->addChild(bg);
 
 	    auto lCornerSprite = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
@@ -285,7 +414,7 @@ bool DPLayer::init() {
 			
 			//setup main cells
 			auto mainListCells = CCArray::create();
-			for (int i = 0; i < sizeof(mainPacks) + 3; i++) {
+			for (int i = 0; i < mainPacks.size(); i++) {
 				
 				auto name = jsonData["main"][i]["name"].as_string();
 				auto sprite = jsonData["main"][i]["sprite"].as_string();
@@ -329,6 +458,13 @@ bool DPLayer::init() {
 				packProgressText->setPosition({170, 11});
 				packProgressFront->setScaleX(1);
 				packProgressFront->setScaleY(0.65f);*/
+
+				std::string reqStr = "Complete " + std::to_string(reqLevels) + " to move on to the next Tier.";
+				CCNode* tempText = CCLabelBMFont::create(reqStr.c_str(), "bigFont.fnt");
+				tempText->setPosition({ 53, 16 });
+				tempText->setAnchorPoint({ 0, 0.5 });
+				tempText->setScale(0.30f);
+				cell->addChild(tempText);
 
 				auto cellMenu = CCMenu::create();
 				cellMenu->setID("cell-menu");
