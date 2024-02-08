@@ -116,8 +116,13 @@ class $modify(CreatorLayer) {
 
 		auto menu = this->getChildByID("creator-buttons-menu");
 
-		auto spr = CCSprite::create("DP_demonProgressionBtn_001.png"_spr);
-        if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
+		auto spr = CCSprite::create("DP_demonProgressionBtn.png"_spr);
+
+		if (Mod::get()->getSettingValue<bool>("alt-button-texture")) {
+			spr = CCSprite::create("DP_demonProgressionBtnAlt.png"_spr);
+		}
+		
+		if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
 			spr->setScale(0.85f);
 		} else {
 			spr->setScale(0.8f);
@@ -145,6 +150,11 @@ class $modify(CreatorLayer) {
 		if (Loader::get()->isModLoaded("cvolton.betterinfo")) {
 			log::info("{}", "BetterInfo Detected. Moved Button.");
 			this->getChildByID("cvolton.betterinfo/center-right-menu")->setPositionY(260);
+		}
+
+		if (Loader::get()->isModLoaded("spaghettdev.gd-roulette")) {
+			log::info("{}", "GD Roulette Detected. Moved Button.");
+			this->getChildByID("spaghettdev.gd-roulette/creator-layer-menu")->setPositionY(92);
 		}
 
         return true;
@@ -212,12 +222,37 @@ std::vector<std::string> getWords(std::string s, std::string d) {
 	return res;
 }
 
+void DPLayer::reloadData(CCObject* sender) {
+	m_list->removeAllChildrenWithCleanup(true);
+	m_list->removeMeAndCleanup();
+
+	m_loadcircle = LoadingCircle::create();
+	m_loadcircle->show();
+
+	m_reload->setVisible(false);
+
+	// download data
+	web::AsyncWebRequest()
+		.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json")
+		.text()
+		.then([&](std::string const& response) {
+			m_data = matjson::parse(response);
+			reloadList(m_currentTab);
+			m_loadcircle->fadeAndRemove();
+			m_reload->setVisible(true);
+		})
+		.expect([&](std::string const& error) {
+			FLAlertLayer::create("ERROR", "Something went wrong getting the List Data. (" + error + ")", "OK")->show();
+			m_loadcircle->fadeAndRemove();
+			m_reload->setVisible(true);
+		});
+}
+
 void DPLayer::openList(CCObject* sender) {
 	//FLAlertLayer::create("the", "bingle bong", "OK")->show();
 	auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
 	auto id = btn->getTag();
 
-	auto glm = GameLevelManager::sharedState();
 	std::string const& url = "https://www.boomlings.com/database/getGJLevelLists.php";
 	std::string const& fields = "secret=Wmfd2893gb7&type=0&diff=-&len=-&count=1&str=" + std::to_string(id); //thank you gd cologne :pray:
 	web::AsyncWebRequest()
@@ -225,7 +260,7 @@ void DPLayer::openList(CCObject* sender) {
 		.postRequest()
 		.fetch(url).text()
 		.then([&](std::string& response) {
-		std::cout << response << std::endl;
+		//std::cout << response << std::endl;
 		if (response != "-1") {
 			auto scene = CCScene::create();
 			//auto dict = glm->responseToDict(gd::string(response), false);
@@ -247,9 +282,6 @@ void DPLayer::openList(CCObject* sender) {
 			55 - ??? (int)
 			56 - ??? (int)
 
-			Example:
-			1:25409:2:GDDP Beginner Tier:3:WW91IGhhdmUgbm93IG9mZmljaWFsbHkgc3RhcnRlZCB5b3VyIEdlb21ldHJ5IERhc2ggZ3JpbmQhIEJ5IGJlYXRpbmcgdGhlc2UgbGV2ZWxzLCB5b3UgYXJlIHdlbGwgcHJlcGFyZWQgdG8gZ3JpbmQgZG93biB0aGUgbGlzdCEgKENvbXBsZXRlIDEzIGRlbW9ucyB0byBhY2hpZXZlIHRoaXMgcmFuayk=:5:1:49:24160219:50:GDDPOfficial:10:8109:7:6:14:618:19::51:65765662,3543219,56587109,57307363,63087691,97557632,80433444,97557638,68061608,75603568,17235008,72184562,76799716,59331033,27143567,58356766,38514054,67904095,8660411,7116121,3081555,15619194,2997354,81742215,27912428:55:0:56:0:28:1703152089:29:0#214900747:GDDPOfficial:24160219#9999:0:1#f5da5823d94bbe7208dd83a30ff427c7d88fdb99
-			
 			(i'll probably only use 1, 2, 3, and 51)
 			*/
 
@@ -319,15 +351,6 @@ void DPLayer::openList(CCObject* sender) {
 		}).expect([](std::string const& error) {
 			FLAlertLayer::create("ERROR", "Something went wrong! (" + error + ")", "OK")->show();
 		});
-
-	/*auto searchObj = GJSearchObject::create(SearchType::LevelListsOnClick, std::to_string(id));
-
-	auto scene = CCScene::create();
-	//scene->addChild(LevelListLayer::create(list));
-	scene->addChild(LevelBrowserLayer::create(searchObj));
-	CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, scene)); // push transition
-	//auto list = GJLevelList::create();
-	//list->m_listID = id;*/
 }
 
 bool DPLayer::init() {
@@ -343,6 +366,7 @@ bool DPLayer::init() {
 
 	    auto bg = createLayerBG();
 		bg->setColor({18, 18, 86});
+		bg->setZOrder(-10);
         this->addChild(bg);
 
 	    auto lCornerSprite = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
@@ -395,110 +419,38 @@ bool DPLayer::init() {
 		this->addChild(listTop);
 		this->addChild(listBottom);
 
-		//LoadingCircle* loadCircle = LoadingCircle::create();
-		//loadCircle->setParentLayer(this);
-		//loadCircle->setID("loading");
-        //loadCircle->show();
+		m_loadcircle = LoadingCircle::create();
+        m_loadcircle->show();
+
+		//reload menu
+		auto reloadMenu = CCMenu::create();
+		reloadMenu->setPosition({ 0, 0 });
+		auto reloadBtnSprite = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
+		auto reloadBtn = CCMenuItemSpriteExtra::create(reloadBtnSprite, this, menu_selector(DPLayer::reloadData));
+		reloadBtn->setPosition({ 30, 30 });
+		reloadMenu->addChild(reloadBtn);
+		reloadMenu->setID("reload-menu");
+		this->addChild(reloadMenu);
+		m_reload = reloadMenu;
+		m_reload->setVisible(false);
+
+		m_currentTab = static_cast<int>(DPListType::Main);
 
 		// download data
-		auto mainFile = web::fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json");
-		if (!mainFile) {
-			FLAlertLayer::create("ERROR", "Something went wrong getting the List Data.", "OK")->show(); 
-		} else {
-			std::string response = mainFile.value();
-			matjson::Value jsonData = matjson::parse(response);
-			
-			//FLAlertLayer::create("Data gotten", jsonData["main"][0]["sprite"].as_string(), "OK")->show();
-			
-			auto mainPacks = jsonData["main"].as_array();
-			
-			//setup main cells
-			auto mainListCells = CCArray::create();
-			for (int i = 0; i < mainPacks.size(); i++) {
-				
-				auto name = jsonData["main"][i]["name"].as_string();
-				auto sprite = jsonData["main"][i]["sprite"].as_string();
-				auto plusSprite = jsonData["main"][i]["plusSprite"].as_string();
-				auto listID = jsonData["main"][i]["listID"].as_int();
-				auto reqLevels = jsonData["main"][i]["reqLevels"].as_int();
-				
-				auto fullTitle = name + " Demons";
-				auto fullSprite = sprite + ".png";
-				auto fullPlusSprite = plusSprite + ".png";
-				
-				CCNode* cell = ListCell::create();
-				
-				CCNode* packText = CCLabelBMFont::create(fullTitle.c_str(), "bigFont.fnt");
-				packText->setScale(0.65f);
-				packText->setAnchorPoint({0, 1});
-				packText->setPosition({53, 49});
-				
-				CCNode* packSpr = CCSprite::create(Mod::get()->expandSpriteName(fullSprite.c_str()));
-				packSpr->setScale(0.15f);
-				packSpr->setAnchorPoint({0, 0});
-				packSpr->setPosition({5, 1});
-				
-				//CCNode* packPlusSpr = CCSprite::create(Mod::get()->expandSpriteName(fullPlusSprite.c_str()));
-				
-				/*auto packProgressBack = CCSprite::create("GJ_progressBar_001.png");
-				packProgressBack->setAnchorPoint({0, 0.5});
-				packProgressBack->setPosition({53, 15});
-				packProgressBack->setScaleX(0.48f);
-				packProgressBack->setScaleY(0.64f);
-				packProgressBack->setColor({0, 0, 0});
-				
-				auto packProgressFront = CCSprite::create("GJ_progressBar_001.png");
-				packProgressFront->setAnchorPoint({0, 0.5});
-				packProgressFront->setPosition({3.74f, 10});
-				packProgressFront->setScaleX(0.975f);
-				packProgressFront->setScaleY(0.76f);
-				packProgressFront->setColor({255, 84, 50});
-				
-				CCNode* packProgressText = CCLabelBMFont::create("0/13", "bigFont.fnt");
-				packProgressText->setPosition({170, 11});
-				packProgressFront->setScaleX(1);
-				packProgressFront->setScaleY(0.65f);*/
-
-				std::string reqStr = "Complete " + std::to_string(reqLevels) + " to move on to the next Tier.";
-				CCNode* tempText = CCLabelBMFont::create(reqStr.c_str(), "bigFont.fnt");
-				tempText->setPosition({ 53, 16 });
-				tempText->setAnchorPoint({ 0, 0.5 });
-				tempText->setScale(0.30f);
-				cell->addChild(tempText);
-
-				auto cellMenu = CCMenu::create();
-				cellMenu->setID("cell-menu");
-				cellMenu->setPosition({0, 0});
-				auto viewSpr = extension::CCScale9Sprite::create("GJ_button_01.png");
-				viewSpr->setPosition({35, 16});
-				viewSpr->setContentSize({66, 30});
-				auto viewText = CCLabelBMFont::create("View", "bigFont.fnt");
-				viewText->setPosition({32, 16});
-				viewText->setScale(0.6f);
-				auto viewBtn = CCMenuItemSpriteExtra::create(viewSpr, this, menu_selector(DPLayer::openList));
-				viewBtn->setPosition({320, 25});
-				viewBtn->setTag(listID);
-				viewSpr->addChild(viewText);
-				cellMenu->addChild(viewBtn);
-				//cellMenu->setHandlerPriority(-1);
-
-				//packProgressBack->addChild(packProgressFront);
-				//packProgressBack->addChild(packProgressText);
-				cell->addChild(cellMenu);
-				cell->addChild(packText);
-				cell->addChild(packSpr);
-				//cell->addChild(packProgressBack);
-				mainListCells->addObject(cell);
-			};
-		
-			//main list
-			CCNode* mainListMenu = ListView::create(mainListCells, 50.0, 358.0, 220.0);
-			mainListMenu->setAnchorPoint({ 0.5, 0.5 });
-			mainListMenu->setPosition({ 104.5, 44.0 });
-			mainListMenu->setID("main-list-menu");
-			//mainListMenu->setVisible(true);
-			this->addChild(mainListMenu);			
-		};
+		web::AsyncWebRequest()
+			.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json")
+			.text()
+			.then([&](std::string const& response) {
+				m_data = matjson::parse(response);
+				reloadList(static_cast<int>(DPListType::Main));
+				m_loadcircle->fadeAndRemove();
+				m_reload->setVisible(true);
+			})
+			.expect([&](std::string const& error) {
+				FLAlertLayer::create("ERROR", "Something went wrong getting the List Data. (" + error + ")", "OK")->show();
+				m_loadcircle->fadeAndRemove();
+				m_reload->setVisible(true);
+			});
 		
 		//extra buttons
 		auto achievementBtnSprite = CCSprite::createWithSpriteFrameName("GJ_achBtn_001.png");
@@ -515,102 +467,260 @@ bool DPLayer::init() {
 		extrasMenu->addChild(leaderboardButton);
 		extrasMenu->addChild(achievementButton);
 		extrasMenu->addChild(monthlyPackButton);
+		extrasMenu->setID("extras-menu");
 		//this->addChild(extrasMenu);
 
 		//list tabs
 		auto listTabs = CCMenu::create();
 		listTabs->setID("list-tabs");
+
+		auto backTabSprite = CCSprite::create("DP_tabBack.png"_spr);
+		backTabSprite->setZOrder(-1);
+		backTabSprite->setAnchorPoint({ 0, 0 });
 		
-		auto mainPacksBtn = TabButton::create("Main", this, menu_selector(DPLayer::soonCallback));
+		auto mainPacksBtn = TabButton::create(TabBaseColor::Unselected, TabBaseColor::Selected, "Main", this, menu_selector(DPLayer::onTab));
 		mainPacksBtn->setPosition(-136.f, 133.5f);
+		mainPacksBtn->setID("main");
 		mainPacksBtn->setTag(static_cast<int>(DPListType::Main));
+		mainPacksBtn->toggle(true);
+		mainPacksBtn->addChild(backTabSprite);
 		listTabs->addChild(mainPacksBtn);
 
-		auto legacyPacksBtn = TabButton::create("Legacy", this, menu_selector(DPLayer::soonCallback));
+		auto legacyPacksBtn = TabButton::create(TabBaseColor::Unselected, TabBaseColor::Selected, "Legacy", this, menu_selector(DPLayer::onTab));
 		legacyPacksBtn->setPosition(-45.f, 133.5f);
+		legacyPacksBtn->setID("legacy");
 		legacyPacksBtn->setTag(static_cast<int>(DPListType::Legacy));
+		legacyPacksBtn->addChild(backTabSprite);
 		listTabs->addChild(legacyPacksBtn);
 
-		auto bonusPacksBtn = TabButton::create("Bonus", this, menu_selector(DPLayer::soonCallback));
+		auto bonusPacksBtn = TabButton::create(TabBaseColor::Unselected, TabBaseColor::Selected, "Bonus", this, menu_selector(DPLayer::onTab));
 		bonusPacksBtn->setPosition(45.f, 133.5f);
+		bonusPacksBtn->setID("bonus");
 		bonusPacksBtn->setTag(static_cast<int>(DPListType::Bonus));
+		bonusPacksBtn->addChild(backTabSprite);
 		listTabs->addChild(bonusPacksBtn);
-		
-		auto monthlyPacksBtn = TabButton::create("Monthly", this, menu_selector(DPLayer::soonCallback));
+		bonusPacksBtn->setVisible(false);
+
+		auto monthlyPacksBtn = TabButton::create(TabBaseColor::Unselected, TabBaseColor::Selected, "Monthly", this, menu_selector(DPLayer::onTab));
 		monthlyPacksBtn->setPosition(136.f, 133.5f);
+		monthlyPacksBtn->setID("monthly");
 		monthlyPacksBtn->setTag(static_cast<int>(DPListType::Monthly));
+		monthlyPacksBtn->addChild(backTabSprite);
 		listTabs->addChild(monthlyPacksBtn);
-		
-		//this->addChild(listTabs);
+		monthlyPacksBtn->setVisible(false);
+
+		this->addChild(listTabs);
+		m_tabs = listTabs;
 
 		this->setKeyboardEnabled(true);
 		this->setKeypadEnabled(true);
-		
-		//load data
-        /*web::AsyncWebRequest()
-            .fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list")
-            .text()
-            .then([](std::string const& packs) {
-				//static_cast<CCArray*>(packs);
-				//generateMainList(packs);
-				CCNode* packData = static_cast<CCArray*>(packs);
-				FLAlertLayer::create("Data", packs, "OK")->show();
-                geode::log::info("{}", "Main Pack Data Loaded.");
-            })
-            .expect([](std::string const& error) {
-                FLAlertLayer::create("ERROR", "Something went wrong, oops!", "OK")->show(); 
-            });*/
 
         return true;
 }
 
-/*void DPLayer::generateMainList(CCArray* packs) {
-	auto mainListCells = CCArray::create();
-	for (int i = 0; i < 9; i++) {
+void DPLayer::reloadList(int type) {
+	
+	auto dataIdx = "";
+
+	if (type == static_cast<int>(DPListType::Main)) {
+		dataIdx = "main";
+	} 
+	else if (type == static_cast<int>(DPListType::Legacy)) {
+		dataIdx = "legacy";
+	}
+	else if (type == static_cast<int>(DPListType::Bonus)) {
+		dataIdx = "bonus";
+	}
+	else if (type == static_cast<int>(DPListType::Monthly)) {
+		dataIdx = "monthly";
+	}
+	
+	auto packs = m_data[dataIdx].as_array();
+
+	//setup cells
+	auto packListCells = CCArray::create();
+	for (int i = 0; i < packs.size(); i++) {
+
+		std::string name = "null";
+		std::string sprite = "DP_Beginner";
+		std::string plusSprite = "DP_BeginnerPlus"; //Main Only
+		int listID = 0;
+		int reqLevels = 0; //Main Only
+		int month = 1; //Monthly Only
+		int year = 2024; //Monthly Only
+		bool official = true; //Bonus Only
+
+		name = m_data[dataIdx][i]["name"].as_string();
+		sprite = m_data[dataIdx][i]["sprite"].as_string();
+		if (type == static_cast<int>(DPListType::Main)) { plusSprite = m_data[dataIdx][i]["plusSprite"].as_string(); }
+		listID = m_data[dataIdx][i]["listID"].as_int();
+		if (type == static_cast<int>(DPListType::Main)) { reqLevels = m_data[dataIdx][i]["reqLevels"].as_int(); }
+		if (type == static_cast<int>(DPListType::Monthly)) { month = m_data[dataIdx][i]["month"].as_int(); }
+		if (type == static_cast<int>(DPListType::Monthly)) { year = m_data[dataIdx][i]["year"].as_int(); }
+		if (type == static_cast<int>(DPListType::Bonus)) { official = m_data[dataIdx][i]["official"].as_bool(); }
+
+		auto fullTitle = name;
+		if (type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) { fullTitle = name + " Demons"; }
+		auto fullSprite = sprite + ".png";
+		auto fullPlusSprite = plusSprite + ".png";
+
 		CCNode* cell = ListCell::create();
-		CCNode* packText = CCLabelBMFont::create("Beginner Demons", "bigFont.fnt");
-		CCNode* packSpr = CCSprite::create("DP_Beginner.png"_spr);
-		packSpr->setScale(0.175f)
-		//CCNode* packText = CCLabelBMFont::create(static_cast<std::string>(mainData[i][0]) + " Demons", "bigFont.fnt");
-		//CCNode* packSpr = CCSprite::create(static_cast<std::string>(mainData[i][1]) + ".png"_spr);
+
+		CCNode* packText = CCLabelBMFont::create(fullTitle.c_str(), "bigFont.fnt");
+		packText->setScale(0.65f);
+		if (fullTitle.length() > 18) { packText->setScale(0.50f); }
+		if (fullTitle.length() > 25) { packText->setScale(0.425f); }
+		packText->setAnchorPoint({ 0, 1 });
+		packText->setPosition({ 53, 49 });
+
+		CCNode* packSpr = CCSprite::create(Mod::get()->expandSpriteName(fullSprite.c_str()));
+		packSpr->setScale(1.3f);
+		packSpr->setAnchorPoint({ 0.5, 0.5 });
+		packSpr->setPosition({ 28.5, 25 });
+
+		//CCNode* packPlusSpr = CCSprite::create(Mod::get()->expandSpriteName(fullPlusSprite.c_str()));
+
+		/*auto packProgressBack = CCSprite::create("GJ_progressBar_001.png");
+		packProgressBack->setAnchorPoint({0, 0.5});
+		packProgressBack->setPosition({53, 15});
+		packProgressBack->setScaleX(0.48f);
+		packProgressBack->setScaleY(0.64f);
+		packProgressBack->setColor({0, 0, 0});
+
+		auto packProgressFront = CCSprite::create("GJ_progressBar_001.png");
+		packProgressFront->setAnchorPoint({0, 0.5});
+		packProgressFront->setPosition({3.74f, 10});
+		packProgressFront->setScaleX(0.975f);
+		packProgressFront->setScaleY(0.76f);
+		packProgressFront->setColor({255, 84, 50});
+
+		CCNode* packProgressText = CCLabelBMFont::create("0/13", "bigFont.fnt");
+		packProgressText->setPosition({170, 11});
+		packProgressFront->setScaleX(1);
+		packProgressFront->setScaleY(0.65f);*/
+
+		if (type == static_cast<int>(DPListType::Main)) {
+			std::string reqStr = "Complete " + std::to_string(reqLevels) + " to move on to the next Tier.";
+			CCNode* tempText = CCLabelBMFont::create(reqStr.c_str(), "bigFont.fnt");
+			tempText->setPosition({ 53, 16 });
+			tempText->setAnchorPoint({ 0, 0.5 });
+			tempText->setScale(0.30f);
+			cell->addChild(tempText);
+		}
+
+		if (type == static_cast<int>(DPListType::Monthly)) {
+			std::string months[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+			std::string monthlyDisp = months[month - 1] + " " + std::to_string(year);
+
+			CCNode* monthlyText = CCLabelBMFont::create(monthlyDisp.c_str(), "bigFont.fnt");
+			monthlyText->setScale(0.35f);
+			monthlyText->setAnchorPoint({ 0, 1 });
+			monthlyText->setPosition({ 53, 30 });
+			monthlyText->setZOrder(1);
+			cell->addChild(monthlyText);
+		}
+
+		auto cellMenu = CCMenu::create();
+		cellMenu->setID("cell-menu");
+		cellMenu->setPosition({ 0, 0 });
+		auto viewSpr = extension::CCScale9Sprite::create("GJ_button_01.png");
+		viewSpr->setPosition({ 35, 16 });
+		viewSpr->setContentSize({ 66, 30 });
+		auto viewText = CCLabelBMFont::create("View", "bigFont.fnt");
+		viewText->setPosition({ 32, 16 });
+		viewText->setScale(0.6f);
+		auto viewBtn = CCMenuItemSpriteExtra::create(viewSpr, this, menu_selector(DPLayer::openList));
+		viewBtn->setPosition({ 320, 25 });
+		viewBtn->setTag(listID);
+		viewSpr->addChild(viewText);
+		cellMenu->addChild(viewBtn);
+
+		if (i == 0 && type == static_cast<int>(DPListType::Monthly)) {
+			auto goldBG = CCLayerColor::create({255, 200, 0, 255});
+			cell->addChild(goldBG);
+
+			cellMenu->setZOrder(1);
+			packText->setZOrder(1);
+			packSpr->setZOrder(1);
+		}
+
+		//packProgressBack->addChild(packProgressFront);
+		//packProgressBack->addChild(packProgressText);
+		cell->addChild(cellMenu);
 		cell->addChild(packText);
 		cell->addChild(packSpr);
-		mainListCells->addObject(cell);
+		//cell->addChild(packProgressBack);
+		packListCells->addObject(cell);
+	};
+
+	//list
+	ListView* packListMenu = ListView::create(packListCells, 50.0, 358.0, 220.0);
+	packListMenu->setAnchorPoint({ 0.5, 0.5 });
+	packListMenu->setPosition({ 104.5, 44.0 });
+	packListMenu->setID("list-menu");
+	this->addChild(packListMenu);
+	m_list = packListMenu;
+	m_currentTab = type;
+}
+
+void DPLayer::onTab(CCObject* pSender) {
+	auto btn = static_cast<TabButton*>(pSender);
+	auto menuType = btn->getTag();
+
+	auto mainbtn = m_tabs->getChildByID("main");
+	auto legacybtn = m_tabs->getChildByID("legacy");
+	auto bonusbtn = m_tabs->getChildByID("bonus");
+	auto monthlybtn = m_tabs->getChildByID("monthly");
+
+	if (menuType == static_cast<int>(DPListType::Main)) {
+		log::info("{}", "Switched to Main Tab");
+
+		btn->toggle(true);
+		static_cast<TabButton*>(legacybtn)->toggle(false);
+		static_cast<TabButton*>(bonusbtn)->toggle(false);
+		static_cast<TabButton*>(monthlybtn)->toggle(false);
+
+		m_list->removeAllChildrenWithCleanup(true);
+		m_list->removeMeAndCleanup();
+		reloadList(static_cast<int>(DPListType::Main));
 	}
+	else if (menuType == static_cast<int>(DPListType::Legacy)) {
+		log::info("{}", "Switched to Legacy Tab");
 		
-	//main list
-	CCNode* mainListMenu = ListView::create(mainListCells, 50.0, 358.0, 220.0);
-	mainListMenu->setAnchorPoint({ 0.5, 0.5 });
-	mainListMenu->setPosition({ 104.5, 44.0 });
-	mainListMenu->setID("main-list-menu");
-	//mainListMenu->setVisible(true);
-	this->addChild(mainListMenu);
-}*/
+		btn->toggle(true);
+		static_cast<TabButton*>(mainbtn)->toggle(false);
+		static_cast<TabButton*>(bonusbtn)->toggle(false);
+		static_cast<TabButton*>(monthlybtn)->toggle(false);
 
-/*void DPLayer::onTab(CCObject* pSender) {
-    if (pSender) {
-        g_tab = static_cast<ModListType>(pSender->getTag());
-    }
-    this->reloadList(false);
+		m_list->removeAllChildrenWithCleanup(true);
+		m_list->removeMeAndCleanup();
+		reloadList(static_cast<int>(DPListType::Legacy));
+	}
+	else if (menuType == static_cast<int>(DPListType::Bonus)) {
+		log::info("{}", "Switched to Bonus Tab");
+		
+		btn->toggle(true);
+		static_cast<TabButton*>(legacybtn)->toggle(false);
+		static_cast<TabButton*>(mainbtn)->toggle(false);
+		static_cast<TabButton*>(monthlybtn)->toggle(false);
 
-    auto toggleTab = [this](CCMenuItemToggler* member) -> void {
-        auto isSelected = member->getTag() == static_cast<int>(g_tab);
-        auto targetMenu = isSelected ? m_topMenu : m_menu;
-        member->toggle(isSelected);
-        if (member->getParent() != targetMenu) {
-            member->retain();
-            member->removeFromParent();
-            targetMenu->addChild(member);
-            member->release();
-        }
-        if (isSelected && m_tabsGradientStencil)
-            m_tabsGradientStencil->setPosition(member->m_onButton->convertToWorldSpace({0.f, 0.f}));
-    };
+		m_list->removeAllChildrenWithCleanup(true);
+		m_list->removeMeAndCleanup();
+		reloadList(static_cast<int>(DPListType::Bonus));
+	}
+	else if (menuType == static_cast<int>(DPListType::Monthly)) {
+		log::info("{}", "Switched to Monthly Tab");
+		
+		btn->toggle(true);
+		static_cast<TabButton*>(legacybtn)->toggle(false);
+		static_cast<TabButton*>(bonusbtn)->toggle(false);
+		static_cast<TabButton*>(mainbtn)->toggle(false);
 
-    toggleTab(m_downloadTabBtn);
-    toggleTab(m_installedTabBtn);
-    toggleTab(m_featuredTabBtn);
-}*/
+		m_list->removeAllChildrenWithCleanup(true);
+		m_list->removeMeAndCleanup();
+		reloadList(static_cast<int>(DPListType::Monthly));
+	}
+}
 
 DPLayer::~DPLayer() {
     this->removeAllChildrenWithCleanup(true);
