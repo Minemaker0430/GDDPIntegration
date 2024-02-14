@@ -445,7 +445,9 @@ void DPLayer::reloadData(CCObject* sender) {
 		.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json")
 		.text()
 		.then([&](std::string const& response) {
-			m_data = matjson::parse(response);
+			Mod::get()->setSavedValue<matjson::Value>("cached-data", matjson::parse(response));
+
+			m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 			reloadList(m_currentTab);
 			m_loadcircle->fadeAndRemove();
 			m_reload->setVisible(true);
@@ -589,13 +591,15 @@ bool DPLayer::init() {
 		auto listTop = CCSprite::createWithSpriteFrameName("GJ_table_top02_001.png");
 		auto listBottom = CCSprite::createWithSpriteFrameName("GJ_table_bottom_001.png");
 
-		listMiddle->setPosition({100, 40});
+		listMiddle->setAnchorPoint({ 0.5, 0.5 });
+		listMiddle->setPosition({ (size.width / 2) - 180, (size.height / 2) - 115 });
 		listMiddle->setContentSize({370, 230});
+		listMiddle->setZOrder(-1);
 
-		listLeft->setPosition({101, 155});
-		listRight->setPosition({469, 155});
-		listTop->setPosition({size.width / 2, 280});
-		listBottom->setPosition({size.width / 2, 30});
+		listLeft->setPosition({(size.width / 2) - 183.5f, (size.height / 2)});
+		listRight->setPosition({ (size.width / 2) + 183.5f, (size.height / 2)});
+		listTop->setPosition({size.width / 2, (size.height / 2) + 120});
+		listBottom->setPosition({size.width / 2, (size.height / 2) - 125});
 
 		listRight->setScaleX(-1);
 		listRight->setScaleY(3.6f);
@@ -634,7 +638,9 @@ bool DPLayer::init() {
 			.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json")
 			.text()
 			.then([&](std::string const& response) {
-				m_data = matjson::parse(response);
+				Mod::get()->setSavedValue<matjson::Value>("cached-data", matjson::parse(response));
+
+				m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 				reloadList(static_cast<int>(DPListType::Main));
 				m_loadcircle->fadeAndRemove();
 				m_reload->setVisible(true);
@@ -1040,10 +1046,14 @@ void DPLayer::reloadList(int type) {
 	};
 
 	//list
+	auto director = CCDirector::sharedDirector();
+	auto size = director->getWinSize();
+
 	ListView* packListMenu = ListView::create(packListCells, 50.0, 358.0, 220.0);
 	packListMenu->setAnchorPoint({ 0.5, 0.5 });
-	packListMenu->setPosition({ 104.5, 44.0 });
+	packListMenu->setPosition({ (size.width / 2) - 180, (size.height / 2) - 115});
 	packListMenu->setID("list-menu");
+	packListMenu->setZOrder(0);
 	this->addChild(packListMenu);
 	m_list = packListMenu;
 	m_currentTab = type;
