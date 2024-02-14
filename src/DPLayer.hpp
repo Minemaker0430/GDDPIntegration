@@ -14,6 +14,7 @@ protected:
 	LoadingCircle* m_loadcircle;
 	int m_currentTab;
 	CCMenu* m_reload;
+	CCLabelBMFont* m_databaseVer;
 	void reloadList(int type);
 	virtual ~DPLayer();
 public:
