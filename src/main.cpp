@@ -223,10 +223,36 @@ class $modify(LevelListLayer) {
 			//Get Completed Levels & Store in Save Data
 
 			auto glm = GameLevelManager::sharedState();
-			auto completedLevels = glm->getCompletedLevels(true);
+			auto completedLevels = glm->getCompletedLevels(false);
 			auto levels = p0->m_levels;
 
 			auto packProgress = 0;
+
+			/*auto progressText = static_cast<CCLabelBMFont*>(children->objectAtIndex(13));
+			std::string s = progressText->getString();
+
+			std::vector<std::string> res;
+			std::string delim = "/";
+			std::string token = "";
+			for (int i = 0; i < s.size(); i++) {
+				bool flag = true;
+				for (int j = 0; j < delim.size(); j++) {
+					if (s[i + j] != delim[j]) flag = false;
+				}
+				if (flag) {
+					if (token.size() > 0) {
+						res.push_back(token);
+						token = "";
+						i += delim.size() - 1;
+					}
+				}
+				else {
+					token += s[i];
+				}
+			}
+			res.push_back(token);
+
+			packProgress = std::stoi(res[0]);*/
 
 			for (int i = 0; i < completedLevels->indexOfObject(completedLevels->lastObject()); i++) {
 				auto lvl = static_cast<GJGameLevel*>(completedLevels->objectAtIndex(i));
@@ -274,7 +300,7 @@ class $modify(LevelListLayer) {
 
 			if (type == "main") {
 				packProgress_main[id] = packProgress;
-				if ((packProgress > reqLevels) && (!hasRank[id].as_bool())) {
+				if ((packProgress >= reqLevels) && (!hasRank[id].as_bool())) {
 					hasRank[id] = true;
 				}
 				else if (packProgress == totalLevels) {
