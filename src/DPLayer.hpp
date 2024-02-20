@@ -25,6 +25,7 @@ public:
 	void reloadData(CCObject*); //when reload button is pressed
 	void infoCallback(CCObject*);
 	void soonCallback(CCObject*); //Coming Soon
+	void achievementsCallback(CCObject*);
 };
 
 enum class DPListType {
@@ -32,4 +33,32 @@ enum class DPListType {
     Legacy,
     Bonus,
 	Monthly,
+};
+
+class DPStatsPopup : public geode::Popup<std::string const&> {
+protected:
+	bool setup(std::string const& value) override {
+		auto winSize = CCDirector::sharedDirector()->getWinSize();
+
+		// convenience function provided by Popup 
+		// for adding/setting a title to the popup
+		this->setTitle("Stats");
+
+		auto label = CCLabelBMFont::create(value.c_str(), "bigFont.fnt");
+		label->setPosition(winSize / 2);
+		this->addChild(label);
+
+		return true;
+	}
+
+public:
+	static DPStatsPopup* create(std::string const& text) {
+		auto ret = new DPStatsPopup();
+		if (ret && ret->init(240.f, 160.f, text)) {
+			ret->autorelease();
+			return ret;
+		}
+		CC_SAFE_DELETE(ret);
+		return nullptr;
+	}
 };

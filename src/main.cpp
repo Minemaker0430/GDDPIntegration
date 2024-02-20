@@ -490,17 +490,28 @@ void DPLayer::openList(CCObject* sender) {
 	auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
 	auto id = btn->getTag();
 	auto type = btn->getID();
+	
+	if (type == "main-practice") {
+		Mod::get()->setSavedValue<bool>("is-practice", true);
+		type = "main";
+	}
+	else {
+		Mod::get()->setSavedValue<bool>("is-practice", false);
+	}
 
 	auto listID = m_data[type][id]["listID"].as_int();
 	auto reqLevels = 0;
 	if (type == "main") { reqLevels = m_data[type][id]["reqLevels"].as_int(); }
 	auto totalLevels = 0;
 	if (type != "monthly") { totalLevels = m_data[type][id]["totalLevels"].as_int(); }
+	auto hasPractice = false;
+	if (type == "main") { hasPractice = m_data[type][id]["practice"].as_bool(); }
 
 	Mod::get()->setSavedValue<std::string>("current-pack-type", type);
 	Mod::get()->setSavedValue<int>("current-pack-index", id);
 	Mod::get()->setSavedValue<int>("current-pack-requirement", reqLevels);
 	Mod::get()->setSavedValue<int>("current-pack-totalLvls", totalLevels);
+	Mod::get()->setSavedValue<bool>("current-pack-hasPractice", hasPractice);
 
 	std::string const& url = "https://www.boomlings.com/database/getGJLevelLists.php";
 	std::string const& fields = "secret=Wmfd2893gb7&type=0&diff=-&len=-&count=1&str=" + std::to_string(listID); //thank you gd cologne :pray:
@@ -541,10 +552,34 @@ void DPLayer::openList(CCObject* sender) {
 			log::info("{}", levelIDstr);
 
 			std::vector<int> IDs;
-			for (int i = 0; i < levelIDstr.size(); i++)
-			{
-				int num = atoi(levelIDstr.at(i).c_str());
-				IDs.push_back(num);
+			if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "main" && Mod::get()->getSavedValue<bool>("current-pack-hasPractice")) {
+				if (Mod::get()->getSavedValue<bool>("is-practice", false)) {
+					for (int i = 0; i < levelIDstr.size(); i++)
+					{
+						int num = atoi(levelIDstr.at(i).c_str());
+						if (i % 2 == 1) {
+							IDs.push_back(num);
+						}
+					}
+					log::info("{}", "In Practice Tier");
+				}
+				else {
+					for (int i = 0; i < levelIDstr.size(); i++)
+					{
+						int num = atoi(levelIDstr.at(i).c_str());
+						if (i % 2 == 0) {
+							IDs.push_back(num);
+						}
+					}
+					log::info("{}", "In Main Tier");
+				}
+			}
+			else {
+				for (int i = 0; i < levelIDstr.size(); i++)
+				{
+					int num = atoi(levelIDstr.at(i).c_str());
+					IDs.push_back(num);
+				}
 			}
 
 			//gd::string desc = ZipUtils::base64URLDecode(data[5]);
@@ -569,6 +604,163 @@ void DPLayer::openList(CCObject* sender) {
 		}).expect([](std::string const& error) {
 			FLAlertLayer::create("ERROR", "Something went wrong! (" + error + ")", "OK")->show();
 		});
+}
+
+void DPLayer::achievementsCallback(CCObject* sender) {
+
+	//all save stuff
+	auto packProgress_main = Mod::get()->getSavedValue<matjson::Array>("pack-progress-main");
+	auto packProgress_legacy = Mod::get()->getSavedValue<matjson::Array>("pack-progress-legacy");
+	auto packProgress_bonus = Mod::get()->getSavedValue<matjson::Array>("pack-progress-bonus");
+	auto packProgress_monthly = Mod::get()->getSavedValue<matjson::Array>("pack-progress-monthly");
+
+	auto hasRank = Mod::get()->getSavedValue<matjson::Array>("has-rank");
+	auto hasCompleted_main = Mod::get()->getSavedValue<matjson::Array>("has-completed-main");
+	auto hasCompleted_legacy = Mod::get()->getSavedValue<matjson::Array>("has-completed-legacy");
+	auto hasCompleted_bonus = Mod::get()->getSavedValue<matjson::Array>("has-completed-bonus");
+	auto hasCompleted_monthly = Mod::get()->getSavedValue<matjson::Array>("has-completed-monthly");
+
+	auto packsCompleted_main = Mod::get()->getSavedValue<int>("packs-completed-main", 0);
+	auto packsCompleted_legacy = Mod::get()->getSavedValue<int>("packs-completed-legacy", 0);
+	auto packsCompleted_bonus = Mod::get()->getSavedValue<int>("packs-completed-bonus", 0);
+	auto packsCompleted_monthly = Mod::get()->getSavedValue<int>("packs-completed-monthly", 0);
+
+	auto bronzeMedals = Mod::get()->getSavedValue<int>("bronze-medals", 0);
+	auto silverMedals = Mod::get()->getSavedValue<int>("silver-medals", 0);
+	auto goldMedals = Mod::get()->getSavedValue<int>("gold-medals", 0);
+
+	auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
+	
+	//get completed packs
+	packsCompleted_main = 0;
+	packsCompleted_legacy = 0;
+	packsCompleted_bonus = 0;
+	packsCompleted_monthly = 0;
+
+	for (int i = 0; i < hasCompleted_main.size(); i++) {
+		if (hasCompleted_main[i].as_bool()) {
+			packsCompleted_main += 1;
+		}
+	}
+
+	for (int i = 0; i < hasCompleted_legacy.size(); i++) {
+		if (hasCompleted_legacy[i].as_bool()) {
+			packsCompleted_legacy += 1;
+		}
+	}
+
+	for (int i = 0; i < hasCompleted_bonus.size(); i++) {
+		if (hasCompleted_bonus[i].as_bool()) {
+			packsCompleted_bonus += 1;
+		}
+
+	}
+	for (int i = 0; i < hasCompleted_monthly.size(); i++) {
+		if (hasCompleted_monthly[i].as_bool()) {
+			packsCompleted_monthly += 1;
+		}
+	}
+
+	Mod::get()->setSavedValue<int>("packs-completed-main", packsCompleted_main);
+	Mod::get()->setSavedValue<int>("packs-completed-legacy", packsCompleted_legacy);
+	Mod::get()->setSavedValue<int>("packs-completed-bonus", packsCompleted_bonus);
+	Mod::get()->setSavedValue<int>("packs-completed-monthly", packsCompleted_monthly);
+
+	//get highest completions (-1 = None)
+	auto highestRank = -1; //highest normal rank
+	auto highestCompletion = -1; //highest plus rank
+	auto hardestTier = -1; //hardest uncompleted tier
+
+	for (int i = 0; i < hasRank.size(); i++) {
+		if (hasRank[i].as_bool()) {
+			highestRank = i;
+		}
+	}
+
+	for (int i = 0; i < hasCompleted_main.size(); i++) {
+		if (hasCompleted_main[i].as_bool()) {
+			highestCompletion = i;
+		}
+	}
+
+	for (int i = 0; i < packProgress_main.size(); i++) {
+		if (packProgress_main[i].as_int() > 0) {
+			hardestTier = i;
+		}
+	}
+
+	//calculate special ranks
+	std::vector<std::string> specialRanks = {
+		//Normal
+		"PROFESSIONAL",
+		"MASTER",
+		"GRANDMASTER",
+		"GODMASTER",
+		//Plus
+		"EXPERIENCED",
+		"EXEMPLARY",
+		"EXCELLENT",
+		"EXCEPTIONAL",
+		"EXTRAORDINARY",
+		"EXPERT",
+		"EXCESSIVE",
+		"EXALTED",
+		"PERFECTION",
+		"ABSOLUTE PERFECTION"
+	};
+
+	auto normalRank = -1;
+	auto plusRank = -1;
+	auto hasPerfection = false;
+
+	if (highestRank >= 6) {
+		normalRank = 0;
+	}
+	else if (highestRank >= 9) {
+		normalRank = 1;
+	}
+	else if (highestRank >= 11) {
+		normalRank = 2;
+	}
+	else if (highestRank >= 12) {
+		normalRank = 3;
+	}
+
+	if (highestCompletion >= 4 && packsCompleted_main >= 5) {
+		plusRank = 4;
+	}
+	else if (highestCompletion >= 5 && packsCompleted_main >= 6) {
+		plusRank = 5;
+	}
+	else if (highestCompletion >= 6 && packsCompleted_main >= 7) {
+		plusRank = 6;
+	}
+	else if (highestCompletion >= 7 && packsCompleted_main >= 8) {
+		plusRank = 7;
+	}
+	else if (highestCompletion >= 8 && packsCompleted_main >= 9) {
+		plusRank = 8;
+	}
+	else if (highestCompletion >= 9 && packsCompleted_main >= 10) {
+		plusRank = 9;
+	}
+	else if (highestCompletion >= 10 && packsCompleted_main >= 11) {
+		plusRank = 10;
+	}
+	else if (highestCompletion >= 11 && packsCompleted_main >= 12) {
+		plusRank = 11;
+	}
+	else if (highestCompletion >= 12 && packsCompleted_main >= 13) {
+		plusRank = 12;
+	}
+
+	if (packsCompleted_main == hasCompleted_main.size() && packsCompleted_bonus == hasCompleted_bonus.size()) {
+		hasPerfection = true;
+	}
+
+	//show popup
+	auto popup = DPStatsPopup::create("");
+	popup->show();
 }
 
 bool DPLayer::init() {
@@ -680,20 +872,16 @@ bool DPLayer::init() {
 		//extra buttons
 		auto achievementBtnSprite = CCSprite::createWithSpriteFrameName("GJ_achBtn_001.png");
 		auto leaderboardsBtnSprite = CCSprite::createWithSpriteFrameName("GJ_statsBtn_001.png");
-		auto monthlyPackBtnSprite = CCSprite::createWithSpriteFrameName("GJ_rateDiffBtnMod_001.png");
 		auto leaderboardButton = CCMenuItemSpriteExtra::create(leaderboardsBtnSprite, this, menu_selector(DPLayer::soonCallback));
 		auto achievementButton = CCMenuItemSpriteExtra::create(achievementBtnSprite, this, menu_selector(DPLayer::soonCallback));
-		auto monthlyPackButton = CCMenuItemSpriteExtra::create(monthlyPackBtnSprite, this, menu_selector(DPLayer::soonCallback));
 		achievementButton->setPosition({ size.width - 30, 30 });
 		leaderboardButton->setPosition({ size.width - 30, 80 });
-		monthlyPackButton->setPosition({ size.width - 80, 30 });
 		auto extrasMenu = CCMenu::create();
 		extrasMenu->setPosition({ 0, 0 });
-		extrasMenu->addChild(leaderboardButton);
+		//extrasMenu->addChild(leaderboardButton);
 		extrasMenu->addChild(achievementButton);
-		extrasMenu->addChild(monthlyPackButton);
 		extrasMenu->setID("extras-menu");
-		//this->addChild(extrasMenu);
+		this->addChild(extrasMenu);
 
 		//list tabs
 		auto listTabs = CCMenu::create();
@@ -907,6 +1095,7 @@ void DPLayer::reloadList(int type) {
 		int month = 1; //Monthly Only
 		int year = 2024; //Monthly Only
 		bool official = true; //Bonus Only
+		bool hasPractice = false; //Main Only
 
 		name = m_data[dataIdx][i]["name"].as_string();
 		sprite = m_data[dataIdx][i]["sprite"].as_string();
@@ -917,20 +1106,49 @@ void DPLayer::reloadList(int type) {
 		if (type == static_cast<int>(DPListType::Monthly)) { month = m_data[dataIdx][i]["month"].as_int(); }
 		if (type == static_cast<int>(DPListType::Monthly)) { year = m_data[dataIdx][i]["year"].as_int(); }
 		if (type == static_cast<int>(DPListType::Bonus)) { official = m_data[dataIdx][i]["official"].as_bool(); }
+		if (type == static_cast<int>(DPListType::Main)) { hasPractice = m_data[dataIdx][i]["practice"].as_bool(); }
 
 		auto fullTitle = name;
-		if (type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) { fullTitle = name + " Demons"; }
+		if (type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) { 
+			if (hasRank[i].as_bool() && type == static_cast<int>(DPListType::Main)) {
+				fullTitle = name + " Demons +";
+			}
+			else {
+				fullTitle = name + " Demons";
+			}
+		}
 		auto fullSprite = sprite + ".png";
 		auto fullPlusSprite = plusSprite + ".png";
 
 		CCNode* cell = ListCell::create();
 
-		CCNode* packText = CCLabelBMFont::create(fullTitle.c_str(), "bigFont.fnt");
+		CCLabelBMFont* packText = CCLabelBMFont::create(fullTitle.c_str(), "bigFont.fnt");
 		packText->setScale(0.65f);
 		if (fullTitle.length() > 18) { packText->setScale(0.50f); }
 		if (fullTitle.length() > 25) { packText->setScale(0.425f); }
 		packText->setAnchorPoint({ 0, 1 });
 		packText->setPosition({ 53, 49 });
+
+		if (type == static_cast<int>(DPListType::Main)) {
+			if (hasCompleted_main[i].as_bool()) {
+				packText->setFntFile("goldFont.fnt");
+			}
+		}
+		else if (type == static_cast<int>(DPListType::Legacy)) {
+			if (hasCompleted_legacy[i].as_bool()) {
+				packText->setFntFile("goldFont.fnt");
+			}
+		}
+		else if (type == static_cast<int>(DPListType::Bonus)) {
+			if (hasCompleted_bonus[i].as_bool()) {
+				packText->setFntFile("goldFont.fnt");
+			}
+		}
+		else if (type == static_cast<int>(DPListType::Monthly)) {
+			if (hasCompleted_monthly[i].as_bool()) {
+				packText->setFntFile("goldFont.fnt");
+			}
+		}
 
 		CCNode* packSpr = CCSprite::create(Mod::get()->expandSpriteName(fullSprite.c_str()));
 		packSpr->setScale(1.0f);
@@ -965,28 +1183,52 @@ void DPLayer::reloadList(int type) {
 		std::string progStr = "...";
 		CCLabelBMFont* progText = CCLabelBMFont::create("...", "bigFont.fnt");
 
-		if (type == static_cast<int>(DPListType::Main) && !hasRank[i].as_bool()) {
-			std::string nextTier = "???";
-			if (i + 1 < packs.size()) {
-				nextTier = m_data[dataIdx][i + 1]["name"].as_string();
+		if (type == static_cast<int>(DPListType::Main)) {
+			if (!hasRank[i].as_bool()) {
+				std::string nextTier = "???";
+				if (i + 1 < packs.size()) {
+					nextTier = m_data[dataIdx][i + 1]["name"].as_string();
+				}
+				progStr = std::to_string(packProgress_main[i].as_int()) + "/" + std::to_string(reqLevels) + " to " + nextTier + " Tier.";
 			}
-			progStr = std::to_string(packProgress_main[i].as_int()) + "/" + std::to_string(reqLevels) + " to " + nextTier + " Tier.";
-		}
-		else if (type == static_cast<int>(DPListType::Main)) {
-			progStr = std::to_string(packProgress_main[i].as_int()) + "/" + std::to_string(totalLevels) + " to Completion.";
-			packPlusSpr->setVisible(true);
+			else if (hasCompleted_main[i].as_bool()) {
+				progStr = "100% Complete!";
+				progText->setFntFile("goldFont.fnt");
+			}
+			else {
+				progStr = std::to_string(packProgress_main[i].as_int()) + "/" + std::to_string(totalLevels) + " to Completion.";
+				packPlusSpr->setVisible(true);
+			}
 		}
 		else if (type == static_cast<int>(DPListType::Legacy)) {
-			progStr = std::to_string(packProgress_legacy[i].as_int()) + "/" + std::to_string(totalLevels) + " to Completion.";
+			if (hasCompleted_legacy[i].as_bool()) {
+				progStr = "100% Complete!";
+				progText->setFntFile("goldFont.fnt");
+			}
+			else {
+				progStr = std::to_string(packProgress_legacy[i].as_int()) + "/" + std::to_string(totalLevels) + " to Completion.";
+			}
 		}
 		else if (type == static_cast<int>(DPListType::Bonus)) {
-			progStr = std::to_string(packProgress_bonus[i].as_int()) + "/" + std::to_string(totalLevels) + " to Completion.";
-		}
-		else if (type == static_cast<int>(DPListType::Monthly) && (packProgress_monthly[i] < 5)) {
-			progStr = std::to_string(packProgress_monthly[i].as_int()) + "/5 to Partial Completion.";
+			if (hasCompleted_bonus[i].as_bool()) {
+				progStr = "100% Complete!";
+				progText->setFntFile("goldFont.fnt");
+			}
+			else {
+				progStr = std::to_string(packProgress_bonus[i].as_int()) + "/" + std::to_string(totalLevels) + " to Completion.";
+			}
 		}
 		else if (type == static_cast<int>(DPListType::Monthly)) {
-			progStr = std::to_string(packProgress_monthly[i].as_int()) + "/6 to Completion.";
+			if (hasCompleted_monthly[i].as_bool()) {
+				progStr = "100% Complete!";
+				progText->setFntFile("goldFont.fnt");
+			}
+			else if (packProgress_monthly[i] < 5) {
+				progStr = std::to_string(packProgress_monthly[i].as_int()) + "/5 to Partial Completion.";
+			}
+			else {
+				progStr = std::to_string(packProgress_monthly[i].as_int()) + "/6 to Completion.";
+			}
 		}
 
 		progText->setCString(progStr.c_str());
@@ -1022,6 +1264,16 @@ void DPLayer::reloadList(int type) {
 		viewSpr->addChild(viewText);
 		cellMenu->addChild(viewBtn);
 
+		if (type == static_cast<int>(DPListType::Main) && hasPractice) {
+			auto practiceSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
+			auto practiceBtn = CCMenuItemSpriteExtra::create(practiceSpr, this, menu_selector(DPLayer::openList));
+			practiceBtn->setPosition({ 288, 14 });
+			practiceSpr->setScale(0.45f);
+			practiceBtn->setTag(i);
+			practiceBtn->setID("main-practice");
+			cellMenu->addChild(practiceBtn);
+		}
+
 		if (i == 0 && type == static_cast<int>(DPListType::Monthly)) {
 			auto goldBG = CCLayerColor::create({255, 200, 0, 255});
 			cell->addChild(goldBG);
@@ -1030,6 +1282,23 @@ void DPLayer::reloadList(int type) {
 			packText->setZOrder(1);
 			packSpr->setZOrder(1);
 			progText->setZOrder(1);
+		}
+
+		if (name == "The Temple Series") {
+			auto michiSpikes = CCSprite::createWithSpriteFrameName("communityIcon_03_001.png");
+			auto michiHeart = CCSprite::createWithSpriteFrameName("d_heart01_001.png");
+
+			michiSpikes->setScale(0.5f);
+			michiSpikes->setPositionX(packText->getContentWidth() - 42);
+			michiSpikes->setPositionY(35);
+
+			michiHeart->setScale(0.35f);
+			michiHeart->setPositionX(packText->getContentWidth() - 42);
+			michiHeart->setPositionY(44);
+			michiHeart->setColor({0, 0, 0});
+
+			cell->addChild(michiSpikes);
+			cell->addChild(michiHeart);
 		}
 
 		if (i != 0 && type == static_cast<int>(DPListType::Main) && !Mod::get()->getSettingValue<bool>("unlock-all-tiers")) {

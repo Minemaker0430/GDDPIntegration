@@ -10,9 +10,8 @@ Complete enough levels in your current Tier and move on to the next!
 
 # Update Roadmap
 
-* Add Bonus Packs
-* Add Monthly Packs
-* Custom Demon Icons on Level Pages
+* Grandpa Demon Support
+* Fancy Level Info Layer
 
 # Compatible Mods
 
