@@ -9,7 +9,7 @@
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
 		"description": "Adds a new Menu for GDDP Progression",
-
+		"repository": "https://github.com/Minemaker0430/GDDPIntegration",
 		"resources": {
 			"sprites": [
 				"resources/*.png"
