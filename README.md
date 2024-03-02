@@ -1,26 +1,24 @@
 # GDDP Integration
 
-A mod made by Minemaker0430 that adds a new menu to the game, where you can keep track of your progression!
+An official mod for the **G**eometry **D**ash **D**emon **P**rogression list that adds a new menu to the game, where you can keep track of your progression!
 
-Complete enough levels in your current Tier and move on to the next!
+* Complete enough levels in your current Tier and move on to the next!
+* Play through various Bonus Packs!
+* Show off your skills by completing the Monthly Pack!
 
 **Are you worthy?**
 
-[Check out the original website!](https://gddp.pro/)
+[Learn more about the GDDP on the website!](https://gddp.pro/)
 
 # Update Roadmap
 
-* Grandpa Demon Support
+* Custom Difficulty Faces/Grandpa Demon Support
 * Fancy Level Info Layer
-
-# Compatible Mods
-
-* BetterInfo
-* Goodbye Unnecessary Buttons
-* GD Roulette
 
 # Credits
 
+* Minemaker0430 - Made the mod
+* ElohmroW - GDDP Co-Owner & Website Programmer
 * Trusta - For making GDDP in the first place
 * GDDP Website - Source of the custom Demon Icons
 * Firee - For helping me start modding back in the old 2.1 DLL days :)

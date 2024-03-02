@@ -190,7 +190,10 @@ class $modify(LevelListLayer) {
 				bg->setColor({ 18, 18, 86 });
 			}
 
-			/*auto menu = dynamic_cast<CCMenu*>(children->objectAtIndex(4));
+			//Get Completed Levels & Store in Save Data
+
+			//auto children = this->getChildren();
+			auto menu = getChildOfType<CCMenu>(this, 0);
 			auto menuChildren = menu->getChildren();
 
 			auto commentBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(3));
@@ -199,45 +202,28 @@ class $modify(LevelListLayer) {
 			auto infoBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(6));
 			auto favBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(7));
 
-			commentBtn->setPosition({ 10000, 10000 });
-			rateBtn->setPosition({ 10000, 10000 });
-			copyBtn->setPosition({ 10000, 10000 });
-			infoBtn->setPosition({ 10000, 10000 });
-			favBtn->setPosition({ 10000, 10000 });*/
+			commentBtn->setVisible(true);
+			rateBtn->setVisible(false);
+			copyBtn->setVisible(false);
+			infoBtn->setVisible(false);
+			favBtn->setVisible(false);
 
-			//auto downloadIcon = typeinfo_cast<CCSprite*>(children->objectAtIndex(6));
-			//auto downloadText = typeinfo_cast<CCLabelBMFont*>(children->objectAtIndex(7));
-			//auto likeIcon = typeinfo_cast<CCSprite*>(children->objectAtIndex(8));
-			//auto likeText = typeinfo_cast<CCLabelBMFont*>(children->objectAtIndex(9));
+			auto diffIcon = getChildOfType<CCSprite>(this, 3);
+			diffIcon->setVisible(false);
 
-			//downloadIcon->removeMeAndCleanup();
-			//downloadText->setPosition({10000, 10000});
-			//likeIcon->removeMeAndCleanup();
-			//likeText->setPosition({ 10000, 10000 });
-
-			//auto diffIcon = typeinfo_cast<CCSprite*>(children->objectAtIndex(10));
-			//diffIcon->setPosition({ 10000, 10000 });
-
-			//auto dpIcon = CCSprite::create();
-
-			//Get Completed Levels & Store in Save Data
-
-			auto glm = GameLevelManager::sharedState();
-			auto completedLevels = glm->getCompletedLevels(false);
-			auto levels = p0->m_levels;
+			auto progText = getChildOfType<CCLabelBMFont>(this, 1);
+			std::string progressStr = progText->getString();
 
 			auto packProgress = 0;
 
-			/*auto progressText = static_cast<CCLabelBMFont*>(children->objectAtIndex(13));
-			std::string s = progressText->getString();
-
+			//get number from string
 			std::vector<std::string> res;
 			std::string delim = "/";
 			std::string token = "";
-			for (int i = 0; i < s.size(); i++) {
+			for (int i = 0; i < progressStr.size(); i++) {
 				bool flag = true;
 				for (int j = 0; j < delim.size(); j++) {
-					if (s[i + j] != delim[j]) flag = false;
+					if (progressStr[i + j] != delim[j]) flag = false;
 				}
 				if (flag) {
 					if (token.size() > 0) {
@@ -247,23 +233,14 @@ class $modify(LevelListLayer) {
 					}
 				}
 				else {
-					token += s[i];
+					token += progressStr[i];
 				}
 			}
 			res.push_back(token);
+			
+			packProgress = std::stoi(res[0]);
 
-			packProgress = std::stoi(res[0]);*/
-
-			for (int i = 0; i < completedLevels->indexOfObject(completedLevels->lastObject()); i++) {
-				auto lvl = static_cast<GJGameLevel*>(completedLevels->objectAtIndex(i));
-				auto lvlID = lvl->m_levelID.value();
-
-				for (int j = 0; j < levels.size(); j++) {
-					if (lvlID == levels[j]) {
-						packProgress += 1;
-					}
-				}
-			}
+			log::info("{}", p0);
 
 			//all save stuff
 			auto packProgress_main = Mod::get()->getSavedValue<matjson::Array>("pack-progress-main");
@@ -293,6 +270,8 @@ class $modify(LevelListLayer) {
 			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
 			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
 
+			auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+
 			log::info("{}", type);
 			log::info("{}", id);
 			log::info("{}", reqLevels);
@@ -303,7 +282,8 @@ class $modify(LevelListLayer) {
 				if ((packProgress >= reqLevels) && (!hasRank[id].as_bool())) {
 					hasRank[id] = true;
 				}
-				else if (packProgress == totalLevels) {
+				
+				if (packProgress == totalLevels) {
 					hasCompleted_main[id] = true;
 				}
 				else {
@@ -351,6 +331,25 @@ class $modify(LevelListLayer) {
 				Mod::get()->setSavedValue("has-completed-monthly", hasCompleted_monthly);
 			}
 
+			//create sprite thing
+			std::string sprName = "DP_Beginner";
+			
+			if (type == "main") {
+				if (hasRank[id].as_bool()) {
+					sprName = data[type][id]["plusSprite"].as_string() + ".png"; 
+				}
+				else {
+					sprName = data[type][id]["sprite"].as_string() + ".png";
+				}
+			}
+			else {
+				sprName = data[type][id]["sprite"].as_string() + ".png";
+			}
+
+			auto dpIcon = CCSprite::create(Mod::get()->expandSpriteName(sprName.c_str()));
+			dpIcon->setPosition(diffIcon->getPosition());
+			dpIcon->setZOrder(diffIcon->getZOrder());
+			this->addChild(dpIcon);
 		}
 
 		return true;
@@ -584,9 +583,23 @@ void DPLayer::openList(CCObject* sender) {
 
 			//gd::string desc = ZipUtils::base64URLDecode(data[5]);
 
+			auto cachedData = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+			auto cachedType = Mod::get()->getSavedValue<std::string>("current-pack-type");
+			auto cachedID = Mod::get()->getSavedValue<int>("current-pack-index");
+
+			gd::string packTitle = "null";
+
+			if (cachedType == "main" || cachedType == "legacy") {
+				packTitle = cachedData[cachedType][cachedID]["name"].as_string() + " Demons";
+			}
+			else {
+				packTitle = cachedData[cachedType][cachedID]["name"].as_string();
+			}
+
 			auto list = GJLevelList::create();
 			list->m_listID = std::stoi(data[1]);
-			list->m_listName = data[3];
+			list->m_listName = packTitle;
+			//list->m_listName = data[3];
 			list->m_downloads = std::stoi(data[13]);
 			list->m_likes = std::stoi(data[17]);
 			//list->m_creatorName = data[29];
@@ -835,6 +848,7 @@ bool DPLayer::init() {
 		this->addChild(listBottom);
 
 		m_loadcircle = LoadingCircle::create();
+		m_loadcircle->m_parentLayer = this;
         m_loadcircle->show();
 
 		//reload menu
@@ -1096,6 +1110,7 @@ void DPLayer::reloadList(int type) {
 		int year = 2024; //Monthly Only
 		bool official = true; //Bonus Only
 		bool hasPractice = false; //Main Only
+		int mainPack = 0; //Legacy Only
 
 		name = m_data[dataIdx][i]["name"].as_string();
 		sprite = m_data[dataIdx][i]["sprite"].as_string();
@@ -1107,11 +1122,12 @@ void DPLayer::reloadList(int type) {
 		if (type == static_cast<int>(DPListType::Monthly)) { year = m_data[dataIdx][i]["year"].as_int(); }
 		if (type == static_cast<int>(DPListType::Bonus)) { official = m_data[dataIdx][i]["official"].as_bool(); }
 		if (type == static_cast<int>(DPListType::Main)) { hasPractice = m_data[dataIdx][i]["practice"].as_bool(); }
+		if (type == static_cast<int>(DPListType::Legacy)) { mainPack = m_data[dataIdx][i]["mainPack"].as_int(); }
 
 		auto fullTitle = name;
 		if (type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) { 
 			if (hasRank[i].as_bool() && type == static_cast<int>(DPListType::Main)) {
-				fullTitle = name + " Demons +";
+				fullTitle = name + "+ Demons";
 			}
 			else {
 				fullTitle = name + " Demons";
@@ -1194,6 +1210,7 @@ void DPLayer::reloadList(int type) {
 			else if (hasCompleted_main[i].as_bool()) {
 				progStr = "100% Complete!";
 				progText->setFntFile("goldFont.fnt");
+				packPlusSpr->setVisible(true);
 			}
 			else {
 				progStr = std::to_string(packProgress_main[i].as_int()) + "/" + std::to_string(totalLevels) + " to Completion.";
@@ -1308,6 +1325,31 @@ void DPLayer::reloadList(int type) {
 				lockIcon->setAnchorPoint({0.5f, 0});
 
 				auto lockText = CCLabelBMFont::create("Get the Previous Rank to unlock!", "bigFont.fnt");
+				lockText->setPosition({ 180, 5 });
+				lockText->setAnchorPoint({ 0.5f, 0 });
+				lockText->setScale(0.5f);
+
+				cell->addChild(lockIcon);
+				cell->addChild(lockText);
+			}
+			else {
+				//packProgressBack->addChild(packProgressFront);
+				//packProgressBack->addChild(packProgressText);
+				cell->addChild(cellMenu);
+				cell->addChild(packText);
+				cell->addChild(packSpr);
+				cell->addChild(packPlusSpr);
+				//cell->addChild(packProgressBack);
+				cell->addChild(progText);
+			}
+		}
+		else if (type == static_cast<int>(DPListType::Legacy) && !Mod::get()->getSettingValue<bool>("unlock-all-legacy")) {
+			if (!hasRank[mainPack].as_bool()) {
+				auto lockIcon = CCSprite::createWithSpriteFrameName("GJ_lock_001.png");
+				lockIcon->setPosition({ 180, 20 });
+				lockIcon->setAnchorPoint({ 0.5f, 0 });
+
+				auto lockText = CCLabelBMFont::create("Get the Normal Rank to unlock!", "bigFont.fnt");
 				lockText->setPosition({ 180, 5 });
 				lockText->setAnchorPoint({ 0.5f, 0 });
 				lockText->setScale(0.5f);
