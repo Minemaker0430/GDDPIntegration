@@ -14,6 +14,10 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 
 * Custom Difficulty Faces/Grandpa Demon Support
 * Fancy Level Info Layer
+* Pack Banners
+* Rank Medals
+* Skillset Info
+* Better Monthly Icons
 
 # Credits
 
