@@ -110,11 +110,11 @@ Monthly:
 class $modify(CreatorLayer) {
 
 	static void onModify(auto& self) {
-        self.setHookPriority("CreatorLayer::init", -42);
-    }
+		static_cast<void>(self.setHookPriority("CreatorLayer::init", -42));
+	}
 
 	bool init() {
-        if (!CreatorLayer::init()) return false;
+		if (!CreatorLayer::init()) return false;
 
 		Mod::get()->setSavedValue<bool>("in-gddp", false);
 
@@ -152,24 +152,29 @@ class $modify(CreatorLayer) {
 		}
 		
 		if (Loader::get()->isModLoaded("cvolton.betterinfo")) {
-			log::info("{}", "BetterInfo Detected. Moved Button.");
+			log::info("BetterInfo Detected. Moved Button.");
 			this->getChildByID("cvolton.betterinfo/center-right-menu")->setPositionY(260);
 		}
 
 		if (Loader::get()->isModLoaded("spaghettdev.gd-roulette")) {
-			log::info("{}", "GD Roulette Detected. Moved Button.");
-			this->getChildByID("spaghettdev.gd-roulette/creator-layer-menu")->setPositionY(92);
+			log::info("GD Roulette Detected. Moved Button.");
+			if (auto menu = this->getChildByID("spaghettdev.gd-roulette/creator-layer-menu")) {
+				menu->setPositionY(92);
+			}
+			else {
+				this->getChildByID("spaghettdev.gd-roulette/center-left-menu")->setPositionY(255);
+			}
 		}
 
-        return true;
-    }
+		return true;
+	}
 
 };
 
 //modify gddp list layout
 class $modify(LevelListLayer) {
 	static void onModify(auto& self) {
-		self.setHookPriority("LevelListLayer::init", -42);
+		static_cast<void>(self.setHookPriority("LevelListLayer::init", -42));
 	}
 
 	bool init(GJLevelList* p0) {
@@ -181,14 +186,14 @@ class $modify(LevelListLayer) {
 
 			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
 
-			//Gotta use getObjectAtIndex because there's no Node IDs here yet :v
+			// Gotta use getObjectAtIndex because there's no Node IDs here yet :v
 
-			auto children = this->getChildren();
+                        auto children = this->getChildren();
 
-			if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
-				auto bg = typeinfo_cast<CCSprite*>(children->objectAtIndex(0));
-				bg->setColor({ 18, 18, 86 });
-			}
+                        if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
+                                auto bg = typeinfo_cast<CCSprite*>(children->objectAtIndex(0));
+                                bg->setColor({ 18, 18, 86 });
+                        }
 
 			//Get Completed Levels & Store in Save Data
 
@@ -359,7 +364,7 @@ class $modify(LevelListLayer) {
 //modify gddp level pages
 class $modify(LevelInfoLayer) {
 	static void onModify(auto & self) {
-		self.setHookPriority("LevelInfoLayer::init", -42);
+		static_cast<void>(self.setHookPriority("LevelInfoLayer::init", -42));
 	}
 
 	bool init(GJGameLevel* p0, bool p1) {
@@ -560,7 +565,7 @@ void DPLayer::openList(CCObject* sender) {
 							IDs.push_back(num);
 						}
 					}
-					log::info("{}", "In Practice Tier");
+					log::info("In Practice Tier");
 				}
 				else {
 					for (int i = 0; i < levelIDstr.size(); i++)
@@ -570,7 +575,7 @@ void DPLayer::openList(CCObject* sender) {
 							IDs.push_back(num);
 						}
 					}
-					log::info("{}", "In Main Tier");
+					log::info("In Main Tier");
 				}
 			}
 			else {
@@ -779,33 +784,33 @@ void DPLayer::achievementsCallback(CCObject* sender) {
 bool DPLayer::init() {
 	if (!CCLayer::init()) return false;
 
-        log::info("{}", "Opened the Demon Progression menu.");
+		log::info("Opened the Demon Progression menu.");
 
 		Mod::get()->setSavedValue<bool>("in-gddp", true);
 		log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
 
-        auto menu = CCMenu::create();
-        auto director = CCDirector::sharedDirector();
-	    auto size = director->getWinSize();
+		auto menu = CCMenu::create();
+		auto director = CCDirector::sharedDirector();
+		auto size = director->getWinSize();
 
-	    auto bg = createLayerBG();
+		auto bg = createLayerBG();
 		if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
 			bg->setColor({ 18, 18, 86 });
 		}
 		bg->setZOrder(-10);
-        this->addChild(bg);
+		this->addChild(bg);
 
-	    auto lCornerSprite = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
-	    lCornerSprite->setAnchorPoint({ 0, 0 });
-	    this->addChild(lCornerSprite);
+		auto lCornerSprite = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
+		lCornerSprite->setAnchorPoint({ 0, 0 });
+		this->addChild(lCornerSprite);
 
-	    auto rCornerSprite = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
-	    rCornerSprite->setAnchorPoint({ 1, 0 });
-	    rCornerSprite->setPosition({ size.width - 70, 0 });
-	    rCornerSprite->setScaleX(-1);
-	    this->addChild(rCornerSprite);
+		auto rCornerSprite = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
+		rCornerSprite->setAnchorPoint({ 1, 0 });
+		rCornerSprite->setPosition({ size.width - 70, 0 });
+		rCornerSprite->setScaleX(-1);
+		this->addChild(rCornerSprite);
 
-        this->addChild(menu);
+		this->addChild(menu);
 
 		//back button
 		auto backSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -849,7 +854,7 @@ bool DPLayer::init() {
 
 		m_loadcircle = LoadingCircle::create();
 		m_loadcircle->m_parentLayer = this;
-        m_loadcircle->show();
+		m_loadcircle->show();
 
 		//reload menu
 		auto reloadMenu = CCMenu::create();
@@ -951,7 +956,7 @@ bool DPLayer::init() {
 		this->setKeyboardEnabled(true);
 		this->setKeypadEnabled(true);
 
-        return true;
+		return true;
 }
 
 void DPLayer::reloadList(int type) {
@@ -1005,7 +1010,7 @@ void DPLayer::reloadList(int type) {
 		Mod::get()->setSavedValue("has-completed-main", hasCompleted_main);
 		Mod::get()->setSavedValue("has-rank", hasRank);
 			
-		log::info("{}", "Found new Main Pack(s).");
+		log::info("Found new Main Pack(s).");
 	}
 
 	if (packProgress_legacy.size() < m_data["legacy"].as_array().size()) { //check legacy packs
@@ -1023,7 +1028,7 @@ void DPLayer::reloadList(int type) {
 		Mod::get()->setSavedValue("pack-progress-legacy", packProgress_legacy);
 		Mod::get()->setSavedValue("has-completed-legacy", hasCompleted_legacy);
 			
-		log::info("{}", "Found new Legacy Pack(s).");
+		log::info("Found new Legacy Pack(s).");
 	}
 
 	if (packProgress_bonus.size() < m_data["bonus"].as_array().size()) { //"check" bonus packs
@@ -1042,7 +1047,7 @@ void DPLayer::reloadList(int type) {
 		Mod::get()->setSavedValue("pack-progress-bonus", progress);
 		Mod::get()->setSavedValue("has-completed-bonus", completed);
 			
-		log::info("{}", "Found new Bonus Pack(s).");
+		log::info("Found new Bonus Pack(s).");
 	}
 
 	if (packProgress_monthly.size() < m_data["monthly"].as_array().size()) { //check monthly packs
@@ -1061,7 +1066,7 @@ void DPLayer::reloadList(int type) {
 		Mod::get()->setSavedValue("pack-progress-monthly", progress);
 		Mod::get()->setSavedValue("has-completed-monthly", completed);
 
-		log::info("{}", "Found new Monthly Pack(s).");
+		log::info("Found new Monthly Pack(s).");
 	}
 
 		Mod::get()->setSavedValue<int>("database-version", m_data["database-version"].as_int());
@@ -1409,7 +1414,7 @@ void DPLayer::onTab(CCObject* pSender) {
 	m_list->removeMeAndCleanup();
 
 	if (menuType == static_cast<int>(DPListType::Main)) {
-		log::info("{}", "Switched to Main Tab");
+		log::info("Switched to Main Tab");
 
 		btn->toggle(true);
 		static_cast<TabButton*>(legacybtn)->toggle(false);
@@ -1419,7 +1424,7 @@ void DPLayer::onTab(CCObject* pSender) {
 		reloadList(static_cast<int>(DPListType::Main));
 	}
 	else if (menuType == static_cast<int>(DPListType::Legacy)) {
-		log::info("{}", "Switched to Legacy Tab");
+		log::info("Switched to Legacy Tab");
 		
 		btn->toggle(true);
 		static_cast<TabButton*>(mainbtn)->toggle(false);
@@ -1429,7 +1434,7 @@ void DPLayer::onTab(CCObject* pSender) {
 		reloadList(static_cast<int>(DPListType::Legacy));
 	}
 	else if (menuType == static_cast<int>(DPListType::Bonus)) {
-		log::info("{}", "Switched to Bonus Tab");
+		log::info("Switched to Bonus Tab");
 		
 		btn->toggle(true);
 		static_cast<TabButton*>(legacybtn)->toggle(false);
@@ -1445,7 +1450,7 @@ void DPLayer::onTab(CCObject* pSender) {
 		}
 	}
 	else if (menuType == static_cast<int>(DPListType::Monthly)) {
-		log::info("{}", "Switched to Monthly Tab");
+		log::info("Switched to Monthly Tab");
 		
 		btn->toggle(true);
 		static_cast<TabButton*>(legacybtn)->toggle(false);
@@ -1463,5 +1468,5 @@ void DPLayer::onTab(CCObject* pSender) {
 }
 
 DPLayer::~DPLayer() {
-    this->removeAllChildrenWithCleanup(true);
+	this->removeAllChildrenWithCleanup(true);
 }
