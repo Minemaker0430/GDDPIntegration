@@ -189,7 +189,7 @@ class $modify(LevelListLayer) {
 			auto children = this->getChildren();
 
 			if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
-				getChildOfType<CCSprite*>(this->getChildren(), 0)->setColor({ 18, 18, 86 });
+				getChildOfType<CCSprite*>(this, 0)->setColor({ 18, 18, 86 });
 			}
 
 			//Get Completed Levels & Store in Save Data
