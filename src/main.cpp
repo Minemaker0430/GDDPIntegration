@@ -186,11 +186,14 @@ class $modify(LevelListLayer) {
 
 			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
 
-			auto children = this->getChildren();
+			// Gotta use getObjectAtIndex because there's no Node IDs here yet :v
 
-			if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
-				getChildOfType<CCSprite*>(this, 0)->setColor({ 18, 18, 86 });
-			}
+                        auto children = this->getChildren();
+
+                        if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
+                                auto bg = typeinfo_cast<CCSprite*>(children->objectAtIndex(0));
+                                bg->setColor({ 18, 18, 86 });
+                        }
 
 			//Get Completed Levels & Store in Save Data
 
