@@ -12,7 +12,6 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 
 # Update Roadmap
 
-* Custom Difficulty Faces/Grandpa Demon Support
 * Fancy Level Info Layer
 * Pack Banners
 * Rank Medals
