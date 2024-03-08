@@ -29,9 +29,9 @@ public:
 };
 
 enum class DPListType {
-	Main,
-	Legacy,
-	Bonus,
+    Main,
+    Legacy,
+    Bonus,
 	Monthly,
 };
 
