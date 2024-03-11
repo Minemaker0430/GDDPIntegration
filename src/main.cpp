@@ -444,7 +444,9 @@ class $modify(LevelInfoLayer) {
 			std::string plusSprite = "DP_BeginnerPlus";
 
 			sprite = data[type][id]["sprite"].as_string();
-			if (type == "main") { plusSprite = data[type][id]["plusSprite"].as_string(); }
+			if (type == "main" || type == "legacy") {
+				plusSprite = data[type][id]["plusSprite"].as_string();
+			}
 
 			std::string fullSpr = sprite + "Text.png";
 			std::string fullPlusSpr = plusSprite + "Text.png";
@@ -598,7 +600,9 @@ class $modify(LevelCell) {
 				std::string plusSprite = "DP_BeginnerPlus";
 
 				sprite = data[type][id]["sprite"].as_string();
-				if (type == "main") { plusSprite = data[type][id]["plusSprite"].as_string(); }
+				if (type == "main" || type == "legacy") {
+					plusSprite = data[type][id]["plusSprite"].as_string(); 
+				}
 
 				std::string fullSpr = sprite + "SmallText.png";
 				std::string fullPlusSpr = plusSprite + "SmallText.png";
@@ -630,7 +634,9 @@ class $modify(LevelCell) {
 				std::string plusSprite = "DP_BeginnerPlus";
 
 				sprite = data[type][id]["sprite"].as_string();
-				if (type == "main") { plusSprite = data[type][id]["plusSprite"].as_string(); }
+				if (type == "main" || type == "legacy") {
+					plusSprite = data[type][id]["plusSprite"].as_string();
+				}
 
 				std::string fullSpr = sprite + "SmallText.png";
 				std::string fullPlusSpr = plusSprite + "SmallText.png";
@@ -761,6 +767,8 @@ void DPLayer::openList(CCObject* sender) {
 	}
 
 	auto listID = m_data[type][id]["listID"].as_int();
+	auto practiceID = 0;
+	if (type == "main") { practiceID = m_data[type][id]["practiceID"].as_int(); }
 	auto reqLevels = 0;
 	if (type == "main") { reqLevels = m_data[type][id]["reqLevels"].as_int(); }
 	auto totalLevels = 0;
@@ -774,8 +782,17 @@ void DPLayer::openList(CCObject* sender) {
 	Mod::get()->setSavedValue<int>("current-pack-totalLvls", totalLevels);
 	Mod::get()->setSavedValue<bool>("current-pack-hasPractice", hasPractice);
 
+	auto fetchID = 0;
+
+	if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "main" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
+		fetchID = practiceID;
+	}
+	else {
+		fetchID = listID;
+	}
+
 	std::string const& url = "https://www.boomlings.com/database/getGJLevelLists.php";
-	std::string const& fields = "secret=Wmfd2893gb7&type=0&diff=-&len=-&count=1&str=" + std::to_string(listID); //thank you gd cologne :pray:
+	std::string const& fields = "secret=Wmfd2893gb7&type=0&diff=-&len=-&count=1&str=" + std::to_string(fetchID); //thank you gd cologne :pray:
 	web::AsyncWebRequest()
 		.bodyRaw(fields)
 		.postRequest()
@@ -813,34 +830,11 @@ void DPLayer::openList(CCObject* sender) {
 			log::info("{}", levelIDstr);
 
 			std::vector<int> IDs;
-			if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "main" && Mod::get()->getSavedValue<bool>("current-pack-hasPractice")) {
-				if (Mod::get()->getSavedValue<bool>("is-practice", false)) {
-					for (int i = 0; i < levelIDstr.size(); i++)
-					{
-						int num = atoi(levelIDstr.at(i).c_str());
-						if (i % 2 == 1) {
-							IDs.push_back(num);
-						}
-					}
-					log::info("In Practice Tier");
-				}
-				else {
-					for (int i = 0; i < levelIDstr.size(); i++)
-					{
-						int num = atoi(levelIDstr.at(i).c_str());
-						if (i % 2 == 0) {
-							IDs.push_back(num);
-						}
-					}
-					log::info("In Main Tier");
-				}
-			}
-			else {
-				for (int i = 0; i < levelIDstr.size(); i++)
-				{
-					int num = atoi(levelIDstr.at(i).c_str());
-					IDs.push_back(num);
-				}
+			
+			for (int i = 0; i < levelIDstr.size(); i++)
+			{
+				int num = atoi(levelIDstr.at(i).c_str());
+				IDs.push_back(num);
 			}
 
 			//gd::string desc = ZipUtils::base64URLDecode(data[5]);
@@ -1550,7 +1544,7 @@ void DPLayer::reloadList(int type) {
 		viewSpr->addChild(viewText);
 		cellMenu->addChild(viewBtn);
 
-		if (type == static_cast<int>(DPListType::Main) && hasPractice) {
+		if (type == static_cast<int>(DPListType::Main) && hasPractice && Mod::get()->getSettingValue<bool>("enable-practice")) {
 			auto practiceSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
 			auto practiceBtn = CCMenuItemSpriteExtra::create(practiceSpr, this, menu_selector(DPLayer::openList));
 			practiceBtn->setPosition({ 288, 14 });

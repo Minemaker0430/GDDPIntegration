@@ -1,10 +1,10 @@
 {
-		"geode": "v2.0.0-beta.21",
+		"geode": "v2.0.0-beta.22",
 		"gd": {
 			"win": "2.204",
 			"android": "2.205"
 		},
-		"version": "v1.0.0-beta.9",
+		"version": "v1.0.0-beta.10",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
@@ -34,7 +34,7 @@
 		"dependencies": [
 			{
 				"id": "geode.node-ids",
-				"version": ">=v1.7.1",
+				"version": ">=v1.8.0",
 				"importance": "required"
 			}
 		],
@@ -55,6 +55,12 @@
 			"description": "Disables Legacy Packs being Locked behind Main Packs.",
 			"type": "bool",
 			"default": false
+		},
+		"enable-practice": {
+			"name": "Enable Practice Packs",
+			"description": "Adds Practice versions of the Main Packs to help you practice Main Tier levels.",
+			"type": "bool",
+			"default": true
 		},
 		"cosmetic-section": {
 			"name": "Cosmetic",

@@ -1,3 +1,8 @@
+# v1.0.0-beta.10
+
+* Fixed Custom Difficulty Faces in Legacy Packs
+* Modified Practice Pack Implementation (will be available later)
+
 # v1.0.0-beta.9
 
 * Added Custom Difficulty Faces (finally)
