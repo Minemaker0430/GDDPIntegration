@@ -10,6 +10,7 @@ protected:
 	virtual void keyBackClicked(); //when you press escape
 	ListView* m_list;
 	CCMenu* m_tabs;
+	CCMenu* m_backMenu;
 	matjson::Value m_data;
 	LoadingCircle* m_loadcircle;
 	int m_currentTab;

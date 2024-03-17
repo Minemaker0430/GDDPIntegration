@@ -1,3 +1,21 @@
+# v1.0.0-beta.11
+
+* Prevented Crashes related to fetching pack data
+* Added Pack Descriptions
+* Difficulty Faces are now collected individually instead of being based on the current pack
+	* Fixes incorrect difficulties
+	* Fixes difficulties showing on Non-GDDP levels
+	* Allows for Bonus Packs and Monthly Packs to show difficulties
+	* Not all levels will have the individual difficulties at the start, please be patient with me
+* Mod no longer accesses depreciated database values
+* Progress evaluation should be significantly better
+* Fixed a minor bug where the mod wouldn't detect you as outside of the GDDP menus
+
+Known Issues:
+* Due to the way the Grandpa Demon compatibility works currently, when using Disable Effects...
+	* Projected Stars particles may be hidden
+	* Some effects may not be hidden on some levels
+
 # v1.0.0-beta.10
 
 * Fixed Custom Difficulty Faces in Legacy Packs
@@ -11,12 +29,6 @@
 * Heavily Optimized Textures
 * Added Setting Sections
 * Added Compact Menu Button
-
-Known Issues:
-* Due to the way the Grandpa Demon compatibility works currently, when using Disable Effects...
-	* Projected Stars particles may be hidden
-	* Some effects may not be hidden on some levels
-* The wrong difficulty will show while viewing Non-GDDP Levels in the GDDP Menus (unless custom difficulty faces are off)
 
 # v1.0.0-beta.8
 
