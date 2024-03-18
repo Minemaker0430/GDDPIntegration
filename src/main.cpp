@@ -221,9 +221,16 @@ class $modify(LevelListLayer) {
 	bool init(GJLevelList* p0) {
 		if (!LevelListLayer::init(p0)) return false;
 
+		auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
+		auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
+		auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
+		auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
+
+		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+
 		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
 
-		if (inGDDP) {
+		if (inGDDP && (p0->m_listID == data[type][id]["listID"].as_int())) {
 
 			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
 
@@ -279,13 +286,6 @@ class $modify(LevelListLayer) {
 			auto goldMedals = Mod::get()->getSavedValue<int>("gold-medals", 0);
 
 			auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
-
-			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
-			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
-			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
-			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
-
-			auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 			log::info("{}", type);
 			log::info("{}", id);
@@ -571,7 +571,7 @@ class $modify(LevelInfoLayer) {
 		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
 
-			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && Mod::get()->getSettingValue<bool>("override-grandpa-demon") && (type == "main" || type == "legacy")) {
+			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && Mod::get()->getSettingValue<bool>("override-grandpa-demon")) {
 				if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && this->getChildByID("grd-difficulty")) {
 					this->getChildByID("grd-difficulty")->setVisible(false);
 					if (this->getChildByID("grd-infinity")) { this->getChildByID("grd-infinity")->setVisible(false); }
@@ -771,6 +771,7 @@ void DPLayer::reloadData(CCObject* sender) {
 	// download data
 	web::AsyncWebRequest()
 		.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json")
+		//.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/dev-list.json")
 		.text()
 		.then([&](std::string const& response) {
 			
@@ -1182,6 +1183,7 @@ bool DPLayer::init() {
 		// download data
 		web::AsyncWebRequest()
 			.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json")
+			//.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/dev-list.json")
 			.text()
 			.then([&](std::string const& response) {
 				Mod::get()->setSavedValue<matjson::Value>("cached-data", matjson::parse(response));

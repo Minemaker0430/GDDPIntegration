@@ -1,3 +1,8 @@
+# v1.0.0-beta.12
+
+* Fixed Visual Bug involving Levels in Bonus and Monthly Packs
+* Non-GDDP Lists don't get visuals applied to them anymore
+
 # v1.0.0-beta.11
 
 * Prevented Crashes related to fetching pack data

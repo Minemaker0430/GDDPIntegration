@@ -4,7 +4,7 @@
 			"win": "2.204",
 			"android": "2.205"
 		},
-		"version": "v1.0.0-beta.11",
+		"version": "v1.0.0-beta.12",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
@@ -34,7 +34,7 @@
 		"dependencies": [
 			{
 				"id": "geode.node-ids",
-				"version": ">=v1.8.0",
+				"version": ">=v1.8.1",
 				"importance": "required"
 			}
 		],
