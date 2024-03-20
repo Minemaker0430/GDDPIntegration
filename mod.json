@@ -4,7 +4,7 @@
 			"win": "2.204",
 			"android": "2.205"
 		},
-		"version": "v1.0.0-beta.12",
+		"version": "v1.0.0-beta.13",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
@@ -62,8 +62,8 @@
 			"type": "bool",
 			"default": true
 		},
-		"cosmetic-section": {
-			"name": "Cosmetic",
+		"menu-section": {
+			"name": "Menu",
 			"type": "custom"
 		},
 		"alt-button-texture": {
@@ -78,15 +78,25 @@
 			"type": "bool",
 			"default": false
 		},
-		"restore-bg-color": {
-			"name": "Vanilla Background Color",
-			"description": "Changes the background color in the GDDP Menus to the Vanilla Color.",
+		"replace-map-packs": {
+			"name": "Replace Map Packs",
+			"description": "Replaces the Map Packs button with the Demon Progression button.",
 			"type": "bool",
 			"default": false
 		},
 		"show-database-version": {
 			"name": "Show Database Version",
 			"description": "Shows what version of the database you're currently on.",
+			"type": "bool",
+			"default": false
+		},
+		"cosmetic-section": {
+			"name": "Cosmetic",
+			"type": "custom"
+		},
+		"restore-bg-color": {
+			"name": "Vanilla Background Color",
+			"description": "Changes the background color in the GDDP Menus to the Vanilla Color.",
 			"type": "bool",
 			"default": false
 		},

@@ -113,6 +113,7 @@ SettingNode* SectionSettingValue::createNode(float width) {
 
 $on_mod(Loaded) {
 	Mod::get()->addCustomSetting<SectionSettingValue>("bypass-section", "");
+	Mod::get()->addCustomSetting<SectionSettingValue>("menu-section", "");
 	Mod::get()->addCustomSetting<SectionSettingValue>("cosmetic-section", "");
 	Mod::get()->addCustomSetting<SectionSettingValue>("compatibility-section", "");
 }
@@ -155,6 +156,30 @@ class $modify(CreatorLayer) {
 				sideMenu->setLayout(AxisLayout::create(Axis::Column), true, true);
 				sideMenu->addChild(dpBtn);
 				this->addChild(sideMenu);
+			}
+		}
+		else if (Mod::get()->getSettingValue<bool>("replace-map-packs")) {
+			auto spr = CCSprite::createWithSpriteFrameName("DP_demonProgressionBtn.png"_spr);
+
+			if (Mod::get()->getSettingValue<bool>("alt-button-texture")) {
+				spr = CCSprite::createWithSpriteFrameName("DP_demonProgressionBtnAlt.png"_spr);
+			}
+
+			if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
+				spr->setScale(0.85f);
+			}
+			else {
+				spr->setScale(0.8f);
+			}
+
+			auto dpBtn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(DPLayer::callback));
+			dpBtn->setPosition({ 451, 153 });
+			dpBtn->setID("demon-progression-button");
+			menu->addChild(dpBtn);
+
+			if (menu->getChildByID("map-packs-button")) {
+				dpBtn->setPosition({ menu->getChildByID("map-packs-button")->getPositionX() + 2, menu->getChildByID("map-packs-button")->getPositionY() - 2 });
+				menu->getChildByID("map-packs-button")->setVisible(false);
 			}
 		}
 		else {
@@ -322,117 +347,121 @@ class $modify(LevelListLayer) {
 	virtual void onBack(CCObject* sender) {
 		LevelListLayer::onBack(sender);
 
-		auto progText = getChildOfType<CCLabelBMFont>(this, 2);
-		std::string progressStr = progText->getString();
+		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
 
-		auto packProgress = 0;
+		if (inGDDP) {
+			auto progText = getChildOfType<CCLabelBMFont>(this, 2);
+			std::string progressStr = progText->getString();
 
-		//get number from string
-		std::vector<std::string> res;
-		std::string delim = "/";
-		std::string token = "";
-		for (int i = 0; i < progressStr.size(); i++) {
-			bool flag = true;
-			for (int j = 0; j < delim.size(); j++) {
-				if (progressStr[i + j] != delim[j]) flag = false;
-			}
-			if (flag) {
-				if (token.size() > 0) {
-					res.push_back(token);
-					token = "";
-					i += delim.size() - 1;
+			auto packProgress = 0;
+
+			//get number from string
+			std::vector<std::string> res;
+			std::string delim = "/";
+			std::string token = "";
+			for (int i = 0; i < progressStr.size(); i++) {
+				bool flag = true;
+				for (int j = 0; j < delim.size(); j++) {
+					if (progressStr[i + j] != delim[j]) flag = false;
+				}
+				if (flag) {
+					if (token.size() > 0) {
+						res.push_back(token);
+						token = "";
+						i += delim.size() - 1;
+					}
+				}
+				else {
+					token += progressStr[i];
 				}
 			}
-			else {
-				token += progressStr[i];
+			res.push_back(token);
+
+			packProgress = std::stoi(res[0]);
+
+			//all save stuff
+			auto packProgress_main = Mod::get()->getSavedValue<matjson::Array>("pack-progress-main");
+			auto packProgress_legacy = Mod::get()->getSavedValue<matjson::Array>("pack-progress-legacy");
+			auto packProgress_bonus = Mod::get()->getSavedValue<matjson::Array>("pack-progress-bonus");
+			auto packProgress_monthly = Mod::get()->getSavedValue<matjson::Array>("pack-progress-monthly");
+
+			auto hasRank = Mod::get()->getSavedValue<matjson::Array>("has-rank");
+			auto hasCompleted_main = Mod::get()->getSavedValue<matjson::Array>("has-completed-main");
+			auto hasCompleted_legacy = Mod::get()->getSavedValue<matjson::Array>("has-completed-legacy");
+			auto hasCompleted_bonus = Mod::get()->getSavedValue<matjson::Array>("has-completed-bonus");
+			auto hasCompleted_monthly = Mod::get()->getSavedValue<matjson::Array>("has-completed-monthly");
+
+			auto packsCompleted_main = Mod::get()->getSavedValue<int>("packs-completed-main", 0);
+			auto packsCompleted_legacy = Mod::get()->getSavedValue<int>("packs-completed-legacy", 0);
+			auto packsCompleted_bonus = Mod::get()->getSavedValue<int>("packs-completed-bonus", 0);
+			auto packsCompleted_monthly = Mod::get()->getSavedValue<int>("packs-completed-monthly", 0);
+
+			auto bronzeMedals = Mod::get()->getSavedValue<int>("bronze-medals", 0);
+			auto silverMedals = Mod::get()->getSavedValue<int>("silver-medals", 0);
+			auto goldMedals = Mod::get()->getSavedValue<int>("gold-medals", 0);
+
+			auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
+
+			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
+			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
+			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
+			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
+
+			auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+
+			if (type == "main") {
+				packProgress_main[id] = packProgress;
+				if ((packProgress >= reqLevels) && (!hasRank[id].as_bool())) {
+					hasRank[id] = true;
+				}
+
+				if (packProgress == totalLevels) {
+					hasCompleted_main[id] = true;
+				}
+				else {
+					hasCompleted_main[id] = false;
+				}
+
+				Mod::get()->setSavedValue("pack-progress-main", packProgress_main);
+				Mod::get()->setSavedValue("has-rank", hasRank);
+				Mod::get()->setSavedValue("has-completed-main", hasCompleted_main);
 			}
-		}
-		res.push_back(token);
+			else if (type == "legacy") {
+				packProgress_legacy[id] = packProgress;
+				if (packProgress == totalLevels) {
+					hasCompleted_legacy[id] = true;
+				}
+				else {
+					hasCompleted_legacy[id] = false;
+				}
 
-		packProgress = std::stoi(res[0]);
-
-		//all save stuff
-		auto packProgress_main = Mod::get()->getSavedValue<matjson::Array>("pack-progress-main");
-		auto packProgress_legacy = Mod::get()->getSavedValue<matjson::Array>("pack-progress-legacy");
-		auto packProgress_bonus = Mod::get()->getSavedValue<matjson::Array>("pack-progress-bonus");
-		auto packProgress_monthly = Mod::get()->getSavedValue<matjson::Array>("pack-progress-monthly");
-
-		auto hasRank = Mod::get()->getSavedValue<matjson::Array>("has-rank");
-		auto hasCompleted_main = Mod::get()->getSavedValue<matjson::Array>("has-completed-main");
-		auto hasCompleted_legacy = Mod::get()->getSavedValue<matjson::Array>("has-completed-legacy");
-		auto hasCompleted_bonus = Mod::get()->getSavedValue<matjson::Array>("has-completed-bonus");
-		auto hasCompleted_monthly = Mod::get()->getSavedValue<matjson::Array>("has-completed-monthly");
-
-		auto packsCompleted_main = Mod::get()->getSavedValue<int>("packs-completed-main", 0);
-		auto packsCompleted_legacy = Mod::get()->getSavedValue<int>("packs-completed-legacy", 0);
-		auto packsCompleted_bonus = Mod::get()->getSavedValue<int>("packs-completed-bonus", 0);
-		auto packsCompleted_monthly = Mod::get()->getSavedValue<int>("packs-completed-monthly", 0);
-
-		auto bronzeMedals = Mod::get()->getSavedValue<int>("bronze-medals", 0);
-		auto silverMedals = Mod::get()->getSavedValue<int>("silver-medals", 0);
-		auto goldMedals = Mod::get()->getSavedValue<int>("gold-medals", 0);
-
-		auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
-
-		auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
-		auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
-		auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
-		auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
-
-		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-
-		if (type == "main") {
-			packProgress_main[id] = packProgress;
-			if ((packProgress >= reqLevels) && (!hasRank[id].as_bool())) {
-				hasRank[id] = true;
+				Mod::get()->setSavedValue("pack-progress-legacy", packProgress_legacy);
+				Mod::get()->setSavedValue("has-completed-legacy", hasCompleted_legacy);
 			}
+			else if (type == "bonus") {
+				packProgress_bonus[id] = packProgress;
+				if (packProgress == totalLevels) {
+					hasCompleted_bonus[id] = true;
+				}
+				else {
+					hasCompleted_bonus[id] = false;
+				}
 
-			if (packProgress == totalLevels) {
-				hasCompleted_main[id] = true;
+				Mod::get()->setSavedValue("pack-progress-bonus", packProgress_bonus);
+				Mod::get()->setSavedValue("has-completed-bonus", hasCompleted_bonus);
 			}
-			else {
-				hasCompleted_main[id] = false;
-			}
+			else if (type == "monthly") {
+				packProgress_monthly[id] = packProgress;
+				if (packProgress == 6) {
+					hasCompleted_monthly[id] = true;
+				}
+				else {
+					hasCompleted_monthly[id] = false;
+				}
 
-			Mod::get()->setSavedValue("pack-progress-main", packProgress_main);
-			Mod::get()->setSavedValue("has-rank", hasRank);
-			Mod::get()->setSavedValue("has-completed-main", hasCompleted_main);
-		}
-		else if (type == "legacy") {
-			packProgress_legacy[id] = packProgress;
-			if (packProgress == totalLevels) {
-				hasCompleted_legacy[id] = true;
+				Mod::get()->setSavedValue("pack-progress-monthly", packProgress_monthly);
+				Mod::get()->setSavedValue("has-completed-monthly", hasCompleted_monthly);
 			}
-			else {
-				hasCompleted_legacy[id] = false;
-			}
-
-			Mod::get()->setSavedValue("pack-progress-legacy", packProgress_legacy);
-			Mod::get()->setSavedValue("has-completed-legacy", hasCompleted_legacy);
-		}
-		else if (type == "bonus") {
-			packProgress_bonus[id] = packProgress;
-			if (packProgress == totalLevels) {
-				hasCompleted_bonus[id] = true;
-			}
-			else {
-				hasCompleted_bonus[id] = false;
-			}
-
-			Mod::get()->setSavedValue("pack-progress-bonus", packProgress_bonus);
-			Mod::get()->setSavedValue("has-completed-bonus", hasCompleted_bonus);
-		}
-		else if (type == "monthly") {
-			packProgress_monthly[id] = packProgress;
-			if (packProgress == 6) {
-				hasCompleted_monthly[id] = true;
-			}
-			else {
-				hasCompleted_monthly[id] = false;
-			}
-
-			Mod::get()->setSavedValue("pack-progress-monthly", packProgress_monthly);
-			Mod::get()->setSavedValue("has-completed-monthly", hasCompleted_monthly);
 		}
 	}
 };

@@ -1,3 +1,9 @@
+# v1.0.0-beta.13
+
+* Fixed crash related to level lists
+* New config option to replace Map Packs
+	* Prioritizes Compact Menu Button over this option
+
 # v1.0.0-beta.12
 
 * Fixed Visual Bug involving Levels in Bonus and Monthly Packs
