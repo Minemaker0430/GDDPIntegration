@@ -178,7 +178,7 @@ class $modify(CreatorLayer) {
 			menu->addChild(dpBtn);
 
 			if (menu->getChildByID("map-packs-button")) {
-				dpBtn->setPosition({ menu->getChildByID("map-packs-button")->getPositionX() + 2, menu->getChildByID("map-packs-button")->getPositionY() - 2 });
+				dpBtn->setPosition({ menu->getChildByID("map-packs-button")->getPositionX() + 2.2f, menu->getChildByID("map-packs-button")->getPositionY() - 2 });
 				menu->getChildByID("map-packs-button")->setVisible(false);
 			}
 		}
@@ -349,7 +349,7 @@ class $modify(LevelListLayer) {
 
 		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
 
-		if (inGDDP) {
+		if (inGDDP && !Mod::get()->getSavedValue<bool>("is-practice", false)) {
 			auto progText = getChildOfType<CCLabelBMFont>(this, 2);
 			std::string progressStr = progText->getString();
 
@@ -839,6 +839,10 @@ void DPLayer::openList(CCObject* sender) {
 		Mod::get()->setSavedValue<bool>("is-practice", true);
 		type = "main";
 	}
+	else if (type == "legacy-practice") {
+		Mod::get()->setSavedValue<bool>("is-practice", true);
+		type = "legacy";
+	}
 	else {
 		Mod::get()->setSavedValue<bool>("is-practice", false);
 	}
@@ -852,6 +856,8 @@ void DPLayer::openList(CCObject* sender) {
 	if (type != "monthly") { totalLevels = m_data[type][id]["totalLevels"].as_int(); }
 	auto hasPractice = false;
 	if (type == "main") { hasPractice = m_data[type][id]["practice"].as_bool(); }
+	auto mainPack = 0;
+	if (type == "legacy") { mainPack = m_data[type][id]["mainPack"].as_int(); }
 
 	Mod::get()->setSavedValue<std::string>("current-pack-type", type);
 	Mod::get()->setSavedValue<int>("current-pack-index", id);
@@ -863,6 +869,9 @@ void DPLayer::openList(CCObject* sender) {
 
 	if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "main" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
 		fetchID = practiceID;
+	}
+	else if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "legacy" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
+		fetchID = m_data["main"][mainPack]["practiceID"].as_int();
 	}
 	else {
 		fetchID = listID;
@@ -881,7 +890,6 @@ void DPLayer::openList(CCObject* sender) {
 		//std::cout << response << std::endl;
 		if (response != "-1") {
 			auto scene = CCScene::create();
-			//auto dict = glm->responseToDict(gd::string(response), false);
 
 			/*
 			Response IDs:
@@ -911,10 +919,26 @@ void DPLayer::openList(CCObject* sender) {
 
 			std::vector<int> IDs;
 			
-			for (int i = 0; i < levelIDstr.size(); i++)
-			{
-				int num = atoi(levelIDstr.at(i).c_str());
-				IDs.push_back(num);
+			if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "main" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
+				for (int i = 0; i < totalLevels; i++)
+				{
+					int num = atoi(levelIDstr.at(i).c_str());
+					IDs.push_back(num);
+				}
+			}
+			else if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "legacy" && Mod::get()->getSavedValue<bool>("is-practice", false))  {
+				for (int i = m_data["main"][mainPack]["totalLevels"].as_int(); i < levelIDstr.size(); i++)
+				{
+					int num = atoi(levelIDstr.at(i).c_str());
+					IDs.push_back(num);
+				}
+			}
+			else {
+				for (int i = 0; i < levelIDstr.size(); i++)
+				{
+					int num = atoi(levelIDstr.at(i).c_str());
+					IDs.push_back(num);
+				}
 			}
 
 			//gd::string desc = ZipUtils::base64URLDecode(data[5]);
@@ -1641,6 +1665,15 @@ void DPLayer::reloadList(int type) {
 			practiceSpr->setScale(0.45f);
 			practiceBtn->setTag(i);
 			practiceBtn->setID("main-practice");
+			cellMenu->addChild(practiceBtn);
+		}
+		else if (type == static_cast<int>(DPListType::Legacy) && m_data["main"][mainPack]["practice"].as_bool() && Mod::get()->getSettingValue<bool>("enable-practice")) {
+			auto practiceSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
+			auto practiceBtn = CCMenuItemSpriteExtra::create(practiceSpr, this, menu_selector(DPLayer::openList));
+			practiceBtn->setPosition({ 288, 14 });
+			practiceSpr->setScale(0.45f);
+			practiceBtn->setTag(i);
+			practiceBtn->setID("legacy-practice");
 			cellMenu->addChild(practiceBtn);
 		}
 

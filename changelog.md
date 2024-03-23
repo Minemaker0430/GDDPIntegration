@@ -1,3 +1,12 @@
+# V1.0.0-beta.14
+
+* Main & Legacy Practice Packs are separated now
+* Fixed Practice Packs overwriting progress
+* Made a very tiny adjustment to the Map Pack replacement button
+
+Side Note:
+* Yes, I know nobody has access to Practice Packs yet but I'm doing stuff in preparation.
+
 # v1.0.0-beta.13
 
 * Fixed crash related to level lists
