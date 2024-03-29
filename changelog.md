@@ -1,3 +1,10 @@
+# v1.0.0-beta.15
+
+* Changed Menu Icon to look more like a regular GD Menu Icon
+* Fixed Practice Packs (again)
+* Fixed Practice Packs not showing GDDP Graphics
+* Added "(Practice)" suffix
+
 # V1.0.0-beta.14
 
 * Main & Legacy Practice Packs are separated now

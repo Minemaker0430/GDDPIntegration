@@ -255,7 +255,14 @@ class $modify(LevelListLayer) {
 
 		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
 
-		if (inGDDP && (p0->m_listID == data[type][id]["listID"].as_int())) {
+		auto listID = data[type][id]["listID"].as_int();
+		auto mainPack = 0;
+		if (type == "legacy") { mainPack = data[type][id]["mainPack"].as_int(); }
+		auto practiceID = 0;
+		if (type == "main") { practiceID = data[type][id]["practiceID"].as_int(); }
+		if (type == "legacy") { practiceID = data["main"][mainPack]["practiceID"].as_int(); }
+
+		if (inGDDP && (p0->m_listID == listID || p0->m_listID == practiceID)) {
 
 			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
 
@@ -848,8 +855,6 @@ void DPLayer::openList(CCObject* sender) {
 	}
 
 	auto listID = m_data[type][id]["listID"].as_int();
-	auto practiceID = 0;
-	if (type == "main") { practiceID = m_data[type][id]["practiceID"].as_int(); }
 	auto reqLevels = 0;
 	if (type == "main") { reqLevels = m_data[type][id]["reqLevels"].as_int(); }
 	auto totalLevels = 0;
@@ -858,6 +863,9 @@ void DPLayer::openList(CCObject* sender) {
 	if (type == "main") { hasPractice = m_data[type][id]["practice"].as_bool(); }
 	auto mainPack = 0;
 	if (type == "legacy") { mainPack = m_data[type][id]["mainPack"].as_int(); }
+	auto practiceID = 0;
+	if (type == "main") { practiceID = m_data[type][id]["practiceID"].as_int(); }
+	if (type == "legacy") { practiceID = m_data["main"][mainPack]["practiceID"].as_int(); }
 
 	Mod::get()->setSavedValue<std::string>("current-pack-type", type);
 	Mod::get()->setSavedValue<int>("current-pack-index", id);
@@ -867,11 +875,8 @@ void DPLayer::openList(CCObject* sender) {
 
 	auto fetchID = 0;
 
-	if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "main" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
+	if ((type == "main" || type == "legacy") && Mod::get()->getSavedValue<bool>("is-practice", false)) {
 		fetchID = practiceID;
-	}
-	else if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "legacy" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
-		fetchID = m_data["main"][mainPack]["practiceID"].as_int();
 	}
 	else {
 		fetchID = listID;
@@ -911,6 +916,15 @@ void DPLayer::openList(CCObject* sender) {
 			(i'll probably only use 1, 2, 3, and 51)
 			*/
 
+			auto cachedData = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+			auto cachedType = Mod::get()->getSavedValue<std::string>("current-pack-type");
+			auto cachedID = Mod::get()->getSavedValue<int>("current-pack-index");
+
+			auto mainPack = 0;
+			if (cachedType == "legacy") { mainPack = cachedData[cachedType][cachedID]["mainPack"].as_int(); }
+			auto totalLevels = 0;
+			if (cachedType != "monthly") { totalLevels = cachedData[cachedType][cachedID]["totalLevels"].as_int(); }
+
 			auto data = getWords(response, ":");
 			log::info("{}", data);
 
@@ -919,15 +933,15 @@ void DPLayer::openList(CCObject* sender) {
 
 			std::vector<int> IDs;
 			
-			if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "main" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
+			if (cachedType == "main" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
 				for (int i = 0; i < totalLevels; i++)
 				{
 					int num = atoi(levelIDstr.at(i).c_str());
 					IDs.push_back(num);
 				}
 			}
-			else if (Mod::get()->getSavedValue<std::string>("current-pack-type") == "legacy" && Mod::get()->getSavedValue<bool>("is-practice", false))  {
-				for (int i = m_data["main"][mainPack]["totalLevels"].as_int(); i < levelIDstr.size(); i++)
+			else if (cachedType == "legacy" && Mod::get()->getSavedValue<bool>("is-practice", false))  {
+				for (int i = cachedData["main"][mainPack]["totalLevels"].as_int(); i < levelIDstr.size(); i++)
 				{
 					int num = atoi(levelIDstr.at(i).c_str());
 					IDs.push_back(num);
@@ -943,14 +957,15 @@ void DPLayer::openList(CCObject* sender) {
 
 			//gd::string desc = ZipUtils::base64URLDecode(data[5]);
 
-			auto cachedData = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-			auto cachedType = Mod::get()->getSavedValue<std::string>("current-pack-type");
-			auto cachedID = Mod::get()->getSavedValue<int>("current-pack-index");
-
 			gd::string packTitle = "null";
 
 			if (cachedType == "main" || cachedType == "legacy") {
-				packTitle = cachedData[cachedType][cachedID]["name"].as_string() + " Demons";
+				if (Mod::get()->getSavedValue<bool>("is-practice", false)) {
+					packTitle = cachedData[cachedType][cachedID]["name"].as_string() + " Demons (Practice)";
+				}
+				else {
+					packTitle = cachedData[cachedType][cachedID]["name"].as_string() + " Demons";
+				}
 			}
 			else {
 				packTitle = cachedData[cachedType][cachedID]["name"].as_string();
