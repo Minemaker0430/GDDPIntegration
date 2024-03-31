@@ -1,3 +1,5 @@
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M8WCJ98)
+
 # GDDP Integration
 
 An official mod for the **G**eometry **D**ash **D**emon **P**rogression list that adds a new menu to the game, where you can keep track of your progression!
