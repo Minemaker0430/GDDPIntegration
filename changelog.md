@@ -1,3 +1,14 @@
+# v1.0.0-beta.16
+
+* Attempted to patch out all Save File bugs
+* Fixed things crashing in super specific cases
+	* Fixed crash when no packs are in a list
+	* Fixed custom sprites not functioning with DP_Invisible
+* Months are now Color Coded
+* Added a Support Button where you can donate to my Ko-Fi c:
+* Changed the way new Bonus Pack additions function
+* Modified the Lock text to say what rank you need (will not show further ranks)
+
 # v1.0.0-beta.15
 
 * Changed Menu Icon to look more like a regular GD Menu Icon

@@ -1,15 +1,20 @@
 {
-		"geode": "v2.0.0-beta.22",
+		"geode": "v2.0.0-beta.23",
 		"gd": {
 			"win": "2.204",
 			"android": "2.205"
 		},
-		"version": "v1.0.0-beta.15",
+		"version": "v1.0.0-beta.16",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
 		"description": "Adds a new Menu for GDDP Progression",
 		"repository": "https://github.com/Minemaker0430/GDDPIntegration",
+
+		"issues": {
+			"info": "Submit problems to the GitHub or @minemaker0430 on Discord.",
+			"url": "https://github.com/Minemaker0430/GDDPIntegration/issues"
+		},
 
 		"resources": {
 			"spritesheets": {

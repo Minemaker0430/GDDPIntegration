@@ -246,14 +246,15 @@ class $modify(LevelListLayer) {
 	bool init(GJLevelList* p0) {
 		if (!LevelListLayer::init(p0)) return false;
 
+		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
+		if (!inGDDP) { return true; }
+
 		auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
 		auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
 		auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
 		auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
 
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-
-		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
 
 		auto listID = data[type][id]["listID"].as_int();
 		auto mainPack = 0;
@@ -262,7 +263,7 @@ class $modify(LevelListLayer) {
 		if (type == "main") { practiceID = data[type][id]["practiceID"].as_int(); }
 		if (type == "legacy") { practiceID = data["main"][mainPack]["practiceID"].as_int(); }
 
-		if (inGDDP && (p0->m_listID == listID || p0->m_listID == practiceID)) {
+		if (p0->m_listID == listID || p0->m_listID == practiceID) {
 
 			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
 
@@ -519,15 +520,15 @@ class $modify(LevelInfoLayer) {
 			std::string fullSpr = sprite + "Text.png";
 			std::string fullPlusSpr = plusSprite + "Text.png";
 
-			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
+			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && sprite != "DP_Invisible.png") {
 				auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
 
-				if (p0->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic")) {
+				if (p0->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible.png") {
 					typeinfo_cast<CCSprite*>(diffSpr->getChildren()->objectAtIndex(0))->setVisible(false);
 					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
 				}
 
-				if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank[id].as_bool()) {
+				if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank[id].as_bool() && plusSprite != "DP_Invisible.png") {
 					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
 				}
 
@@ -675,22 +676,25 @@ class $modify(LevelCell) {
 				std::string fullSpr = sprite + "SmallText.png";
 				std::string fullPlusSpr = plusSprite + "SmallText.png";
 
-				auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
+				if (sprite != "DP_Invisible.png") {
+					auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
 
-				if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic")) {
-					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+					if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible.png") {
+						typeinfo_cast<CCSprite*>(diffIcon->getChildren()->objectAtIndex(0))->setVisible(false);
+						customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+					}
+
+					if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank[id].as_bool() && plusSprite != "DP_Invisible.png") {
+						customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+					}
+
+					customSpr->setID("gddp-difficulty");
+					customSpr->setAnchorPoint({ 0.5f, 0.5f });
+					customSpr->setPosition({ diffIcon->getPositionX() + 0.5f, diffIcon->getPositionY() });
+					customSpr->setZOrder(5);
+
+					layer->addChild(customSpr);
 				}
-
-				if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank[id].as_bool()) {
-					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-				}
-
-				customSpr->setID("gddp-difficulty");
-				customSpr->setAnchorPoint({ 0.5f, 1 });
-				customSpr->setPosition({ diffIcon->getPositionX() + 0.5f, diffIcon->getPositionY() + 30 });
-				customSpr->setZOrder(5);
-
-				layer->addChild(customSpr);
 			}
 			//typical list layer
 			else if (this->getChildByID("main-layer")->getChildByID("difficulty-container")) {
@@ -707,23 +711,25 @@ class $modify(LevelCell) {
 				std::string fullSpr = sprite + "SmallText.png";
 				std::string fullPlusSpr = plusSprite + "SmallText.png";
 
-				auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
+				if (sprite != "DP_Invisible.png") {
+					auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
 
-				if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic")) {
-					typeinfo_cast<CCSprite*>(diffIcon->getChildren()->objectAtIndex(0))->setVisible(false);
-					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+					if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible.png") {
+						typeinfo_cast<CCSprite*>(diffIcon->getChildren()->objectAtIndex(0))->setVisible(false);
+						customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+					}
+
+					if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank[id].as_bool() && plusSprite != "DP_Invisible.png") {
+						customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+					}
+
+					customSpr->setID("gddp-difficulty");
+					customSpr->setAnchorPoint({ 0.5f, 0.5f });
+					customSpr->setPosition({ diffIcon->getPositionX() + 0.5f, diffIcon->getPositionY() });
+					customSpr->setZOrder(5);
+
+					layer->addChild(customSpr);
 				}
-
-				if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank[id].as_bool()) {
-					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-				}
-
-				customSpr->setID("gddp-difficulty");
-				customSpr->setAnchorPoint({ 0.5f, 0.5f });
-				customSpr->setPosition({ diffIcon->getPositionX() + 0.5f, diffIcon->getPositionY() });
-				customSpr->setZOrder(5);
-
-				layer->addChild(customSpr);
 			}
 		}
 	}
@@ -745,6 +751,7 @@ void DPLayer::keyBackClicked() {
 }
 
 void DPLayer::backButton(CCObject*) {
+	Mod::get()->setSavedValue<bool>("in-gddp", false);
 	keyBackClicked();
 }
 
@@ -812,7 +819,7 @@ void DPLayer::reloadData(CCObject* sender) {
 		.then([&](std::string const& response) {
 			
 			Mod::get()->setSavedValue<matjson::Value>("cached-data", matjson::parse(response));
-			m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data", {});
+			m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data", matjson::parse("{\"main\": [], \"legacy\": [], \"bonus\": [], \"monthly\": [], \"database-version\": 0, \"level-data\": {}}"));
 			reloadList(m_currentTab);
 
 			m_loadcircle->fadeAndRemove();
@@ -1256,7 +1263,7 @@ bool DPLayer::init() {
 			.then([&](std::string const& response) {
 				Mod::get()->setSavedValue<matjson::Value>("cached-data", matjson::parse(response));
 
-				m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data", {});
+				m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data", matjson::parse("{\"main\": [], \"legacy\": [], \"bonus\": [], \"monthly\": [], \"database-version\": 0, \"level-data\": {}}"));
 				reloadList(static_cast<int>(DPListType::Main));
 				m_loadcircle->fadeAndRemove();
 				m_reload->setVisible(true);
@@ -1378,7 +1385,7 @@ void DPLayer::reloadList(int type) {
 	/*
 	Main Pack Update - Reset Main Pack Save Data
 	Legacy Pack Update - Reset Legacy Save Data
-	Bonus Pack Update - Doesn't need to be checked
+	Bonus Pack Update - Move all data up one array index and add a new slot at index 0
 	Monthly Pack Update - Move all data up one array index and add a new slot at index 0
 	*/
 	
@@ -1421,7 +1428,7 @@ void DPLayer::reloadList(int type) {
 		log::info("Found new Legacy Pack(s).");
 	}
 
-	if (packProgress_bonus.size() < m_data["bonus"].as_array().size()) { //"check" bonus packs
+	if (packProgress_bonus.size() < m_data["bonus"].as_array().size()) { //check bonus packs
 		matjson::Array progress = packProgress_bonus;
 		matjson::Array completed = hasCompleted_bonus;
 
@@ -1429,14 +1436,14 @@ void DPLayer::reloadList(int type) {
 
 		//insert dummy save data
 		for (int i = 0; i < sizeDiff; i++) {
-			progress.push_back(0);
-			completed.push_back(false);
+			progress.insert(progress.begin(), 0);
+			completed.insert(completed.begin(), false);
 		}
 
 		//push save data
 		Mod::get()->setSavedValue("pack-progress-bonus", progress);
 		Mod::get()->setSavedValue("has-completed-bonus", completed);
-			
+
 		log::info("Found new Bonus Pack(s).");
 	}
 
@@ -1482,6 +1489,8 @@ void DPLayer::reloadList(int type) {
 
 	auto versionTxt = "Database Version: " + std::to_string(m_data["database-version"].as_int());
 	m_databaseVer->setCString(versionTxt.c_str());
+
+	if (m_data[dataIdx].as_array().size() <= 0) { return; }
 
 	//setup cells
 	auto packListCells = CCArray::create();
@@ -1647,9 +1656,11 @@ void DPLayer::reloadList(int type) {
 
 		if (type == static_cast<int>(DPListType::Monthly)) {
 			std::string months[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+			ccColor3B monthColor[12] = { {255, 0, 0}, {255, 128, 0}, {255, 255, 0}, {128, 255, 0}, {0, 255, 0}, {0, 255, 128}, {0, 255, 255}, {0, 128, 255}, {0, 0, 255}, {128, 0, 255}, {255, 0, 255}, {255, 0, 128} };
 			std::string monthlyDisp = months[month - 1] + " " + std::to_string(year);
 
-			CCNode* monthlyText = CCLabelBMFont::create(monthlyDisp.c_str(), "bigFont.fnt");
+			auto monthlyText = CCLabelBMFont::create(monthlyDisp.c_str(), "bigFont.fnt");
+			monthlyText->setColor(monthColor[month - 1]);
 			monthlyText->setScale(0.35f);
 			monthlyText->setAnchorPoint({ 0, 1 });
 			monthlyText->setPosition({ 53, 30 });
@@ -1719,13 +1730,25 @@ void DPLayer::reloadList(int type) {
 			cell->addChild(michiHeart);
 		}
 
-		if (i != 0 && type == static_cast<int>(DPListType::Main) && !Mod::get()->getSettingValue<bool>("unlock-all-tiers")) {
+		if (i > 0 && type == static_cast<int>(DPListType::Main) && !Mod::get()->getSettingValue<bool>("unlock-all-tiers")) {
 			if (!hasRank[i - 1].as_bool()) {
 				auto lockIcon = CCSprite::createWithSpriteFrameName("GJ_lock_001.png");
 				lockIcon->setPosition({180, 20});
 				lockIcon->setAnchorPoint({0.5f, 0});
 
-				auto lockText = CCLabelBMFont::create("Get the Previous Rank to unlock!", "bigFont.fnt");
+				std::string rankText = "???";
+				if (i > 1) {
+					if (hasRank[i - 2].as_bool()) {
+						rankText = m_data[dataIdx][i - 1]["name"].as_string();
+					}
+				}
+				else {
+					rankText = m_data[dataIdx][i - 1]["name"].as_string();
+				}
+				
+				std::string fullLockText = "Get the " + rankText + " Rank to unlock!";
+
+				auto lockText = CCLabelBMFont::create(fullLockText.c_str(), "bigFont.fnt");
 				lockText->setPosition({ 180, 5 });
 				lockText->setAnchorPoint({ 0.5f, 0 });
 				lockText->setScale(0.5f);
@@ -1750,7 +1773,18 @@ void DPLayer::reloadList(int type) {
 				lockIcon->setPosition({ 180, 20 });
 				lockIcon->setAnchorPoint({ 0.5f, 0 });
 
-				auto lockText = CCLabelBMFont::create("Get the Normal Rank to unlock!", "bigFont.fnt");
+				std::string rankText = "???";
+				if (mainPack > 0) {
+					if (hasRank[mainPack - 1].as_bool()) {
+						rankText = m_data["main"][mainPack]["name"].as_string();
+					}
+				}
+				else {
+					rankText = m_data["main"][mainPack]["name"].as_string();
+				}
+				std::string fullLockText = "Get the " + rankText + " Rank to unlock!";
+
+				auto lockText = CCLabelBMFont::create(fullLockText.c_str(), "bigFont.fnt");
 				lockText->setPosition({ 180, 5 });
 				lockText->setAnchorPoint({ 0.5f, 0 });
 				lockText->setScale(0.5f);
@@ -1806,8 +1840,10 @@ void DPLayer::onTab(CCObject* pSender) {
 	auto bonusbtn = m_tabs->getChildByID("bonus");
 	auto monthlybtn = m_tabs->getChildByID("monthly");
 
-	m_list->removeAllChildrenWithCleanup(true);
-	m_list->removeMeAndCleanup();
+	if (m_list) {
+		m_list->removeAllChildrenWithCleanup(true);
+		m_list->removeMeAndCleanup();
+	}
 
 	if (menuType == static_cast<int>(DPListType::Main)) {
 		log::info("Switched to Main Tab");
