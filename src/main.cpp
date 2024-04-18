@@ -487,6 +487,10 @@ class $modify(LevelInfoLayer) {
 
 		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
 
+		if (Mod::get()->getSettingValue<bool>("show-outside-menus")) {
+			inGDDP = true;
+		}
+
 		if (inGDDP && data["level-data"].contains(std::to_string(p0->m_levelID.value()))) {
 
 			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
@@ -605,6 +609,10 @@ class $modify(LevelInfoLayer) {
 
 		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
 
+		if (Mod::get()->getSettingValue<bool>("show-outside-menus")) {
+			inGDDP = true;
+		}
+
 		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
 
@@ -631,6 +639,12 @@ class $modify(LevelCell) {
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
+
+		if (Mod::get()->getSettingValue<bool>("show-outside-menus")) {
+			inGDDP = true;
+		}
+
+		//log::info("{}", inGDDP);
 
 		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 
@@ -746,11 +760,13 @@ void DPLayer::callback(CCObject*) {
 }
 
 void DPLayer::keyBackClicked() {
+
 	Mod::get()->setSavedValue<bool>("in-gddp", false);
 	CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
 }
 
 void DPLayer::backButton(CCObject*) {
+
 	Mod::get()->setSavedValue<bool>("in-gddp", false);
 	keyBackClicked();
 }
@@ -810,6 +826,10 @@ void DPLayer::reloadData(CCObject* sender) {
 
 	this->setKeyboardEnabled(false);
 	this->setKeypadEnabled(false);
+
+	if (!Mod::get()->getSettingValue<bool>("enable-cache")) {
+		Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
+	}
 
 	// download data
 	web::AsyncWebRequest()
@@ -1255,6 +1275,10 @@ bool DPLayer::init() {
 
 		m_currentTab = static_cast<int>(DPListType::Main);
 
+		if (!Mod::get()->getSettingValue<bool>("enable-cache")) {
+			Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
+		}
+
 		// download data
 		web::AsyncWebRequest()
 			.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json")
@@ -1359,6 +1383,11 @@ bool DPLayer::init() {
 void DPLayer::reloadList(int type) {
 
 	//all save stuff
+	auto ids_main = Mod::get()->getSavedValue<matjson::Array>("ids-main");
+	auto ids_legacy = Mod::get()->getSavedValue<matjson::Array>("ids-legacy");
+	auto ids_bonus = Mod::get()->getSavedValue<matjson::Array>("ids-bonus");
+	auto ids_monthly = Mod::get()->getSavedValue<matjson::Array>("ids-monthly");
+
 	auto packProgress_main = Mod::get()->getSavedValue<matjson::Array>("pack-progress-main");
 	auto packProgress_legacy = Mod::get()->getSavedValue<matjson::Array>("pack-progress-legacy");
 	auto packProgress_bonus = Mod::get()->getSavedValue<matjson::Array>("pack-progress-bonus");
@@ -1388,18 +1417,23 @@ void DPLayer::reloadList(int type) {
 	Bonus Pack Update - Move all data up one array index and add a new slot at index 0
 	Monthly Pack Update - Move all data up one array index and add a new slot at index 0
 	*/
+
+	ids_main.resize(m_data["main"].as_array().size());
+	ids_legacy.resize(m_data["legacy"].as_array().size());
+	ids_bonus.resize(m_data["bonus"].as_array().size());
+	ids_monthly.resize(m_data["monthly"].as_array().size());
 	
 	if (packProgress_main.size() < m_data["main"].as_array().size()) { //check main packs
-		//"erase" data
-		packProgress_main.clear();
-		hasCompleted_main.clear();
-		hasRank.clear();
 
-		//insert dummy save data
+		//insert save data
 		for (int i = 0; i < m_data["main"].as_array().size(); i++) {
-			packProgress_main.push_back(0);
-			hasCompleted_main.push_back(false);
-			hasRank.push_back(false);
+
+			if (ids_main[i] != m_data["main"][i]["listID"]) {
+				ids_main.insert(ids_main.begin() + i, 0);
+				packProgress_main.insert(packProgress_main.begin() + i, 0);
+				hasCompleted_main.insert(hasCompleted_main.begin() + i, false);
+				hasRank.insert(hasRank.begin() + i, false);
+			}
 		}
 
 		//push save data
@@ -1411,14 +1445,15 @@ void DPLayer::reloadList(int type) {
 	}
 
 	if (packProgress_legacy.size() < m_data["legacy"].as_array().size()) { //check legacy packs
-		//"erase" data
-		packProgress_legacy.clear();
-		hasCompleted_legacy.clear();
 			
-		//insert dummy save data
+		//insert save data
 		for (int i = 0; i < m_data["legacy"].as_array().size(); i++) {
-			packProgress_legacy.push_back(0);
-			hasCompleted_legacy.push_back(false);
+
+			if (ids_legacy[i] != m_data["legacy"][i]["listID"]) {
+				ids_legacy.insert(ids_legacy.begin() + i, 0);
+				packProgress_legacy.insert(packProgress_legacy.begin() + i, 0);
+				hasCompleted_legacy.insert(hasCompleted_legacy.begin() + i, false);
+			}
 		}
 
 		//push save data
@@ -1429,45 +1464,66 @@ void DPLayer::reloadList(int type) {
 	}
 
 	if (packProgress_bonus.size() < m_data["bonus"].as_array().size()) { //check bonus packs
-		matjson::Array progress = packProgress_bonus;
-		matjson::Array completed = hasCompleted_bonus;
+		
+		//insert save data
+		for (int i = 0; i < m_data["bonus"].as_array().size(); i++) {
 
-		auto sizeDiff = m_data["bonus"].as_array().size() - packProgress_bonus.size();
-
-		//insert dummy save data
-		for (int i = 0; i < sizeDiff; i++) {
-			progress.insert(progress.begin(), 0);
-			completed.insert(completed.begin(), false);
+			if (ids_bonus[i] != m_data["bonus"][i]["listID"]) {
+				ids_bonus.insert(ids_bonus.begin() + i, 0);
+				packProgress_bonus.insert(packProgress_bonus.begin() + i, 0);
+				hasCompleted_bonus.insert(hasCompleted_bonus.begin() + i, false);
+			}
 		}
 
 		//push save data
-		Mod::get()->setSavedValue("pack-progress-bonus", progress);
-		Mod::get()->setSavedValue("has-completed-bonus", completed);
+		Mod::get()->setSavedValue("pack-progress-bonus", packProgress_bonus);
+		Mod::get()->setSavedValue("has-completed-bonus", hasCompleted_bonus);
 
 		log::info("Found new Bonus Pack(s).");
 	}
 
 	if (packProgress_monthly.size() < m_data["monthly"].as_array().size()) { //check monthly packs
-		matjson::Array progress = packProgress_monthly;
-		matjson::Array completed = hasCompleted_monthly;
+		
+		//insert save data
+		for (int i = 0; i < m_data["monthly"].as_array().size(); i++) {
 
-		auto sizeDiff = m_data["monthly"].as_array().size() - packProgress_monthly.size();
-
-		//insert dummy save data
-		for (int i = 0; i < sizeDiff; i++) {
-			progress.insert(progress.begin(), 0);
-			completed.insert(completed.begin(), false);
+			if (ids_monthly[i] != m_data["monthly"][i]["listID"]) {
+				ids_monthly.insert(ids_monthly.begin() + i, 0);
+				packProgress_monthly.insert(packProgress_monthly.begin() + i, 0);
+				hasCompleted_monthly.insert(hasCompleted_monthly.begin() + i, false);
+			}
 		}
 
 		//push save data
-		Mod::get()->setSavedValue("pack-progress-monthly", progress);
-		Mod::get()->setSavedValue("has-completed-monthly", completed);
+		Mod::get()->setSavedValue("pack-progress-monthly", packProgress_monthly);
+		Mod::get()->setSavedValue("has-completed-monthly", hasCompleted_monthly);
 
 		log::info("Found new Monthly Pack(s).");
 	}
 
-		Mod::get()->setSavedValue<int>("database-version", m_data["database-version"].as_int());
-		log::info("{}", Mod::get()->getSavedValue<int>("database-version"));
+	for (int i = 0; i < m_data["main"].as_array().size(); i++) {
+		ids_main[i] = m_data["main"][i]["listID"].as_int();
+	}
+
+	for (int i = 0; i < m_data["legacy"].as_array().size(); i++) {
+		ids_legacy[i] = m_data["legacy"][i]["listID"].as_int();
+	}
+
+	for (int i = 0; i < m_data["bonus"].as_array().size(); i++) {
+		ids_bonus[i] = m_data["bonus"][i]["listID"].as_int();
+	}
+
+	for (int i = 0; i < m_data["monthly"].as_array().size(); i++) {
+		ids_monthly[i] = m_data["monthly"][i]["listID"].as_int();
+	}
+
+	Mod::get()->setSavedValue<matjson::Array>("ids-main", ids_main);
+	Mod::get()->setSavedValue<matjson::Array>("ids-legacy", ids_legacy);
+	Mod::get()->setSavedValue<matjson::Array>("ids-bonus", ids_bonus);
+	Mod::get()->setSavedValue<matjson::Array>("ids-monthly", ids_monthly);
+
+	Mod::get()->setSavedValue<int>("database-version", m_data["database-version"].as_int());
+	log::info("{}", Mod::get()->getSavedValue<int>("database-version"));
 
 	//do everything else
 	auto dataIdx = "";

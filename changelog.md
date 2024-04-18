@@ -1,3 +1,10 @@
+# v1.0.0-beta.17
+
+* Data Caching is now disabled by default, can be enabled in settings
+* Updated the "Custom Difficulty Faces" description to not include misinformation (i forgot to update it)
+* Packs can now be inserted into any position instead of just beginning/end
+* Custom Difficulty Faces can now be enabled outside of the GDDP Menus
+
 # v1.0.0-beta.16
 
 * Attempted to patch out all Save File bugs

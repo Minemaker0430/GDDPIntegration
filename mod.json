@@ -1,10 +1,10 @@
 {
-		"geode": "v2.0.0-beta.23",
+		"geode": "v2.0.0-beta.24",
 		"gd": {
 			"win": "2.204",
 			"android": "2.205"
 		},
-		"version": "v1.0.0-beta.16",
+		"version": "v1.0.0-beta.17",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
@@ -39,7 +39,7 @@
 		"dependencies": [
 			{
 				"id": "geode.node-ids",
-				"version": ">=v1.8.1",
+				"version": ">=v1.9.1",
 				"importance": "required"
 			}
 		],
@@ -66,6 +66,18 @@
 			"description": "Adds Practice versions of the Main Packs to help you practice Main Tier levels.",
 			"type": "bool",
 			"default": true
+		},
+		"enable-cache": {
+			"name": "Enable Cache",
+			"description": "Saves previous database data. Updates to previously existing data may take longer.",
+			"type": "bool",
+			"default": false
+		},
+		"show-outside-menus": {
+			"name": "Show Faces Outside Menus",
+			"description": "Makes Custom Difficulty Faces no longer require GDDP Menus to activate.",
+			"type": "bool",
+			"default": false
 		},
 		"menu-section": {
 			"name": "Menu",
@@ -107,7 +119,7 @@
 		},
 		"custom-difficulty-faces": {
 			"name": "Custom Difficulty Faces",
-			"description": "Shows custom difficulty faces in the GDDP Menus (Currently only Main and Legacy).",
+			"description": "Shows custom difficulty faces in the GDDP Menus.",
 			"type": "bool",
 			"default": true
 		},
