@@ -2,110 +2,13 @@
 #include <Geode/Geode.hpp>
 
 //other headers
-#include <Geode/cocos/include/ccTypes.h>
-
-#include <Geode/modify/CreatorLayer.hpp>
-#include <Geode/modify/LevelListLayer.hpp>
-#include <Geode/modify/LevelInfoLayer.hpp>
-#include <Geode/modify/LevelCell.hpp>
-
-#include <Geode/binding/LevelListLayer.hpp>
-#include <Geode/binding/LevelBrowserLayer.hpp>
-#include <Geode/binding/GJSearchObject.hpp>
-#include <Geode/binding/GJListLayer.hpp>
-#include <Geode/binding/BoomListView.hpp>
-#include <Geode/binding/LoadingCircle.hpp>
-
-#include <Geode/Enums.hpp>
-
-#include <Geode/loader/Loader.hpp>
-
-#include <Geode/ui/BasedButton.hpp>
-#include <Geode/ui/BasedButtonSprite.hpp>
-#include <Geode/ui/ListView.hpp>
-#include <Geode/binding/ListCell.hpp>
-
 #include <Geode/utils/web.hpp>
-#include <Geode/utils/JsonValidation.hpp>
-#include <Geode/utils/string.hpp>
 
 #include "DPLayer.hpp"
 #include "Settings.hpp"
 
 //geode namespace
 using namespace geode::prelude;
-
-/*
-List IDs:
-
-[UF] = Unofficial
-
-Main:
-25409 - Beginner
-25408 - Bronze
-25406 - Silver
-25403 - Gold
-25399 - Amber
-24994 - Platinum
-24993 - Sapphire
-24991 - Jade
-24989 - Emerald
-24986 - Ruby
-24721 - Diamond
-24711 - Onyx
-24702 - Amethyst
-24694 - Azurite
-24687 - Obsidian
-
-Legacy:
-? - Beginner
-? - Bronze
-? - Silver
-? - Gold
-? - Amber
-161032 - Platinum
-160741 - Sapphire
-160743 - Jade
-160745 - Emerald
-? - Ruby
-? - Diamond
-? - Onyx
-? - Amethyst
-? - Azurite
-? - Obsidian
-
-Bonus:
-? - 12DoC 2023
-? - Minigame
-? - #GD10
-? - 12DoC 2022
-? - Nine Circles
-? - Memory I
-? - Memory II
-? - Memory III
-? - 2 Player Solo
-? - Invisible
-? - 1.9 GDPS
-? - XXL
-? - Speedrun
-? - Trusta
-? - Temple
-? - Coder
-? - Kria
-? - AeonAir
-? - GDDL 1
-? - GDDL 2
-? - Apocalyptic Trilogy
-? - Plasma
-? - RGB
-? - Sonic
-? - Lightwave
-? - Sonic Wave
-
-Monthly:
-? - Current
-
-*/
 
 SettingNode* SectionSettingValue::createNode(float width) {
 	return SectionSettingNode::create(this, width);
@@ -118,636 +21,17 @@ $on_mod(Loaded) {
 	Mod::get()->addCustomSetting<SectionSettingValue>("compatibility-section", "");
 }
 
-//add button to creator layer
-class $modify(CreatorLayer) {
-
-	static void onModify(auto& self) {
-		static_cast<void>(self.setHookPriority("CreatorLayer::init", -42));
-    }
-
-	bool init() {
-        if (!CreatorLayer::init()) return false;
-
-		Mod::get()->setSavedValue<bool>("in-gddp", false);
-
-		auto menu = this->getChildByID("creator-buttons-menu");
-
-		if (Mod::get()->getSettingValue<bool>("compact-button")) {
-			auto spr = CircleButtonSprite::createWithSpriteFrameName("DP_Logo.png"_spr);
-
-			if (Mod::get()->getSettingValue<bool>("alt-button-texture")) {
-				spr = CircleButtonSprite::createWithSpriteFrameName("DP_BeginnerPlus.png"_spr);
-			}
-
-			auto dpBtn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(DPLayer::callback));
-			dpBtn->setID("demon-progression-button");
-
-			if (Loader::get()->isModLoaded("cvolton.betterinfo")) {
-				log::info("BetterInfo Detected. Added Button.");
-				this->getChildByID("cvolton.betterinfo/center-right-menu")->addChild(dpBtn);
-				this->getChildByID("cvolton.betterinfo/center-right-menu")->setLayout(AxisLayout::create(Axis::Column), true, true);
-			}
-			else {
-				auto size = CCDirector::sharedDirector()->getWinSize();
-				auto sideMenu = CCMenu::create();
-				sideMenu->setPositionX(size.width - 22);
-				sideMenu->setAnchorPoint({ 0, 0 });
-				sideMenu->setID("center-right-menu"_spr);
-				sideMenu->setLayout(AxisLayout::create(Axis::Column), true, true);
-				sideMenu->addChild(dpBtn);
-				this->addChild(sideMenu);
-			}
-		}
-		else if (Mod::get()->getSettingValue<bool>("replace-map-packs")) {
-			auto spr = CCSprite::createWithSpriteFrameName("DP_demonProgressionBtn.png"_spr);
-
-			if (Mod::get()->getSettingValue<bool>("alt-button-texture")) {
-				spr = CCSprite::createWithSpriteFrameName("DP_demonProgressionBtnAlt.png"_spr);
-			}
-
-			if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
-				spr->setScale(0.85f);
-			}
-			else {
-				spr->setScale(0.8f);
-			}
-
-			auto dpBtn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(DPLayer::callback));
-			dpBtn->setPosition({ 451, 153 });
-			dpBtn->setID("demon-progression-button");
-			menu->addChild(dpBtn);
-
-			if (menu->getChildByID("map-packs-button")) {
-				dpBtn->setPosition({ menu->getChildByID("map-packs-button")->getPositionX() + 2.2f, menu->getChildByID("map-packs-button")->getPositionY() - 2 });
-				menu->getChildByID("map-packs-button")->setVisible(false);
-			}
-		}
-		else {
-			auto spr = CCSprite::createWithSpriteFrameName("DP_demonProgressionBtn.png"_spr);
-
-			if (Mod::get()->getSettingValue<bool>("alt-button-texture")) {
-				spr = CCSprite::createWithSpriteFrameName("DP_demonProgressionBtnAlt.png"_spr);
-			}
-
-			if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
-				spr->setScale(0.85f);
-			}
-			else {
-				spr->setScale(0.8f);
-			}
-
-			auto dpBtn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(DPLayer::callback));
-			dpBtn->setPosition({ 451, 153 });
-			dpBtn->setID("demon-progression-button");
-			menu->addChild(dpBtn);
-
-			if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
-				menu->getChildByID("quests-button")->setPositionX(45.8);
-				menu->getChildByID("daily-button")->setPositionX(135.4);
-				menu->getChildByID("weekly-button")->setPositionX(225);
-				menu->getChildByID("gauntlets-button")->setPositionX(314.6);
-				menu->getChildByID("demon-progression-button")->setPositionX(406.2);
-			}
-			else {
-				menu->getChildByID("map-button")->setPositionX(2.9);
-				menu->getChildByID("daily-button")->setPositionX(91.5);
-				menu->getChildByID("weekly-button")->setPositionX(181);
-				menu->getChildByID("event-button")->setPositionX(270.5);
-				menu->getChildByID("gauntlets-button")->setPositionX(360.1);
-			}
-
-			if (Loader::get()->isModLoaded("cvolton.betterinfo")) {
-				log::info("BetterInfo Detected. Moved Button.");
-				this->getChildByID("cvolton.betterinfo/center-right-menu")->setPositionY(260);
-			}
-
-			if (Loader::get()->isModLoaded("spaghettdev.gd-roulette")) {
-				log::info("GD Roulette Detected. Moved Button.");
-				if (auto menu = this->getChildByID("spaghettdev.gd-roulette/creator-layer-menu")) {
-					menu->setPositionY(92);
-				}
-				else {
-					this->getChildByID("spaghettdev.gd-roulette/center-left-menu")->setPositionY(255);
-				}
-			}
-		}
-
-        return true;
-    }
-
-};
-
-//modify gddp list layout
-class $modify(LevelListLayer) {
-	static void onModify(auto& self) {
-		static_cast<void>(self.setHookPriority("LevelListLayer::init", -42));
-	}
-
-	bool init(GJLevelList* p0) {
-		if (!LevelListLayer::init(p0)) return false;
-
-		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
-		if (!inGDDP) { return true; }
-
-		auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
-		auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
-		auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
-		auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
-
-		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-
-		auto listID = data[type][id]["listID"].as_int();
-		auto mainPack = 0;
-		if (type == "legacy") { mainPack = data[type][id]["mainPack"].as_int(); }
-		auto practiceID = 0;
-		if (type == "main") { practiceID = data[type][id]["practiceID"].as_int(); }
-		if (type == "legacy") { practiceID = data["main"][mainPack]["practiceID"].as_int(); }
-
-		if (p0->m_listID == listID || p0->m_listID == practiceID) {
-
-			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
-
-			// Gotta use getObjectAtIndex because there's no Node IDs here yet :v
-
-			auto children = this->getChildren();
-
-			if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
-				auto bg = typeinfo_cast<CCSprite*>(children->objectAtIndex(0));
-				bg->setColor({ 18, 18, 86 });
-			}
-
-			//Get Completed Levels & Store in Save Data
-
-			//auto children = this->getChildren();
-			auto menu = getChildOfType<CCMenu>(this, 0);
-			auto menuChildren = menu->getChildren();
-
-			auto commentBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(3));
-			auto rateBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(4));
-			auto copyBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(5));
-			//auto infoBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(7));
-			auto favBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(menuChildren->objectAtIndex(6));
-
-			commentBtn->setVisible(true);
-			rateBtn->setVisible(false);
-			copyBtn->setVisible(false);
-			//infoBtn->setVisible(false);
-			favBtn->setVisible(false);
-
-			auto diffIcon = getChildOfType<CCSprite>(this, 3);
-			diffIcon->setVisible(false);
-
-			//all save stuff
-			auto packProgress_main = Mod::get()->getSavedValue<matjson::Array>("pack-progress-main");
-			auto packProgress_legacy = Mod::get()->getSavedValue<matjson::Array>("pack-progress-legacy");
-			auto packProgress_bonus = Mod::get()->getSavedValue<matjson::Array>("pack-progress-bonus");
-			auto packProgress_monthly = Mod::get()->getSavedValue<matjson::Array>("pack-progress-monthly");
-
-			auto hasRank = Mod::get()->getSavedValue<matjson::Array>("has-rank");
-			auto hasCompleted_main = Mod::get()->getSavedValue<matjson::Array>("has-completed-main");
-			auto hasCompleted_legacy = Mod::get()->getSavedValue<matjson::Array>("has-completed-legacy");
-			auto hasCompleted_bonus = Mod::get()->getSavedValue<matjson::Array>("has-completed-bonus");
-			auto hasCompleted_monthly = Mod::get()->getSavedValue<matjson::Array>("has-completed-monthly");
-
-			auto packsCompleted_main = Mod::get()->getSavedValue<int>("packs-completed-main", 0);
-			auto packsCompleted_legacy = Mod::get()->getSavedValue<int>("packs-completed-legacy", 0);
-			auto packsCompleted_bonus = Mod::get()->getSavedValue<int>("packs-completed-bonus", 0);
-			auto packsCompleted_monthly = Mod::get()->getSavedValue<int>("packs-completed-monthly", 0);
-
-			auto bronzeMedals = Mod::get()->getSavedValue<int>("bronze-medals", 0);
-			auto silverMedals = Mod::get()->getSavedValue<int>("silver-medals", 0);
-			auto goldMedals = Mod::get()->getSavedValue<int>("gold-medals", 0);
-
-			auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
-
-			log::info("{}", type);
-			log::info("{}", id);
-			log::info("{}", reqLevels);
-			log::info("{}", totalLevels);
-
-			//create sprite thing
-			std::string sprName = "DP_Beginner";
-			
-			if (type == "main") {
-				if (hasRank[id].as_bool()) {
-					sprName = data[type][id]["plusSprite"].as_string() + ".png"; 
-				}
-				else {
-					sprName = data[type][id]["sprite"].as_string() + ".png";
-				}
-			}
-			else {
-				sprName = data[type][id]["sprite"].as_string() + ".png";
-			}
-
-			if (sprName != "DP_Invisible.png") {
-				auto dpIcon = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName.c_str()));
-				dpIcon->setPosition(diffIcon->getPosition());
-				dpIcon->setZOrder(diffIcon->getZOrder());
-				this->addChild(dpIcon);
-			}
-			
-		}
-
-		return true;
-	}
-
-	virtual void onBack(CCObject* sender) {
-		LevelListLayer::onBack(sender);
-
-		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
-
-		if (inGDDP && !Mod::get()->getSavedValue<bool>("is-practice", false)) {
-			auto progText = getChildOfType<CCLabelBMFont>(this, 2);
-			std::string progressStr = progText->getString();
-
-			auto packProgress = 0;
-
-			//get number from string
-			std::vector<std::string> res;
-			std::string delim = "/";
-			std::string token = "";
-			for (int i = 0; i < progressStr.size(); i++) {
-				bool flag = true;
-				for (int j = 0; j < delim.size(); j++) {
-					if (progressStr[i + j] != delim[j]) flag = false;
-				}
-				if (flag) {
-					if (token.size() > 0) {
-						res.push_back(token);
-						token = "";
-						i += delim.size() - 1;
-					}
-				}
-				else {
-					token += progressStr[i];
-				}
-			}
-			res.push_back(token);
-
-			packProgress = std::stoi(res[0]);
-
-			//all save stuff
-			auto packProgress_main = Mod::get()->getSavedValue<matjson::Array>("pack-progress-main");
-			auto packProgress_legacy = Mod::get()->getSavedValue<matjson::Array>("pack-progress-legacy");
-			auto packProgress_bonus = Mod::get()->getSavedValue<matjson::Array>("pack-progress-bonus");
-			auto packProgress_monthly = Mod::get()->getSavedValue<matjson::Array>("pack-progress-monthly");
-
-			auto hasRank = Mod::get()->getSavedValue<matjson::Array>("has-rank");
-			auto hasCompleted_main = Mod::get()->getSavedValue<matjson::Array>("has-completed-main");
-			auto hasCompleted_legacy = Mod::get()->getSavedValue<matjson::Array>("has-completed-legacy");
-			auto hasCompleted_bonus = Mod::get()->getSavedValue<matjson::Array>("has-completed-bonus");
-			auto hasCompleted_monthly = Mod::get()->getSavedValue<matjson::Array>("has-completed-monthly");
-
-			auto packsCompleted_main = Mod::get()->getSavedValue<int>("packs-completed-main", 0);
-			auto packsCompleted_legacy = Mod::get()->getSavedValue<int>("packs-completed-legacy", 0);
-			auto packsCompleted_bonus = Mod::get()->getSavedValue<int>("packs-completed-bonus", 0);
-			auto packsCompleted_monthly = Mod::get()->getSavedValue<int>("packs-completed-monthly", 0);
-
-			auto bronzeMedals = Mod::get()->getSavedValue<int>("bronze-medals", 0);
-			auto silverMedals = Mod::get()->getSavedValue<int>("silver-medals", 0);
-			auto goldMedals = Mod::get()->getSavedValue<int>("gold-medals", 0);
-
-			auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
-
-			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
-			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
-			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
-			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
-
-			auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-
-			if (type == "main") {
-				packProgress_main[id] = packProgress;
-				if ((packProgress >= reqLevels) && (!hasRank[id].as_bool())) {
-					hasRank[id] = true;
-				}
-
-				if (packProgress == totalLevels) {
-					hasCompleted_main[id] = true;
-				}
-				else {
-					hasCompleted_main[id] = false;
-				}
-
-				Mod::get()->setSavedValue("pack-progress-main", packProgress_main);
-				Mod::get()->setSavedValue("has-rank", hasRank);
-				Mod::get()->setSavedValue("has-completed-main", hasCompleted_main);
-			}
-			else if (type == "legacy") {
-				packProgress_legacy[id] = packProgress;
-				if (packProgress == totalLevels) {
-					hasCompleted_legacy[id] = true;
-				}
-				else {
-					hasCompleted_legacy[id] = false;
-				}
-
-				Mod::get()->setSavedValue("pack-progress-legacy", packProgress_legacy);
-				Mod::get()->setSavedValue("has-completed-legacy", hasCompleted_legacy);
-			}
-			else if (type == "bonus") {
-				packProgress_bonus[id] = packProgress;
-				if (packProgress == totalLevels) {
-					hasCompleted_bonus[id] = true;
-				}
-				else {
-					hasCompleted_bonus[id] = false;
-				}
-
-				Mod::get()->setSavedValue("pack-progress-bonus", packProgress_bonus);
-				Mod::get()->setSavedValue("has-completed-bonus", hasCompleted_bonus);
-			}
-			else if (type == "monthly") {
-				packProgress_monthly[id] = packProgress;
-				if (packProgress == 6) {
-					hasCompleted_monthly[id] = true;
-				}
-				else {
-					hasCompleted_monthly[id] = false;
-				}
-
-				Mod::get()->setSavedValue("pack-progress-monthly", packProgress_monthly);
-				Mod::get()->setSavedValue("has-completed-monthly", hasCompleted_monthly);
-			}
-		}
-	}
-};
-
-//modify gddp level pages
-class $modify(LevelInfoLayer) {
-	static void onModify(auto & self) {
-		static_cast<void>(self.setHookPriority("LevelInfoLayer::init", -42));
-	}
-
-	bool init(GJGameLevel* p0, bool p1) {
-		if (!LevelInfoLayer::init(p0, p1)) return false;
-
-		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-
-		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
-
-		if (Mod::get()->getSettingValue<bool>("show-outside-menus")) {
-			inGDDP = true;
-		}
-
-		if (inGDDP && data["level-data"].contains(std::to_string(p0->m_levelID.value()))) {
-
-			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
-
-			if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
-				auto bg = typeinfo_cast<CCSprite*>(this->getChildByID("background"));
-				bg->setColor({ 18, 18, 86 });
-			}
-
-			auto hasRank = Mod::get()->getSavedValue<matjson::Array>("has-rank");
-
-			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
-			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
-			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
-			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
-
-			auto diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
-
-			auto gddpDiff = data["level-data"][std::to_string(p0->m_levelID.value())]["difficulty"].as_int();
-
-			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
-				diffSpr->setOpacity(0);
-			}
-
-			std::string sprite = "DP_Beginner";
-			std::string plusSprite = "DP_BeginnerPlus";
-
-			sprite = data["main"][gddpDiff]["sprite"].as_string();
-			plusSprite = data["main"][gddpDiff]["plusSprite"].as_string();
-
-			std::string fullSpr = sprite + "Text.png";
-			std::string fullPlusSpr = plusSprite + "Text.png";
-
-			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && sprite != "DP_Invisible.png") {
-				auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
-
-				if (p0->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible.png") {
-					typeinfo_cast<CCSprite*>(diffSpr->getChildren()->objectAtIndex(0))->setVisible(false);
-					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-				}
-
-				if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank[id].as_bool() && plusSprite != "DP_Invisible.png") {
-					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-				}
-
-				customSpr->setID("gddp-difficulty");
-				customSpr->setAnchorPoint({ 0.5f, 1 });
-				customSpr->setPosition({ diffSpr->getPositionX() + 0.25f, diffSpr->getPositionY() + 30 });
-				customSpr->setZOrder(5);
-
-				this->addChild(customSpr);
-				
-				if (this->getChildByID("grd-difficulty") && !Mod::get()->getSettingValue<bool>("override-grandpa-demon")) {
-					customSpr->setVisible(false);
-				}
-			}
-
-			if (Mod::get()->getSettingValue<bool>("disable-grandpa-demon-effects") && Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
-				if (Loader::get()->isModLoaded("itzkiba.grandpa_demon")) {
-					if (this->getChildByID("grd-infinity")) {
-						if (getChildOfType<CCSprite>(this, 11) && getChildOfType<CCSprite>(this, 12)) {
-							auto grdBG1 = getChildOfType<CCSprite>(this, 11);
-							auto grdBG2 = getChildOfType<CCSprite>(this, 12);
-
-							grdBG1->setVisible(false);
-							grdBG2->setVisible(false);
-
-							typeinfo_cast<CCSprite*>(this->getChildByID("background"))->setOpacity(255);
-							typeinfo_cast<CCSprite*>(this->getChildByID("bottom-left-art"))->setOpacity(255);
-							typeinfo_cast<CCSprite*>(this->getChildByID("bottom-right-art"))->setOpacity(255);
-						}
-						if (getChildOfType<CCParticleSystemQuad>(this, 0) && getChildOfType<CCParticleSystemQuad>(this, 1)) {
-							auto grdParticles1 = getChildOfType<CCParticleSystemQuad>(this, 0);
-							auto grdParticles2 = getChildOfType<CCParticleSystemQuad>(this, 1);
-							
-							grdParticles1->setVisible(false);
-							grdParticles2->setVisible(false);
-						}
-					}
-					else {
-						if (auto grdBG = getChildOfType<CCSprite>(this, 11)) {
-							grdBG->setVisible(false);
-							typeinfo_cast<CCSprite*>(this->getChildByID("background"))->setOpacity(255);
-							typeinfo_cast<CCSprite*>(this->getChildByID("bottom-left-art"))->setOpacity(255);
-							typeinfo_cast<CCSprite*>(this->getChildByID("bottom-right-art"))->setOpacity(255);
-						}
-						if (auto grdParticles = getChildOfType<CCParticleSystemQuad>(this, 0)) {
-							grdParticles->setVisible(false);
-						}
-					}
-				}
-			}
-
-			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && Mod::get()->getSettingValue<bool>("override-grandpa-demon") && (type == "main" || type == "legacy")) {
-				if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && this->getChildByID("grd-difficulty")) {
-					this->getChildByID("grd-difficulty")->setVisible(false);
-					if (this->getChildByID("grd-infinity")) { this->getChildByID("grd-infinity")->setVisible(false); }
-
-					this->getChildByID("grd-difficulty")->removeMeAndCleanup();
-				}
-			}
-
-		}
-
-		return true;
-	}
-
-	void updateLabelValues() {
-		LevelInfoLayer::updateLabelValues();
-
-		if (this->m_level->m_stars != 10) {
-			return;
-		}
-		
-		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-
-		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
-
-		if (Mod::get()->getSettingValue<bool>("show-outside-menus")) {
-			inGDDP = true;
-		}
-
-		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
-			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
-
-			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && Mod::get()->getSettingValue<bool>("override-grandpa-demon")) {
-				if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && this->getChildByID("grd-difficulty")) {
-					this->getChildByID("grd-difficulty")->setVisible(false);
-					if (this->getChildByID("grd-infinity")) { this->getChildByID("grd-infinity")->setVisible(false); }
-
-					this->getChildByID("grd-difficulty")->removeMeAndCleanup();
-				}
-			}
-		}
-	}
-
-		
-};
-
-//modify level cells
-class $modify(LevelCell) {
-
-	void loadCustomLevelCell() {
-		LevelCell::loadCustomLevelCell();
-
-		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-
-		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
-
-		if (Mod::get()->getSettingValue<bool>("show-outside-menus")) {
-			inGDDP = true;
-		}
-
-		//log::info("{}", inGDDP);
-
-		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
-
-			auto hasRank = Mod::get()->getSavedValue<matjson::Array>("has-rank");
-
-			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
-			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
-			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
-			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
-
-			auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-
-			auto gddpDiff = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["difficulty"].as_int();
-
-			if (!Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
-				return;
-			}
-
-			//check for grandpa demon
-			if (this->getChildByID("main-layer")->getChildByID("grd-demon-icon-layer") && Mod::get()->getSettingValue<bool>("override-grandpa-demon")) {
-				auto diffIcon = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("main-layer")->getChildByID("grd-demon-icon-layer")->getChildByID("difficulty-sprite"));
-				auto layer = typeinfo_cast<CCNode*>(this->getChildByID("main-layer")->getChildByID("grd-demon-icon-layer"));
-
-				diffIcon->setVisible(false);
-
-				if (layer->getChildByID("grd-infinity")) { layer->getChildByID("grd-infinity")->setVisible(false); }
-				if (getChildOfType(layer, 3)) { 
-					if (getChildOfType(layer, 3)->getTag() == 69420 && getChildOfType(layer, 4)) {
-						if ((this->m_level->m_isEpic == 1) && Mod::get()->getSettingValue<bool>("replace-epic")) { getChildOfType(layer, 3)->setVisible(false); }
-						getChildOfType(layer, 4)->setVisible(false);
-					}
-					else {
-						getChildOfType(layer, 3)->setVisible(false);
-					}
-				}
-
-				std::string sprite = "DP_Beginner";
-				std::string plusSprite = "DP_BeginnerPlus";
-
-				sprite = data["main"][gddpDiff]["sprite"].as_string();
-				plusSprite = data["main"][gddpDiff]["plusSprite"].as_string();
-
-				std::string fullSpr = sprite + "SmallText.png";
-				std::string fullPlusSpr = plusSprite + "SmallText.png";
-
-				if (sprite != "DP_Invisible.png") {
-					auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
-
-					if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible.png") {
-						typeinfo_cast<CCSprite*>(diffIcon->getChildren()->objectAtIndex(0))->setVisible(false);
-						customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-					}
-
-					if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank[id].as_bool() && plusSprite != "DP_Invisible.png") {
-						customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-					}
-
-					customSpr->setID("gddp-difficulty");
-					customSpr->setAnchorPoint({ 0.5f, 0.5f });
-					customSpr->setPosition({ diffIcon->getPositionX() + 0.5f, diffIcon->getPositionY() });
-					customSpr->setZOrder(5);
-
-					layer->addChild(customSpr);
-				}
-			}
-			//typical list layer
-			else if (this->getChildByID("main-layer")->getChildByID("difficulty-container")) {
-				auto diffIcon = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("main-layer")->getChildByID("difficulty-container")->getChildByID("difficulty-sprite"));
-				auto layer = typeinfo_cast<CCNode*>(this->getChildByID("main-layer")->getChildByID("difficulty-container"));
-				typeinfo_cast<GJDifficultySprite*>(layer->getChildByID("difficulty-sprite"))->setOpacity(0);
-
-				std::string sprite = "DP_Beginner";
-				std::string plusSprite = "DP_BeginnerPlus";
-
-				sprite = data["main"][gddpDiff]["sprite"].as_string();
-				plusSprite = data["main"][gddpDiff]["plusSprite"].as_string();
-
-				std::string fullSpr = sprite + "SmallText.png";
-				std::string fullPlusSpr = plusSprite + "SmallText.png";
-
-				if (sprite != "DP_Invisible.png") {
-					auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
-
-					if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible.png") {
-						typeinfo_cast<CCSprite*>(diffIcon->getChildren()->objectAtIndex(0))->setVisible(false);
-						customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-					}
-
-					if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank[id].as_bool() && plusSprite != "DP_Invisible.png") {
-						customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-					}
-
-					customSpr->setID("gddp-difficulty");
-					customSpr->setAnchorPoint({ 0.5f, 0.5f });
-					customSpr->setPosition({ diffIcon->getPositionX() + 0.5f, diffIcon->getPositionY() });
-					customSpr->setZOrder(5);
-
-					layer->addChild(customSpr);
-				}
-			}
-		}
-	}
-};
+/*
+Save Format:
+
+"listID": {
+	"type": "main",
+	"completed": false,
+	"progress": 2,
+	"has-rank": false
+}
+
+*/
 
 //Main DP Layer
 void DPLayer::callback(CCObject*) {
@@ -781,7 +65,7 @@ DPLayer* DPLayer::create() {
 	return nullptr;
 }
 
-void DPLayer::infoCallback(CCObject*) {
+void DPLayer::infoCallback(CCObject*) { //unused
 	FLAlertLayer::create(nullptr, "GDDP Info", "OK", nullptr, "Beat the required number of levels in each pack to get a special rank and move on to the next pack.\n\nMod Developer: Minemaker0430\nGDDP Creator: Trusta\nSpecial Thanks: FireMario211 (Firee), HJFod, The GDP Discord Server, & The Geode Discord Server")->show();
 }
 
@@ -831,10 +115,20 @@ void DPLayer::reloadData(CCObject* sender) {
 		Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
 	}
 
+	std::string dataURL;
+
+	//log::info("{}", GameManager::sharedState()->m_playerName);
+	if (GameManager::sharedState()->m_playerName == "Minemaker0430") {
+		log::info("Hello, me");
+		dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/dev-list.json";
+	}
+	else {
+		dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json";
+	}
+
 	// download data
 	web::AsyncWebRequest()
-		.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json")
-		//.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/dev-list.json")
+		.fetch(dataURL)
 		.text()
 		.then([&](std::string const& response) {
 			
@@ -851,7 +145,7 @@ void DPLayer::reloadData(CCObject* sender) {
 			this->setKeypadEnabled(true);
 		})
 		.expect([&](std::string const& error) {
-			FLAlertLayer::create("ERROR", "Something went wrong getting the List Data. (" + error + ")", "OK")->show();
+			FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({})", error), "OK")->show();
 
 			m_loadcircle->fadeAndRemove();
 			m_reload->setVisible(true);
@@ -988,10 +282,10 @@ void DPLayer::openList(CCObject* sender) {
 
 			if (cachedType == "main" || cachedType == "legacy") {
 				if (Mod::get()->getSavedValue<bool>("is-practice", false)) {
-					packTitle = cachedData[cachedType][cachedID]["name"].as_string() + " Demons (Practice)";
+					packTitle = fmt::format("{} Demons (Practice)", cachedData[cachedType][cachedID]["name"].as_string());
 				}
 				else {
-					packTitle = cachedData[cachedType][cachedID]["name"].as_string() + " Demons";
+					packTitle = fmt::format("{} Demons", cachedData[cachedType][cachedID]["name"].as_string());
 				}
 			}
 			else {
@@ -1022,7 +316,7 @@ void DPLayer::openList(CCObject* sender) {
 			m_loadcircle->fadeAndRemove();
 		}
 		}).expect([&](std::string const& error) {
-			FLAlertLayer::create("ERROR", "Something went wrong! (" + error + ")", "OK")->show();
+			FLAlertLayer::create("ERROR", fmt::format("Something went wrong! ({})", error), "OK")->show();
 			m_loadcircle->fadeAndRemove();
 		});
 }
@@ -1279,10 +573,19 @@ bool DPLayer::init() {
 			Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
 		}
 
+		std::string dataURL;
+
+		if (GameManager::sharedState()->m_playerName == "Minemaker0430") {
+			log::info("Hello, me");
+			dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/dev-list.json";
+		}
+		else {
+			dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json";
+		}
+
 		// download data
 		web::AsyncWebRequest()
-			.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json")
-			//.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/dev-list.json")
+			.fetch(dataURL)
 			.text()
 			.then([&](std::string const& response) {
 				Mod::get()->setSavedValue<matjson::Value>("cached-data", matjson::parse(response));
@@ -1298,7 +601,7 @@ bool DPLayer::init() {
 				this->setKeypadEnabled(true);
 			})
 			.expect([&](std::string const& error) {
-				FLAlertLayer::create("ERROR", "Something went wrong getting the List Data. (" + error + ")", "OK")->show();
+				FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({})", error), "OK")->show();
 				m_loadcircle->fadeAndRemove();
 				m_reload->setVisible(true);
 				m_tabs->setVisible(false);
@@ -1383,144 +686,11 @@ bool DPLayer::init() {
 void DPLayer::reloadList(int type) {
 
 	//all save stuff
-	auto ids_main = Mod::get()->getSavedValue<matjson::Array>("ids-main");
-	auto ids_legacy = Mod::get()->getSavedValue<matjson::Array>("ids-legacy");
-	auto ids_bonus = Mod::get()->getSavedValue<matjson::Array>("ids-bonus");
-	auto ids_monthly = Mod::get()->getSavedValue<matjson::Array>("ids-monthly");
-
-	auto packProgress_main = Mod::get()->getSavedValue<matjson::Array>("pack-progress-main");
-	auto packProgress_legacy = Mod::get()->getSavedValue<matjson::Array>("pack-progress-legacy");
-	auto packProgress_bonus = Mod::get()->getSavedValue<matjson::Array>("pack-progress-bonus");
-	auto packProgress_monthly = Mod::get()->getSavedValue<matjson::Array>("pack-progress-monthly");
-
-	auto hasRank = Mod::get()->getSavedValue<matjson::Array>("has-rank");
-	auto hasCompleted_main = Mod::get()->getSavedValue<matjson::Array>("has-completed-main");
-	auto hasCompleted_legacy = Mod::get()->getSavedValue<matjson::Array>("has-completed-legacy");
-	auto hasCompleted_bonus = Mod::get()->getSavedValue<matjson::Array>("has-completed-bonus");
-	auto hasCompleted_monthly = Mod::get()->getSavedValue<matjson::Array>("has-completed-monthly");
-
-	auto packsCompleted_main = Mod::get()->getSavedValue<int>("packs-completed-main", 0);
-	auto packsCompleted_legacy = Mod::get()->getSavedValue<int>("packs-completed-legacy", 0);
-	auto packsCompleted_bonus = Mod::get()->getSavedValue<int>("packs-completed-bonus", 0);
-	auto packsCompleted_monthly = Mod::get()->getSavedValue<int>("packs-completed-monthly", 0);
-
 	auto bronzeMedals = Mod::get()->getSavedValue<int>("bronze-medals", 0);
 	auto silverMedals = Mod::get()->getSavedValue<int>("silver-medals", 0);
 	auto goldMedals = Mod::get()->getSavedValue<int>("gold-medals", 0);
 
 	auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
-
-	//check if database got an update
-	/*
-	Main Pack Update - Reset Main Pack Save Data
-	Legacy Pack Update - Reset Legacy Save Data
-	Bonus Pack Update - Move all data up one array index and add a new slot at index 0
-	Monthly Pack Update - Move all data up one array index and add a new slot at index 0
-	*/
-
-	ids_main.resize(m_data["main"].as_array().size());
-	ids_legacy.resize(m_data["legacy"].as_array().size());
-	ids_bonus.resize(m_data["bonus"].as_array().size());
-	ids_monthly.resize(m_data["monthly"].as_array().size());
-	
-	if (packProgress_main.size() < m_data["main"].as_array().size()) { //check main packs
-
-		//insert save data
-		for (int i = 0; i < m_data["main"].as_array().size(); i++) {
-
-			if (ids_main[i] != m_data["main"][i]["listID"]) {
-				ids_main.insert(ids_main.begin() + i, 0);
-				packProgress_main.insert(packProgress_main.begin() + i, 0);
-				hasCompleted_main.insert(hasCompleted_main.begin() + i, false);
-				hasRank.insert(hasRank.begin() + i, false);
-			}
-		}
-
-		//push save data
-		Mod::get()->setSavedValue("pack-progress-main", packProgress_main);
-		Mod::get()->setSavedValue("has-completed-main", hasCompleted_main);
-		Mod::get()->setSavedValue("has-rank", hasRank);
-			
-		log::info("Found new Main Pack(s).");
-	}
-
-	if (packProgress_legacy.size() < m_data["legacy"].as_array().size()) { //check legacy packs
-			
-		//insert save data
-		for (int i = 0; i < m_data["legacy"].as_array().size(); i++) {
-
-			if (ids_legacy[i] != m_data["legacy"][i]["listID"]) {
-				ids_legacy.insert(ids_legacy.begin() + i, 0);
-				packProgress_legacy.insert(packProgress_legacy.begin() + i, 0);
-				hasCompleted_legacy.insert(hasCompleted_legacy.begin() + i, false);
-			}
-		}
-
-		//push save data
-		Mod::get()->setSavedValue("pack-progress-legacy", packProgress_legacy);
-		Mod::get()->setSavedValue("has-completed-legacy", hasCompleted_legacy);
-			
-		log::info("Found new Legacy Pack(s).");
-	}
-
-	if (packProgress_bonus.size() < m_data["bonus"].as_array().size()) { //check bonus packs
-		
-		//insert save data
-		for (int i = 0; i < m_data["bonus"].as_array().size(); i++) {
-
-			if (ids_bonus[i] != m_data["bonus"][i]["listID"]) {
-				ids_bonus.insert(ids_bonus.begin() + i, 0);
-				packProgress_bonus.insert(packProgress_bonus.begin() + i, 0);
-				hasCompleted_bonus.insert(hasCompleted_bonus.begin() + i, false);
-			}
-		}
-
-		//push save data
-		Mod::get()->setSavedValue("pack-progress-bonus", packProgress_bonus);
-		Mod::get()->setSavedValue("has-completed-bonus", hasCompleted_bonus);
-
-		log::info("Found new Bonus Pack(s).");
-	}
-
-	if (packProgress_monthly.size() < m_data["monthly"].as_array().size()) { //check monthly packs
-		
-		//insert save data
-		for (int i = 0; i < m_data["monthly"].as_array().size(); i++) {
-
-			if (ids_monthly[i] != m_data["monthly"][i]["listID"]) {
-				ids_monthly.insert(ids_monthly.begin() + i, 0);
-				packProgress_monthly.insert(packProgress_monthly.begin() + i, 0);
-				hasCompleted_monthly.insert(hasCompleted_monthly.begin() + i, false);
-			}
-		}
-
-		//push save data
-		Mod::get()->setSavedValue("pack-progress-monthly", packProgress_monthly);
-		Mod::get()->setSavedValue("has-completed-monthly", hasCompleted_monthly);
-
-		log::info("Found new Monthly Pack(s).");
-	}
-
-	for (int i = 0; i < m_data["main"].as_array().size(); i++) {
-		ids_main[i] = m_data["main"][i]["listID"].as_int();
-	}
-
-	for (int i = 0; i < m_data["legacy"].as_array().size(); i++) {
-		ids_legacy[i] = m_data["legacy"][i]["listID"].as_int();
-	}
-
-	for (int i = 0; i < m_data["bonus"].as_array().size(); i++) {
-		ids_bonus[i] = m_data["bonus"][i]["listID"].as_int();
-	}
-
-	for (int i = 0; i < m_data["monthly"].as_array().size(); i++) {
-		ids_monthly[i] = m_data["monthly"][i]["listID"].as_int();
-	}
-
-	Mod::get()->setSavedValue<matjson::Array>("ids-main", ids_main);
-	Mod::get()->setSavedValue<matjson::Array>("ids-legacy", ids_legacy);
-	Mod::get()->setSavedValue<matjson::Array>("ids-bonus", ids_bonus);
-	Mod::get()->setSavedValue<matjson::Array>("ids-monthly", ids_monthly);
 
 	Mod::get()->setSavedValue<int>("database-version", m_data["database-version"].as_int());
 	log::info("{}", Mod::get()->getSavedValue<int>("database-version"));
@@ -1543,7 +713,7 @@ void DPLayer::reloadList(int type) {
 	
 	auto packs = m_data[dataIdx].as_array();
 
-	auto versionTxt = "Database Version: " + std::to_string(m_data["database-version"].as_int());
+	auto versionTxt = fmt::format("Database Version: {}", std::to_string(m_data["database-version"].as_int()));
 	m_databaseVer->setCString(versionTxt.c_str());
 
 	if (m_data[dataIdx].as_array().size() <= 0) { return; }
@@ -1574,17 +744,23 @@ void DPLayer::reloadList(int type) {
 		if (type == static_cast<int>(DPListType::Main)) { hasPractice = m_data[dataIdx][i]["practice"].as_bool(); }
 		if (type == static_cast<int>(DPListType::Legacy)) { mainPack = m_data[dataIdx][i]["mainPack"].as_int(); }
 
+		//get list save
+		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+
 		auto fullTitle = name;
 		if (type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) { 
-			if (hasRank[i].as_bool() && type == static_cast<int>(DPListType::Main)) {
-				fullTitle = name + "+ Demons";
+			if (listSave.hasRank && type == static_cast<int>(DPListType::Main)) {
+				fullTitle = fmt::format("{}+ Demons", name);
 			}
 			else {
-				fullTitle = name + " Demons";
+				fullTitle = fmt::format("{} Demons", name);
 			}
 		}
-		auto fullSprite = sprite + ".png";
-		auto fullPlusSprite = plusSprite + ".png";
+		if (type == static_cast<int>(DPListType::Monthly) && listSave.progress >= 5) {
+			fullTitle = fmt::format("{} +", name);
+		}
+		auto fullSprite = fmt::format("{}.png", sprite);
+		auto fullPlusSprite = fmt::format("{}.png", plusSprite);
 
 		CCNode* cell = ListCell::create();
 
@@ -1595,25 +771,8 @@ void DPLayer::reloadList(int type) {
 		packText->setAnchorPoint({ 0, 1 });
 		packText->setPosition({ 53, 49 });
 
-		if (type == static_cast<int>(DPListType::Main)) {
-			if (hasCompleted_main[i].as_bool()) {
-				packText->setFntFile("goldFont.fnt");
-			}
-		}
-		else if (type == static_cast<int>(DPListType::Legacy)) {
-			if (hasCompleted_legacy[i].as_bool()) {
-				packText->setFntFile("goldFont.fnt");
-			}
-		}
-		else if (type == static_cast<int>(DPListType::Bonus)) {
-			if (hasCompleted_bonus[i].as_bool()) {
-				packText->setFntFile("goldFont.fnt");
-			}
-		}
-		else if (type == static_cast<int>(DPListType::Monthly)) {
-			if (hasCompleted_monthly[i].as_bool()) {
-				packText->setFntFile("goldFont.fnt");
-			}
+		if (listSave.completed) {
+			packText->setFntFile("goldFont.fnt");
 		}
 
 		CCNode* packSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
@@ -1657,51 +816,42 @@ void DPLayer::reloadList(int type) {
 		CCLabelBMFont* progText = CCLabelBMFont::create("...", "bigFont.fnt");
 
 		if (type == static_cast<int>(DPListType::Main)) {
-			if (!hasRank[i].as_bool()) {
+			if (!listSave.hasRank) {
 				std::string nextTier = "???";
 				if (i + 1 < packs.size()) {
 					nextTier = m_data[dataIdx][i + 1]["name"].as_string();
 				}
-				progStr = std::to_string(packProgress_main[i].as_int()) + "/" + std::to_string(reqLevels) + " to " + nextTier + " Tier.";
+				progStr = fmt::format("{}/{} to {} Tier", std::to_string(listSave.progress), std::to_string(reqLevels), nextTier);
 			}
-			else if (hasCompleted_main[i].as_bool()) {
+			else if (listSave.completed) {
 				progStr = "100% Complete!";
 				progText->setFntFile("goldFont.fnt");
 				packPlusSpr->setVisible(true);
 			}
 			else {
-				progStr = std::to_string(packProgress_main[i].as_int()) + "/" + std::to_string(totalLevels) + " to Completion.";
+				progStr = fmt::format("{}/{} to Completion", std::to_string(listSave.progress), std::to_string(totalLevels));
 				packPlusSpr->setVisible(true);
 			}
 		}
-		else if (type == static_cast<int>(DPListType::Legacy)) {
-			if (hasCompleted_legacy[i].as_bool()) {
+		else if (type == static_cast<int>(DPListType::Legacy) || type == static_cast<int>(DPListType::Bonus)) {
+			if (listSave.completed) {
 				progStr = "100% Complete!";
 				progText->setFntFile("goldFont.fnt");
 			}
 			else {
-				progStr = std::to_string(packProgress_legacy[i].as_int()) + "/" + std::to_string(totalLevels) + " to Completion.";
-			}
-		}
-		else if (type == static_cast<int>(DPListType::Bonus)) {
-			if (hasCompleted_bonus[i].as_bool()) {
-				progStr = "100% Complete!";
-				progText->setFntFile("goldFont.fnt");
-			}
-			else {
-				progStr = std::to_string(packProgress_bonus[i].as_int()) + "/" + std::to_string(totalLevels) + " to Completion.";
+				progStr = fmt::format("{}/{} to Completion", std::to_string(listSave.progress), std::to_string(totalLevels));
 			}
 		}
 		else if (type == static_cast<int>(DPListType::Monthly)) {
-			if (hasCompleted_monthly[i].as_bool()) {
+			if (listSave.completed) {
 				progStr = "100% Complete!";
 				progText->setFntFile("goldFont.fnt");
 			}
-			else if (packProgress_monthly[i] < 5) {
-				progStr = std::to_string(packProgress_monthly[i].as_int()) + "/5 to Partial Completion.";
+			else if (listSave.progress < 5) {
+				progStr = fmt::format("{}/5 to Partial Completion", std::to_string(listSave.progress));
 			}
 			else {
-				progStr = std::to_string(packProgress_monthly[i].as_int()) + "/6 to Completion.";
+				progStr = fmt::format("{}/6 to Completion", std::to_string(listSave.progress));
 			}
 		}
 
@@ -1713,7 +863,7 @@ void DPLayer::reloadList(int type) {
 		if (type == static_cast<int>(DPListType::Monthly)) {
 			std::string months[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 			ccColor3B monthColor[12] = { {255, 0, 0}, {255, 128, 0}, {255, 255, 0}, {128, 255, 0}, {0, 255, 0}, {0, 255, 128}, {0, 255, 255}, {0, 128, 255}, {0, 0, 255}, {128, 0, 255}, {255, 0, 255}, {255, 0, 128} };
-			std::string monthlyDisp = months[month - 1] + " " + std::to_string(year);
+			std::string monthlyDisp = fmt::format("{} {}", months[month - 1], std::to_string(year));
 
 			auto monthlyText = CCLabelBMFont::create(monthlyDisp.c_str(), "bigFont.fnt");
 			monthlyText->setColor(monthColor[month - 1]);
@@ -1787,14 +937,24 @@ void DPLayer::reloadList(int type) {
 		}
 
 		if (i > 0 && type == static_cast<int>(DPListType::Main) && !Mod::get()->getSettingValue<bool>("unlock-all-tiers")) {
-			if (!hasRank[i - 1].as_bool()) {
+
+			//get rank of previous main pack
+			auto prevListID = m_data[dataIdx][i - 1]["listID"].as_int();
+			auto rankCheck = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(prevListID)).hasRank;
+
+			if (!rankCheck) {
 				auto lockIcon = CCSprite::createWithSpriteFrameName("GJ_lock_001.png");
 				lockIcon->setPosition({180, 20});
 				lockIcon->setAnchorPoint({0.5f, 0});
 
 				std::string rankText = "???";
 				if (i > 1) {
-					if (hasRank[i - 2].as_bool()) {
+
+					//check for the one before that
+					prevListID = m_data[dataIdx][i - 2]["listID"].as_int();
+					rankCheck = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(prevListID)).hasRank;
+
+					if (rankCheck) {
 						rankText = m_data[dataIdx][i - 1]["name"].as_string();
 					}
 				}
@@ -1802,7 +962,7 @@ void DPLayer::reloadList(int type) {
 					rankText = m_data[dataIdx][i - 1]["name"].as_string();
 				}
 				
-				std::string fullLockText = "Get the " + rankText + " Rank to unlock!";
+				std::string fullLockText = fmt::format("Get the {} Rank to unlock!", rankText);
 
 				auto lockText = CCLabelBMFont::create(fullLockText.c_str(), "bigFont.fnt");
 				lockText->setPosition({ 180, 5 });
@@ -1824,21 +984,31 @@ void DPLayer::reloadList(int type) {
 			}
 		}
 		else if (type == static_cast<int>(DPListType::Legacy) && !Mod::get()->getSettingValue<bool>("unlock-all-legacy")) {
-			if (!hasRank[mainPack].as_bool()) {
+			
+			//get main pack list ID
+			auto mainListID = m_data["main"][mainPack]["listID"].as_int();
+			auto rankCheck = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(mainListID)).hasRank;
+			
+			if (!rankCheck) {
 				auto lockIcon = CCSprite::createWithSpriteFrameName("GJ_lock_001.png");
 				lockIcon->setPosition({ 180, 20 });
 				lockIcon->setAnchorPoint({ 0.5f, 0 });
 
 				std::string rankText = "???";
 				if (mainPack > 0) {
-					if (hasRank[mainPack - 1].as_bool()) {
+
+					//get previous main pack
+					auto prevListID = m_data[dataIdx][mainPack - 1]["listID"].as_int();
+					rankCheck = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(prevListID)).hasRank;
+
+					if (rankCheck) {
 						rankText = m_data["main"][mainPack]["name"].as_string();
 					}
 				}
 				else {
 					rankText = m_data["main"][mainPack]["name"].as_string();
 				}
-				std::string fullLockText = "Get the " + rankText + " Rank to unlock!";
+				std::string fullLockText = fmt::format("Get the {} Rank to unlock!", rankText);
 
 				auto lockText = CCLabelBMFont::create(fullLockText.c_str(), "bigFont.fnt");
 				lockText->setPosition({ 180, 5 });
@@ -1877,8 +1047,8 @@ void DPLayer::reloadList(int type) {
 	auto director = CCDirector::sharedDirector();
 	auto size = director->getWinSize();
 
-	ListView* packListMenu = ListView::create(packListCells, 50.0, 358.0, 220.0);
-	packListMenu->setAnchorPoint({ 0.5, 0.5 });
+	ListView* packListMenu = ListView::create(packListCells, 50.0f, 358.0f, 220.0f);
+	packListMenu->setAnchorPoint({ 0.5f, 0.5f });
 	packListMenu->setPosition({ (size.width / 2) - 180, (size.height / 2) - 115});
 	packListMenu->setID("list-menu");
 	packListMenu->setZOrder(0);

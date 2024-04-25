@@ -10,6 +10,10 @@ project(GDDPIntegration VERSION 1.0.0)
 add_library(${PROJECT_NAME} SHARED
     src/main.cpp
     # Add your cpp files here
+    src/CreatorLayer.cpp
+    src/LevelListLayer.cpp
+    src/LevelInfoLayer.cpp
+    src/LevelCell.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

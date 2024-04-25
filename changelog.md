@@ -1,3 +1,14 @@
+# v1.0.0-beta.18
+
+* Completely Overhauled the save system
+	* Save data is now tied to List IDs rather than the ID of the pack in an array
+		* This means packs that are added/removed will no longer affect previous data like it once did
+		* This is also a simpler method and allows save data to be built off of easier since each value now uses the same structure
+	* Saved values are now a proper JSON as opposed to a bunch of arrays
+	* Old save data will be unused in favor of the new system
+* Monthly Packs now have a "+" suffix if partially completed
+* Changed string formatting since I was doing it in a stupid way before
+
 # v1.0.0-beta.17
 
 * Data Caching is now disabled by default, can be enabled in settings

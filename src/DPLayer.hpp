@@ -16,7 +16,6 @@ protected:
 	int m_currentTab;
 	CCMenu* m_reload;
 	CCLabelBMFont* m_databaseVer;
-	void reloadList(int type);
 	virtual ~DPLayer();
 public:
 	static DPLayer* create(); //to create the layer
@@ -24,9 +23,40 @@ public:
 	void onTab(CCObject*); //tabs switched?
 	void openList(CCObject*); //open list with the id tagged on the btn
 	void reloadData(CCObject*); //when reload button is pressed
+	void reloadList(int type);
 	void infoCallback(CCObject*);
 	void soonCallback(CCObject*); //Coming Soon
 	void achievementsCallback(CCObject*);
+};
+
+struct ListSaveFormat {
+	int progress;
+	bool completed;
+	bool hasRank;
+};
+
+template<>
+struct matjson::Serialize<ListSaveFormat> {
+	static ListSaveFormat from_json(matjson::Value const& value) {
+		return ListSaveFormat{
+			.progress = value["progress"].as_int(),
+			.completed = value["completed"].as_bool(),
+			.hasRank = value["has-rank"].as_bool()
+		};
+	}
+
+	static matjson::Value to_json(ListSaveFormat const& value) {
+		auto obj = matjson::Object();
+		obj["progress"] = value.progress;
+		obj["completed"] = value.completed;
+		obj["has-rank"] = value.hasRank;
+		return obj;
+	}
+
+	static bool is_json(Value const& value) {
+		// TODO: this is intentionally lazy..
+		return value.is_object();
+	}
 };
 
 enum class DPListType {
