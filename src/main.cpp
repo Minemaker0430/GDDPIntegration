@@ -998,7 +998,7 @@ void DPLayer::reloadList(int type) {
 				if (mainPack > 0) {
 
 					//get previous main pack
-					auto prevListID = m_data[dataIdx][mainPack - 1]["listID"].as_int();
+					auto prevListID = m_data["main"][mainPack - 1]["listID"].as_int();
 					rankCheck = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(prevListID)).hasRank;
 
 					if (rankCheck) {

@@ -1,3 +1,10 @@
+# v1.0.0-beta.19
+
+* Fixed save bugs
+	* Main packs no longer get rid of ranks if the pack is completed
+	* Monthly packs no longer are completed at 0/6
+* Fixed Legacy Lock Label
+
 # v1.0.0-beta.18
 
 * Completely Overhauled the save system

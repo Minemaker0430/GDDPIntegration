@@ -152,13 +152,19 @@ class $modify(LevelListLayer) {
 			auto hasRank = false;
 
 			auto progress = packProgress;
-			if ((packProgress >= reqLevels) && (!listSave.hasRank) && (type == "main")) {
+			if ((packProgress >= reqLevels) && (type == "main")) {
 				hasRank = true;
 			}
 
 			auto completed = false;
 
-			if (packProgress == totalLevels) {
+			if ((packProgress == totalLevels) && type != "monthly") {
+				completed = true;
+				if (type == "main") {
+					hasRank = true;
+				}
+			}
+			else if ((type == "monthly") && (packProgress > 5)) {
 				completed = true;
 			}
 
