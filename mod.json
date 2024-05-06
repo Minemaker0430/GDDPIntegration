@@ -123,6 +123,12 @@
 			"type": "bool",
 			"default": true
 		},
+		"all-demons-rated": {
+			"name": "Rate All Demons",
+			"description": "Shows custom difficulty faces on all rated demons.",
+			"type": "bool",
+			"default": false
+		},
 		"replace-epic": {
 			"name": "Replace Epic Fire",
 			"description": "Replaces the Epic fire with the Plus fire in the GDDP Menus.",

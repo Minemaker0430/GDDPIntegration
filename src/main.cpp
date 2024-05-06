@@ -6,6 +6,7 @@
 
 #include "DPLayer.hpp"
 #include "Settings.hpp"
+#include "ListManager.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -19,6 +20,7 @@ $on_mod(Loaded) {
 	Mod::get()->addCustomSetting<SectionSettingValue>("menu-section", "");
 	Mod::get()->addCustomSetting<SectionSettingValue>("cosmetic-section", "");
 	Mod::get()->addCustomSetting<SectionSettingValue>("compatibility-section", "");
+	ListManager::init();
 }
 
 /*
