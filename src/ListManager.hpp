@@ -1,3 +1,7 @@
+/*
+    Created by wint0r
+*/
+
 #ifndef __LISTMANAGER_HPP_
 #define __LISTMANAGER_HPP_
 
@@ -52,6 +56,9 @@ const std::map<std::string, std::string> IDS_TO_GDDP = {
     { "Very Hard", "Amber" },
     { "Insane", "Amber" },
     { "Extreme", "Amber" },
+    { "Remorseless", "Amber" },
+    { "Relentless", "Amber" },
+    { "Terrifying", "Amber" },
 };
 
 struct ListManager {
@@ -63,7 +70,7 @@ struct ListManager {
     static void parsePointercrateResponse(matjson::Value val_part1, matjson::Value val_part2);
     //static void throwError(std::string message);
     static std::optional<ListRating> getRating(int levelID);
-    static std::string getSpriteName(GJGameLevel *level);
+    static std::string getSpriteName(GJGameLevel* level);
 };
 
 #endif

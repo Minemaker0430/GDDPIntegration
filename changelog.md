@@ -1,3 +1,14 @@
+# v1.0.0-beta.20
+
+* Added skillset badges
+* Added failsafes for missing textures
+* Fixed coin icons in LevelBrowserLayer causing visual bugs
+	* This also sets an ID for the Grandpa Demon face, let me know if this conflicts with another mod
+* Added an option to enable GDDP Ratings for all difficulties **\([Made by wint0r](https://github.com/wint0r), tweaked by Me\)**
+	* Uses IDS, NLW, and Pointercrate API
+* Added some more options
+* Fixed Disable Grandpa Demon Effects (I think)
+
 # v1.0.0-beta.19
 
 * Fixed save bugs

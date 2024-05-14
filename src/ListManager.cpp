@@ -1,3 +1,7 @@
+/*
+    Created by wint0r
+*/
+
 #include "ListManager.hpp"
 #include <Geode/utils/web.hpp>
 
@@ -8,7 +12,7 @@ const std::string IDS_API_URL = "https://nlw.oat.zone/ids?type=all";
 const std::string POINTERCRATE_API_URL_PART_1 = "https://pointercrate.com/api/v2/demons/listed/?limit=100";
 const std::string POINTERCRATE_API_URL_PART_2 = "https://pointercrate.com/api/v2/demons/listed/?limit=50&after=100";
 const std::string GD_HISTORY_URL = "https://history.geometrydash.eu/api/v1/search/level/advanced/"
-                                   "?limit=1000&filter=cache_demon = true AND cache_demon_type = 6";
+"?limit=1000&filter=cache_demon = true AND cache_demon_type = 6";
 
 bool ListManager::fetchedNLWRatings;
 bool ListManager::fetchedIDSRatings;
@@ -17,12 +21,12 @@ std::vector<ListRating> ListManager::ratings;
 
 std::string getUserAgent() {
     return fmt::format("{}/{}; GeometryDash/{} (GeodeSDK/{}); {}",
-		Mod::get()->getID(),
-		Mod::get()->getVersion().toString(true),
-		GEODE_STR(GEODE_GD_VERSION),
-		Loader::get()->getVersion().toString(true),
-		GEODE_PLATFORM_NAME
-	);
+        Mod::get()->getID(),
+        Mod::get()->getVersion().toString(true),
+        GEODE_STR(GEODE_GD_VERSION),
+        Loader::get()->getVersion().toString(true),
+        GEODE_PLATFORM_NAME
+    );
 }
 
 void ListManager::init() {
@@ -31,13 +35,13 @@ void ListManager::init() {
             .userAgent(getUserAgent())
             .fetch(NLW_API_URL)
             .json()
-            .then([] (const matjson::Value &val) {
-                ListManager::fetchedNLWRatings = true;
-                ListManager::parseResponse(val, true);
-            })
-            .expect([] (const std::string &error) {
-                ListManager::fetchedNLWRatings = true;
-            });
+            .then([](const matjson::Value& val) {
+            ListManager::fetchedNLWRatings = true;
+            ListManager::parseResponse(val, true);
+                })
+            .expect([](const std::string& error) {
+                    ListManager::fetchedNLWRatings = true;
+                });
     }
 
     if (!ListManager::fetchedIDSRatings) {
@@ -45,14 +49,14 @@ void ListManager::init() {
             .userAgent(getUserAgent())
             .fetch(IDS_API_URL)
             .json()
-            .then([] (const matjson::Value &val) {
-                ListManager::fetchedIDSRatings = true;
-                ListManager::parseResponse(val, false);
-            })
-            .expect([] (const std::string &error) {
-                // todo: error handling...
-                ListManager::fetchedIDSRatings = true;
-            });
+            .then([](const matjson::Value& val) {
+            ListManager::fetchedIDSRatings = true;
+            ListManager::parseResponse(val, false);
+                })
+            .expect([](const std::string& error) {
+                    // todo: error handling...
+                    ListManager::fetchedIDSRatings = true;
+                });
     }
 
     if (!ListManager::fetchedPointercrateRatings) {
@@ -60,22 +64,22 @@ void ListManager::init() {
             .userAgent(getUserAgent())
             .fetch(POINTERCRATE_API_URL_PART_1)
             .json()
-            .then([] (const matjson::Value &val_part1) {
-                web::AsyncWebRequest()
-                    .userAgent(getUserAgent())
-                    .fetch(POINTERCRATE_API_URL_PART_2)
-                    .json()
-                    .then([val_part1] (const matjson::Value &val_part2) {
-                        ListManager::fetchedPointercrateRatings = true;
-                        ListManager::parsePointercrateResponse(val_part1, val_part2);
+            .then([](const matjson::Value& val_part1) {
+            web::AsyncWebRequest()
+                .userAgent(getUserAgent())
+                .fetch(POINTERCRATE_API_URL_PART_2)
+                .json()
+                .then([val_part1](const matjson::Value& val_part2) {
+                ListManager::fetchedPointercrateRatings = true;
+                ListManager::parsePointercrateResponse(val_part1, val_part2);
                     })
-                    .expect([] (const std::string &error) {
+                .expect([](const std::string& error) {
                         ListManager::fetchedPointercrateRatings = true;
                     });
-            })
-            .expect([] (const std::string &error) {
-                ListManager::fetchedPointercrateRatings = true;
-            });
+                })
+            .expect([](const std::string& error) {
+                    ListManager::fetchedPointercrateRatings = true;
+                });
     }
 }
 
@@ -93,9 +97,11 @@ void ListManager::parseResponse(matjson::Value val, bool isExtreme) {
         std::string type = level["type"].as_string();
         if (type == "platformer") {
             rating.type = RatingType::Platformer;
-        } else if (type == "pending") {
+        }
+        else if (type == "pending") {
             rating.type = RatingType::Pending;
-        } else {
+        }
+        else {
             rating.type = RatingType::Classic;
         }
         rating.id = level["id"].is_number() ? level["id"].as_int() : -1;
@@ -142,7 +148,7 @@ int levenshteinDistance(std::string a, std::string b) {
                 matrix[i - 1][j] + 1,
                 matrix[i][j - 1] + 1,
                 matrix[i - 1][j - 1] + cost
-            });
+                });
         }
     }
 
@@ -157,7 +163,7 @@ void ListManager::parsePointercrateResponse(matjson::Value val_part1, matjson::V
 
     auto levels = val_part1.as_array();
     auto levels_part2 = val_part2.as_array();
-    for (auto &level : levels_part2) {
+    for (auto& level : levels_part2) {
         levels.push_back(level);
     }
 
@@ -165,7 +171,7 @@ void ListManager::parsePointercrateResponse(matjson::Value val_part1, matjson::V
     int diamondEnd = -1;
     int onyxEnd = -1;
     int amethystEnd = -1;
-    for (auto &level : levels) {
+    for (auto& level : levels) {
         std::string name = level["name"].is_string() ? level["name"].as_string() : "?";
         if (name == "Hardry")
             rubyEnd = level["position"].as_int();
@@ -183,7 +189,8 @@ void ListManager::parsePointercrateResponse(matjson::Value val_part1, matjson::V
     if (dataResult.isErr()) {
         log::error("uh. not good");
         useGDH = false;
-    } else {
+    }
+    else {
         gdhData = dataResult.ok().value();
     }
 
@@ -193,7 +200,7 @@ void ListManager::parsePointercrateResponse(matjson::Value val_part1, matjson::V
         rating.isExtreme = true;
         rating.type = RatingType::Classic;
         rating.name = level["name"].is_string() ? level["name"].as_string() : "?";
-        
+
         rating.id = level["level_id"].is_number() ? level["level_id"].as_int() : -1;
         if (rating.id < 0 && useGDH) {
             auto extremes = gdhData["hits"].as_array();
@@ -206,7 +213,8 @@ void ListManager::parsePointercrateResponse(matjson::Value val_part1, matjson::V
 
             if (hits.size() == 1) {
                 rating.id = hits[0]["online_id"].as_int();
-            } else {
+            }
+            else {
                 // fetch the level in case the level is outside the 1000 level cache
                 if (hits.size() == 0) {
                     std::string filter = fmt::format("cache_demon = true AND cache_level_name='{}'", rating.name);
@@ -254,30 +262,45 @@ void ListManager::parsePointercrateResponse(matjson::Value val_part1, matjson::V
 
 std::optional<ListRating> ListManager::getRating(int levelID) {
     for (auto rating : ListManager::ratings) {
-		if (levelID == rating.id && rating.tier != "Fuck") {
-			return rating;
-		}
-	}
+        if (levelID == rating.id && rating.tier != "Fuck") {
+            return rating;
+        }
+    }
 
     return std::nullopt;
 }
 
-std::string ListManager::getSpriteName(GJGameLevel *level) {
+std::string ListManager::getSpriteName(GJGameLevel* level) {
     auto ratingOpt = ListManager::getRating(level->m_levelID.value());
     if (ratingOpt.has_value()) {
         auto rating = ratingOpt.value();
         if (rating.isExtreme) {
-            return fmt::format("DP_{}", NLW_TO_GDDP.at(rating.tier));
-        } else {
-            return fmt::format("DP_{}", IDS_TO_GDDP.at(rating.tier));
+            if (NLW_TO_GDDP.contains(rating.tier)) {
+                return fmt::format("DP_{}", NLW_TO_GDDP.at(rating.tier));
+            }
+            else {
+                return "";
+            }
         }
-    } else if (level->m_demonDifficulty == 3) {
+        else {
+            if (IDS_TO_GDDP.contains(rating.tier)) {
+                return fmt::format("DP_{}", IDS_TO_GDDP.at(rating.tier));
+            }
+            else {
+                return "";
+            }
+        }
+    }
+    else if (level->m_demonDifficulty == 3) {
         return "DP_Beginner";
-    } else if (level->m_demonDifficulty == 4) {
+    }
+    else if (level->m_demonDifficulty == 4) {
         return "DP_Bronze";
-    } else if (level->m_stars == 10 && level->m_demonDifficulty == 0) {
+    }
+    else if (level->m_stars == 10 && level->m_demonDifficulty == 0) {
         return "DP_Silver";
-    } else {
+    }
+    else {
         return "";
     }
 }

@@ -105,12 +105,12 @@ class $modify(CreatorLayer) {
 				menu->getChildByID("gauntlets-button")->setPositionX(360.1);
 			}
 
-			if (Loader::get()->isModLoaded("cvolton.betterinfo")) {
+			if (Loader::get()->isModLoaded("cvolton.betterinfo") && !Mod::get()->getSettingValue<bool>("dont-move-side-btns")) {
 				log::info("BetterInfo Detected. Moved Button.");
 				this->getChildByID("cvolton.betterinfo/center-right-menu")->setPositionY(260);
 			}
 
-			if (Loader::get()->isModLoaded("spaghettdev.gd-roulette")) {
+			if (Loader::get()->isModLoaded("spaghettdev.gd-roulette") && !Mod::get()->getSettingValue<bool>("dont-move-side-btns")) {
 				log::info("GD Roulette Detected. Moved Button.");
 				if (auto menu = this->getChildByID("spaghettdev.gd-roulette/creator-layer-menu")) {
 					menu->setPositionY(92);

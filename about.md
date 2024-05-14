@@ -12,7 +12,8 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 
 # Credits
 
-* Minemaker0430 - Made the mod
+* **Minemaker0430** - Made the mod
+* **wint0r** - Created the IDS/NLW/Pointercrate Integration option for the mod
 * ElohmroW - GDDP Co-Owner & Website Programmer
 * Trusta - For making GDDP in the first place
 * GDDP Website - Source of the custom Demon Icons

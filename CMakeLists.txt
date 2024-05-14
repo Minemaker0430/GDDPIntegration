@@ -14,7 +14,6 @@ add_library(${PROJECT_NAME} SHARED
     src/LevelListLayer.cpp
     src/LevelInfoLayer.cpp
     src/LevelCell.cpp
-    src/LevelBrowserLayer.cpp
     src/ListManager.cpp
 )
 

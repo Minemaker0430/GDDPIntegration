@@ -9,12 +9,25 @@
 using namespace geode::prelude;
 
 //modify gddp level pages
-class $modify(LevelInfoLayer) {
+class $modify(DemonProgression, LevelInfoLayer) {
 	static void onModify(auto & self) {
 		static_cast<void>(self.setHookPriority("LevelInfoLayer::init", -42));
 	}
 
-	bool init(GJGameLevel * p0, bool p1) {
+	void skillInfoPopup(CCObject* target) {
+		auto btn = static_cast<CCMenuItemSpriteExtra*>(target);
+		auto skillID = btn->getID();
+
+		auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info");
+
+		FLAlertLayer::create(
+			skillsetData[skillID]["display-name"].as_string().c_str(),
+			skillsetData[skillID]["description"].as_string().c_str(),
+			"OK"
+		)->show();
+	}
+
+	bool init(GJGameLevel* p0, bool p1) {
 		if (!LevelInfoLayer::init(p0, p1)) return false;
 
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
@@ -25,143 +38,215 @@ class $modify(LevelInfoLayer) {
 			inGDDP = true;
 		}
 
-		if (inGDDP) {
-			bool disableGrandpaDemon = false;
+		if (inGDDP && (data["level-data"].contains(std::to_string(p0->m_levelID.value())) || Mod::get()->getSettingValue<bool>("all-demons-rated"))) {
+
+			//if not on the GDDP, IDS, NLW, or Pointercrate, return
+			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && p0->m_stars == 10 && ListManager::getSpriteName(p0) == "") {
+				if (!data["level-data"].contains(std::to_string(p0->m_levelID.value()))) {
+					return true;
+				}
+			}
+
+			//if not a demon level that's registered on the gddp, return
+			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && p0->m_stars != 10) {
+				if (!data["level-data"].contains(std::to_string(p0->m_levelID.value()))) {
+					return true;
+				}
+			}
+
+			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
+
+			if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
+				auto bg = typeinfo_cast<CCSprite*>(this->getChildByID("background"));
+				bg->setColor({ 18, 18, 86 });
+			}
+
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
-			if (data["level-data"].contains(std::to_string(p0->m_levelID.value()))) {
-				log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
+			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
+			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
+			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
 
-				if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
-					auto bg = typeinfo_cast<CCSprite*>(this->getChildByID("background"));
-					bg->setColor({ 18, 18, 86 });
+			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(data[type][id]["listID"].as_int())).hasRank;
+
+			auto diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
+			
+			auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::parse("{\"unknown\": {\"display-name\": \"Unknown\",\"description\": \"This skill does not have a description.\",\"sprite\": \"DP_Skill_Unknown\"}}"));
+
+			int gddpDiff = 0;
+			matjson::Array skillsets = {};
+
+			if (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
+				gddpDiff = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["difficulty"].as_int();
+				skillsets = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["skillsets"].as_array();
+			}
+
+			//skillset badges
+			if (Mod::get()->getSettingValue<bool>("skillset-badges") && skillsets.size() > 0) {
+
+				//create the skillset menu
+				auto skillMenu = CCMenu::create();
+				auto skillLayout = AxisLayout::create();
+				skillLayout->setAxis(Axis::Column);
+				skillMenu->setLayout(skillLayout, true, false);
+				skillMenu->setID("skillset-menu"_spr);
+				skillMenu->setPosition({ diffSpr->getPositionX() + 14, diffSpr->getPositionY() - 26 });
+				skillMenu->setZOrder(42);
+				skillMenu->setContentSize({ 31.5f, 65.0f });
+				skillMenu->setAnchorPoint({ 1.0f, 0.5f });
+				skillMenu->setScale(0.75f);
+
+				//add skillset buttons
+				for (int i = 0; i < skillsets.size(); i++) {
+
+					std::string skillID = skillsets[i].as_string();
+
+					//check data entry
+					if (!skillsetData.contains(skillID)) {
+						skillID = "unknown";
+					}
+
+					//get data
+					auto name = skillsetData[skillID]["display-name"].as_string();
+					auto desc = skillsetData[skillID]["description"].as_string();
+					auto spriteName = fmt::format("{}.png", skillsetData[skillID]["sprite"].as_string());
+
+					CCSprite* sprite;
+					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName.c_str())) == nullptr) {
+						spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].as_string());
+						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName.c_str()));
+					}
+					else {
+						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName.c_str()));
+					}
+
+					auto skillsetBtn = CCMenuItemSpriteExtra::create(sprite, this, menu_selector(DemonProgression::skillInfoPopup));
+					skillsetBtn->setID(skillID);
+					skillMenu->addChild(skillsetBtn);
 				}
 
-				auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
-				auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
-				auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
+				skillMenu->updateLayout(false);
 
-				auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(data[type][id]["listID"].as_int())).hasRank;
+				this->addChild(skillMenu);
 
-				auto diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
+			}
 
-				auto gddpDiff = data["level-data"][std::to_string(p0->m_levelID.value())]["difficulty"].as_int();
+			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
+				diffSpr->setOpacity(0);
+			}
 
-				if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
-					diffSpr->setOpacity(0);
-				}
+			std::string sprite = "DP_Beginner";
+			std::string plusSprite = "DP_BeginnerPlus";
 
-				std::string sprite = "DP_Beginner";
-				std::string plusSprite = "DP_BeginnerPlus";
-
+			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(p0->m_levelID.value()))) {
+				sprite = ListManager::getSpriteName(p0);
+				plusSprite = fmt::format("{}Plus", sprite);
+			}
+			else {
 				sprite = data["main"][gddpDiff]["sprite"].as_string();
 				plusSprite = data["main"][gddpDiff]["plusSprite"].as_string();
+			}
 
-				std::string fullSpr = sprite + "Text.png";
-				std::string fullPlusSpr = plusSprite + "Text.png";
+			//fallbacks
+			if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite).c_str())) == nullptr) {
+				sprite = "DP_Invisible";
+			}
 
-				if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && sprite != "DP_Invisible.png") {
-					auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
+			if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSprite).c_str())) == nullptr) {
+				plusSprite = "DP_Invisible";
+			}
 
-					if (p0->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible.png") {
-						typeinfo_cast<CCSprite*>(diffSpr->getChildren()->objectAtIndex(0))->setVisible(false);
-						customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-					}
+			std::string fullSpr = fmt::format("{}Text.png", sprite);
+			std::string fullPlusSpr = fmt::format("{}Text.png", plusSprite);
 
-					if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank && plusSprite != "DP_Invisible.png") {
-						customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-					}
+			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && sprite != "DP_Invisible") {
+				auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
 
-					customSpr->setID("gddp-difficulty");
-					customSpr->setAnchorPoint({ 0.5f, 1 });
-					customSpr->setPosition({ diffSpr->getPositionX() + 0.25f, diffSpr->getPositionY() + 30 });
-					customSpr->setZOrder(5);
-
-					this->addChild(customSpr);
-
-					if (this->getChildByID("grd-difficulty") && !Mod::get()->getSettingValue<bool>("override-grandpa-demon")) {
-						customSpr->setVisible(false);
-					}
+				if (p0->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible") {
+					typeinfo_cast<CCSprite*>(diffSpr->getChildren()->objectAtIndex(0))->setVisible(false);
+					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
 				}
 
-				disableGrandpaDemon = true;
-			} else if (Mod::get()->getSettingValue<bool>("all-demons-rated")) {
-				std::string sprite = ListManager::getSpriteName(p0);
-				if (sprite != "") {
-					std::string fullSpr = sprite + "Text.png";
-					std::string fullPlusSpr = sprite + "PlusText.png";
-					auto diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
+				if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank && plusSprite != "DP_Invisible") {
+					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+				}
 
-					if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
-						diffSpr->setOpacity(0);
+				customSpr->setID("gddp-difficulty");
+				customSpr->setAnchorPoint({ 0.5f, 1 });
+				customSpr->setPosition({ diffSpr->getPositionX() + 0.25f, diffSpr->getPositionY() + 30 });
+				customSpr->setZOrder(5);
+
+				this->addChild(customSpr);
+
+				if (this->getChildByID("grd-difficulty") && !Mod::get()->getSettingValue<bool>("override-grandpa-demon")) {
+					customSpr->setVisible(false);
+				}
+			}
+
+			//GrD Effects
+			if (Mod::get()->getSettingValue<bool>("disable-grandpa-demon-effects") && Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
+				if (Loader::get()->isModLoaded("itzkiba.grandpa_demon")) {
+					int num = 0;
+
+					for (int i = 0; i < this->getChildrenCount(); i++) {
+						if (getChildOfType<CCSprite>(this, i)) {
+							if (!(getChildOfType<CCSprite>(this, i)->getID() != "") && (getChildOfType<CCSprite>(this, i)->getTag() != 69420) && (getChildOfType<CCSprite>(this, i)->getContentHeight() >= 750.0f)) {
+								num += 1;
+								getChildOfType<CCSprite>(this, i)->setID(fmt::format("grd-bg-{}", num));
+							}
+						}
+
+						if (num == 2) {
+							break;
+						}
+					}
+
+					num = 0;
+
+					for (int i = 0; i < this->getChildrenCount(); i++) {
+						if (getChildOfType<CCParticleSystemQuad>(this, i)) {
+							if (!(getChildOfType<CCParticleSystemQuad>(this, i)->getID() != "") && (getChildOfType<CCParticleSystemQuad>(this, i)->getPositionY() >= 230)) {
+								num += 1;
+								getChildOfType<CCParticleSystemQuad>(this, i)->setID(fmt::format("grd-particles-{}", num));
+							}
+						}
+
+						if (num == 2) {
+							break;
+						}
+					}
+
+					if (this->getChildByID("grd-bg-1")) {
+						this->getChildByID("grd-bg-1")->setVisible(false);
 						
-						auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
 
-						if (p0->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic")) {
-							typeinfo_cast<CCSprite*>(diffSpr->getChildren()->objectAtIndex(0))->setVisible(false);
-							customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
-						}
-
-						customSpr->setID("gddp-difficulty");
-						customSpr->setAnchorPoint({ 0.5f, 1 });
-						customSpr->setPosition({ diffSpr->getPositionX() + 0.25f, diffSpr->getPositionY() + 30 });
-						customSpr->setZOrder(5);
-
-						this->addChild(customSpr);
-
-						if (this->getChildByID("grd-difficulty") && !Mod::get()->getSettingValue<bool>("override-grandpa-demon")) {
-							customSpr->setVisible(false);
-						}
+						typeinfo_cast<CCSprite*>(this->getChildByID("background"))->setOpacity(255);
+						typeinfo_cast<CCSprite*>(this->getChildByID("bottom-left-art"))->setOpacity(255);
+						typeinfo_cast<CCSprite*>(this->getChildByID("bottom-right-art"))->setOpacity(255);
 					}
-					disableGrandpaDemon = true;
-				}
-			}
 
-			if (disableGrandpaDemon) {
-				if (Mod::get()->getSettingValue<bool>("disable-grandpa-demon-effects") && Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
-					if (Loader::get()->isModLoaded("itzkiba.grandpa_demon")) {
-						if (this->getChildByID("grd-infinity")) {
-							if (getChildOfType<CCSprite>(this, 11) && getChildOfType<CCSprite>(this, 12)) {
-								auto grdBG1 = getChildOfType<CCSprite>(this, 11);
-								auto grdBG2 = getChildOfType<CCSprite>(this, 12);
-
-								grdBG1->setVisible(false);
-								grdBG2->setVisible(false);
-
-								typeinfo_cast<CCSprite*>(this->getChildByID("background"))->setOpacity(255);
-								typeinfo_cast<CCSprite*>(this->getChildByID("bottom-left-art"))->setOpacity(255);
-								typeinfo_cast<CCSprite*>(this->getChildByID("bottom-right-art"))->setOpacity(255);
-							}
-							if (getChildOfType<CCParticleSystemQuad>(this, 0) && getChildOfType<CCParticleSystemQuad>(this, 1)) {
-								auto grdParticles1 = getChildOfType<CCParticleSystemQuad>(this, 0);
-								auto grdParticles2 = getChildOfType<CCParticleSystemQuad>(this, 1);
-
-								grdParticles1->setVisible(false);
-								grdParticles2->setVisible(false);
-							}
-						}
-						else {
-							if (auto grdBG = getChildOfType<CCSprite>(this, 11)) {
-								grdBG->setVisible(false);
-								typeinfo_cast<CCSprite*>(this->getChildByID("background"))->setOpacity(255);
-								typeinfo_cast<CCSprite*>(this->getChildByID("bottom-left-art"))->setOpacity(255);
-								typeinfo_cast<CCSprite*>(this->getChildByID("bottom-right-art"))->setOpacity(255);
-							}
-							if (auto grdParticles = getChildOfType<CCParticleSystemQuad>(this, 0)) {
-								grdParticles->setVisible(false);
-							}
-						}
+					if (this->getChildByID("grd-bg-2")) {
+						this->getChildByID("grd-bg-2")->setVisible(false);
 					}
-				}
 
-				if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && Mod::get()->getSettingValue<bool>("override-grandpa-demon") && (type == "main" || type == "legacy")) {
-					if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && this->getChildByID("grd-difficulty")) {
-						this->getChildByID("grd-difficulty")->setVisible(false);
-						if (this->getChildByID("grd-infinity")) { this->getChildByID("grd-infinity")->setVisible(false); }
+					if (this->getChildByID("grd-particles-1")) {
+						this->getChildByID("grd-particles-1")->setVisible(false);
+					}
 
-						this->getChildByID("grd-difficulty")->removeMeAndCleanup();
+					if (this->getChildByID("grd-particles-2")) {
+						this->getChildByID("grd-particles-2")->setVisible(false);
 					}
 				}
 			}
+
+			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && Mod::get()->getSettingValue<bool>("override-grandpa-demon") && (type == "main" || type == "legacy")) {
+				if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && this->getChildByID("grd-difficulty")) {
+					this->getChildByID("grd-difficulty")->setVisible(false);
+					if (this->getChildByID("grd-infinity")) { this->getChildByID("grd-infinity")->setVisible(false); }
+
+					this->getChildByID("grd-difficulty")->removeMeAndCleanup();
+				}
+			}
+
 		}
 
 		return true;
@@ -182,7 +267,22 @@ class $modify(LevelInfoLayer) {
 			inGDDP = true;
 		}
 
-		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
+		if (inGDDP && (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value())) || Mod::get()->getSettingValue<bool>("all-demons-rated"))) {
+			
+			//if not on the GDDP, IDS, NLW, or Pointercrate, return
+			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars == 10 && ListManager::getSpriteName(this->m_level) == "") {
+				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
+					return;
+				}
+			}
+
+			//if not a demon level that's registered on the gddp, return
+			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars != 10) {
+				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
+					return;
+				}
+			}
+			
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
 
 			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && Mod::get()->getSettingValue<bool>("override-grandpa-demon")) {
@@ -195,6 +295,4 @@ class $modify(LevelInfoLayer) {
 			}
 		}
 	}
-
-
 };

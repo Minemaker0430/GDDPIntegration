@@ -90,6 +90,11 @@ class $modify(LevelListLayer) {
 				sprName = fmt::format("{}.png", data[type][id]["sprite"].as_string());
 			}
 
+			//fallbacks
+			if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName.c_str())) == nullptr) {
+				sprName = "DP_Invisible.png";
+			}
+
 			if (sprName != "DP_Invisible.png") {
 				auto dpIcon = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName.c_str()));
 				dpIcon->setPosition(diffIcon->getPosition());

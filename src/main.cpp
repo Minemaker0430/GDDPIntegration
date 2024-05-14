@@ -157,6 +157,22 @@ void DPLayer::reloadData(CCObject* sender) {
 			this->setKeyboardEnabled(true);
 			this->setKeypadEnabled(true);
 		});
+
+	web::AsyncWebRequest()
+		.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/skill-badges.json")
+		.text()
+		.then([&](std::string const& response) {
+			if (matjson::parse(response) != Mod::get()->getSavedValue<matjson::Value>("skillset-info", {})) {
+				Mod::get()->setSavedValue<matjson::Value>("skillset-info", matjson::parse(response));
+				log::info("Updated skillset info.");
+			}
+			else {
+				log::info("No skillset updates found.");
+			}
+		})
+		.expect([&](std::string const& error) {
+			FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the Skillset Data. ({})", error), "OK")->show();
+		});
 }
 
 void DPLayer::openList(CCObject* sender) {
@@ -324,160 +340,7 @@ void DPLayer::openList(CCObject* sender) {
 }
 
 void DPLayer::achievementsCallback(CCObject* sender) {
-
-	//all save stuff
-	auto packProgress_main = Mod::get()->getSavedValue<matjson::Array>("pack-progress-main");
-	auto packProgress_legacy = Mod::get()->getSavedValue<matjson::Array>("pack-progress-legacy");
-	auto packProgress_bonus = Mod::get()->getSavedValue<matjson::Array>("pack-progress-bonus");
-	auto packProgress_monthly = Mod::get()->getSavedValue<matjson::Array>("pack-progress-monthly");
-
-	auto hasRank = Mod::get()->getSavedValue<matjson::Array>("has-rank");
-	auto hasCompleted_main = Mod::get()->getSavedValue<matjson::Array>("has-completed-main");
-	auto hasCompleted_legacy = Mod::get()->getSavedValue<matjson::Array>("has-completed-legacy");
-	auto hasCompleted_bonus = Mod::get()->getSavedValue<matjson::Array>("has-completed-bonus");
-	auto hasCompleted_monthly = Mod::get()->getSavedValue<matjson::Array>("has-completed-monthly");
-
-	auto packsCompleted_main = Mod::get()->getSavedValue<int>("packs-completed-main", 0);
-	auto packsCompleted_legacy = Mod::get()->getSavedValue<int>("packs-completed-legacy", 0);
-	auto packsCompleted_bonus = Mod::get()->getSavedValue<int>("packs-completed-bonus", 0);
-	auto packsCompleted_monthly = Mod::get()->getSavedValue<int>("packs-completed-monthly", 0);
-
-	auto bronzeMedals = Mod::get()->getSavedValue<int>("bronze-medals", 0);
-	auto silverMedals = Mod::get()->getSavedValue<int>("silver-medals", 0);
-	auto goldMedals = Mod::get()->getSavedValue<int>("gold-medals", 0);
-
-	auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
-	
-	//get completed packs
-	packsCompleted_main = 0;
-	packsCompleted_legacy = 0;
-	packsCompleted_bonus = 0;
-	packsCompleted_monthly = 0;
-
-	for (int i = 0; i < hasCompleted_main.size(); i++) {
-		if (hasCompleted_main[i].as_bool()) {
-			packsCompleted_main += 1;
-		}
-	}
-
-	for (int i = 0; i < hasCompleted_legacy.size(); i++) {
-		if (hasCompleted_legacy[i].as_bool()) {
-			packsCompleted_legacy += 1;
-		}
-	}
-
-	for (int i = 0; i < hasCompleted_bonus.size(); i++) {
-		if (hasCompleted_bonus[i].as_bool()) {
-			packsCompleted_bonus += 1;
-		}
-
-	}
-	for (int i = 0; i < hasCompleted_monthly.size(); i++) {
-		if (hasCompleted_monthly[i].as_bool()) {
-			packsCompleted_monthly += 1;
-		}
-	}
-
-	Mod::get()->setSavedValue<int>("packs-completed-main", packsCompleted_main);
-	Mod::get()->setSavedValue<int>("packs-completed-legacy", packsCompleted_legacy);
-	Mod::get()->setSavedValue<int>("packs-completed-bonus", packsCompleted_bonus);
-	Mod::get()->setSavedValue<int>("packs-completed-monthly", packsCompleted_monthly);
-
-	//get highest completions (-1 = None)
-	auto highestRank = -1; //highest normal rank
-	auto highestCompletion = -1; //highest plus rank
-	auto hardestTier = -1; //hardest uncompleted tier
-
-	for (int i = 0; i < hasRank.size(); i++) {
-		if (hasRank[i].as_bool()) {
-			highestRank = i;
-		}
-	}
-
-	for (int i = 0; i < hasCompleted_main.size(); i++) {
-		if (hasCompleted_main[i].as_bool()) {
-			highestCompletion = i;
-		}
-	}
-
-	for (int i = 0; i < packProgress_main.size(); i++) {
-		if (packProgress_main[i].as_int() > 0) {
-			hardestTier = i;
-		}
-	}
-
-	//calculate special ranks
-	std::vector<std::string> specialRanks = {
-		//Normal
-		"PROFESSIONAL",
-		"MASTER",
-		"GRANDMASTER",
-		"GODMASTER",
-		//Plus
-		"EXPERIENCED",
-		"EXEMPLARY",
-		"EXCELLENT",
-		"EXCEPTIONAL",
-		"EXTRAORDINARY",
-		"EXPERT",
-		"EXCESSIVE",
-		"EXALTED",
-		"PERFECTION",
-		"ABSOLUTE PERFECTION"
-	};
-
-	auto normalRank = -1;
-	auto plusRank = -1;
-	auto hasPerfection = false;
-
-	if (highestRank >= 6) {
-		normalRank = 0;
-	}
-	else if (highestRank >= 9) {
-		normalRank = 1;
-	}
-	else if (highestRank >= 11) {
-		normalRank = 2;
-	}
-	else if (highestRank >= 12) {
-		normalRank = 3;
-	}
-
-	if (highestCompletion >= 4 && packsCompleted_main >= 5) {
-		plusRank = 4;
-	}
-	else if (highestCompletion >= 5 && packsCompleted_main >= 6) {
-		plusRank = 5;
-	}
-	else if (highestCompletion >= 6 && packsCompleted_main >= 7) {
-		plusRank = 6;
-	}
-	else if (highestCompletion >= 7 && packsCompleted_main >= 8) {
-		plusRank = 7;
-	}
-	else if (highestCompletion >= 8 && packsCompleted_main >= 9) {
-		plusRank = 8;
-	}
-	else if (highestCompletion >= 9 && packsCompleted_main >= 10) {
-		plusRank = 9;
-	}
-	else if (highestCompletion >= 10 && packsCompleted_main >= 11) {
-		plusRank = 10;
-	}
-	else if (highestCompletion >= 11 && packsCompleted_main >= 12) {
-		plusRank = 11;
-	}
-	else if (highestCompletion >= 12 && packsCompleted_main >= 13) {
-		plusRank = 12;
-	}
-
-	if (packsCompleted_main == hasCompleted_main.size() && packsCompleted_bonus == hasCompleted_bonus.size()) {
-		hasPerfection = true;
-	}
-
-	//show popup
-	auto popup = DPStatsPopup::create("");
-	popup->show();
+	//insert stuff here eventually
 }
 
 bool DPLayer::init() {
@@ -613,6 +476,22 @@ bool DPLayer::init() {
 				this->setKeypadEnabled(true);
 			});
 		
+		web::AsyncWebRequest()
+			.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/skill-badges.json")
+			.text()
+			.then([&](std::string const& response) {
+				if (matjson::parse(response) != Mod::get()->getSavedValue<matjson::Value>("skillset-info", {})) {
+					Mod::get()->setSavedValue<matjson::Value>("skillset-info", matjson::parse(response));
+					log::info("Updated skillset info.");
+				}
+				else {
+					log::info("No skillset updates found.");
+				}
+			})
+			.expect([&](std::string const& error) {
+				FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the Skillset Data. ({})", error), "OK")->show();
+			});
+
 		//extra buttons
 		auto achievementBtnSprite = CCSprite::createWithSpriteFrameName("GJ_achBtn_001.png");
 		auto leaderboardsBtnSprite = CCSprite::createWithSpriteFrameName("GJ_statsBtn_001.png");
@@ -692,6 +571,11 @@ void DPLayer::reloadList(int type) {
 	auto silverMedals = Mod::get()->getSavedValue<int>("silver-medals", 0);
 	auto goldMedals = Mod::get()->getSavedValue<int>("gold-medals", 0);
 
+	auto demonCountMain = Mod::get()->getSavedValue<int>("demon-count-main", 0);
+	auto demonCountLegacy = Mod::get()->getSavedValue<int>("demon-count-legacy", 0);
+	auto demonCountBonus = Mod::get()->getSavedValue<int>("demon-count-bonus", 0);
+	auto demonCountMonthly = Mod::get()->getSavedValue<int>("demon-count-monthly", 0);
+
 	auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
 
 	Mod::get()->setSavedValue<int>("database-version", m_data["database-version"].as_int());
@@ -702,15 +586,19 @@ void DPLayer::reloadList(int type) {
 
 	if (type == static_cast<int>(DPListType::Main)) {
 		dataIdx = "main";
+		demonCountMain = 0;
 	} 
 	else if (type == static_cast<int>(DPListType::Legacy)) {
 		dataIdx = "legacy";
+		demonCountLegacy = 0;
 	}
 	else if (type == static_cast<int>(DPListType::Bonus)) {
 		dataIdx = "bonus";
+		demonCountBonus = 0;
 	}
 	else if (type == static_cast<int>(DPListType::Monthly)) {
 		dataIdx = "monthly";
+		demonCountMonthly = 0;
 	}
 	
 	auto packs = m_data[dataIdx].as_array();
@@ -749,6 +637,19 @@ void DPLayer::reloadList(int type) {
 		//get list save
 		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
 
+		if (type == static_cast<int>(DPListType::Main)) {
+			demonCountMain += listSave.progress;
+		}
+		else if (type == static_cast<int>(DPListType::Legacy)) {
+			demonCountLegacy += listSave.progress;
+		}
+		else if (type == static_cast<int>(DPListType::Bonus)) {
+			demonCountBonus += listSave.progress;
+		}
+		else if (type == static_cast<int>(DPListType::Monthly)) {
+			demonCountMonthly += listSave.progress;
+		}
+
 		auto fullTitle = name;
 		if (type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) { 
 			if (listSave.hasRank && type == static_cast<int>(DPListType::Main)) {
@@ -763,6 +664,15 @@ void DPLayer::reloadList(int type) {
 		}
 		auto fullSprite = fmt::format("{}.png", sprite);
 		auto fullPlusSprite = fmt::format("{}.png", plusSprite);
+
+		//fallbacks
+		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSprite.c_str())) == nullptr) {
+			fullSprite = "DP_Invisible.png";
+		}
+
+		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSprite.c_str())) == nullptr) {
+			fullPlusSprite = "DP_Invisible.png";
+		}
 
 		CCNode* cell = ListCell::create();
 
@@ -1044,6 +954,13 @@ void DPLayer::reloadList(int type) {
 
 		packListCells->addObject(cell);
 	};
+
+	Mod::get()->setSavedValue<int>("demon-count-main", demonCountMain);
+	Mod::get()->setSavedValue<int>("demon-count-legacy", demonCountLegacy);
+	Mod::get()->setSavedValue<int>("demon-count-bonus", demonCountBonus);
+	Mod::get()->setSavedValue<int>("demon-count-monthly", demonCountMonthly);
+
+	Mod::get()->setSavedValue<int>("total-demon-count", demonCountMain + demonCountLegacy + demonCountBonus + demonCountMonthly);
 
 	//list
 	auto director = CCDirector::sharedDirector();
