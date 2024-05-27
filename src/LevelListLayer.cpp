@@ -75,6 +75,21 @@ class $modify(LevelListLayer) {
 			log::info("{}", reqLevels);
 			log::info("{}", totalLevels);
 
+			//progress bar stuff
+			if (auto progBar = getChildOfType<CCSprite>(this, 6)) {
+
+				progBar->setID("progress-bar");
+
+				if (auto frontSpr = typeinfo_cast<CCSprite*>(progBar->getChildren()->objectAtIndex(0))) {
+					if (listSave.completed) {
+						frontSpr->setColor({ 255, 255, 0 });
+					}
+					else if (type == "main" && !listSave.hasRank) {
+						frontSpr->setColor({ 255, 84, 50 });
+					}
+				}
+			}
+
 			//create sprite thing
 			std::string sprName = "DP_Beginner";
 
@@ -99,6 +114,7 @@ class $modify(LevelListLayer) {
 				auto dpIcon = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName.c_str()));
 				dpIcon->setPosition(diffIcon->getPosition());
 				dpIcon->setZOrder(diffIcon->getZOrder());
+				dpIcon->setID("gddp-difficulty");
 				this->addChild(dpIcon);
 			}
 

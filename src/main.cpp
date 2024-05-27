@@ -7,6 +7,7 @@
 #include "DPLayer.hpp"
 #include "Settings.hpp"
 #include "ListManager.hpp"
+#include "StatsPopup.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -20,6 +21,7 @@ $on_mod(Loaded) {
 	Mod::get()->addCustomSetting<SectionSettingValue>("menu-section", "");
 	Mod::get()->addCustomSetting<SectionSettingValue>("cosmetic-section", "");
 	Mod::get()->addCustomSetting<SectionSettingValue>("compatibility-section", "");
+
 	ListManager::init();
 }
 
@@ -100,18 +102,26 @@ std::vector<std::string> getWords(std::string s, std::string d) {
 }
 
 void DPLayer::reloadData(CCObject* sender) {
-	m_list->removeAllChildrenWithCleanup(true);
-	m_list->removeMeAndCleanup();
+	if (!m_finishedLoading) {
+		return;
+	}
+
+	m_finishedLoading = false;
+	
+	if (m_list) {
+		m_list->removeAllChildrenWithCleanup(true);
+		m_list->removeMeAndCleanup();
+	}
 
 	m_loadcircle = LoadingCircle::create();
 	m_loadcircle->show();
 
-	m_reload->setVisible(false);
+	//m_reload->setVisible(false);
 	m_tabs->setVisible(false);
-	m_backMenu->setVisible(false);
+	//m_backMenu->setVisible(false);
 
-	this->setKeyboardEnabled(false);
-	this->setKeypadEnabled(false);
+	//this->setKeyboardEnabled(false);
+	//this->setKeypadEnabled(false);
 
 	if (!Mod::get()->getSettingValue<bool>("enable-cache")) {
 		Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
@@ -145,13 +155,15 @@ void DPLayer::reloadData(CCObject* sender) {
 
 			this->setKeyboardEnabled(true);
 			this->setKeypadEnabled(true);
+
+			m_finishedLoading = true;
 		})
 		.expect([&](std::string const& error) {
 			FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({})", error), "OK")->show();
 
 			m_loadcircle->fadeAndRemove();
 			m_reload->setVisible(true);
-			m_tabs->setVisible(true);
+			//m_tabs->setVisible(true);
 			m_backMenu->setVisible(true);
 
 			this->setKeyboardEnabled(true);
@@ -340,7 +352,9 @@ void DPLayer::openList(CCObject* sender) {
 }
 
 void DPLayer::achievementsCallback(CCObject* sender) {
-	//insert stuff here eventually
+	if (m_finishedLoading) {
+		StatsPopup::create()->show();
+	}
 }
 
 bool DPLayer::init() {
@@ -380,7 +394,7 @@ bool DPLayer::init() {
 		auto backMenu = CCMenu::create();
 		backMenu->addChild(backButton);
 		backMenu->setPosition({25, size.height - 25});
-		backMenu->setVisible(false);
+		//backMenu->setVisible(false);
 		this->addChild(backMenu);
 		m_backMenu = backMenu;
 
@@ -430,7 +444,7 @@ bool DPLayer::init() {
 		reloadMenu->setID("reload-menu");
 		this->addChild(reloadMenu);
 		m_reload = reloadMenu;
-		m_reload->setVisible(false);
+		//m_reload->setVisible(false);
 
 		m_currentTab = static_cast<int>(DPListType::Main);
 
@@ -464,6 +478,8 @@ bool DPLayer::init() {
 
 				this->setKeyboardEnabled(true);
 				this->setKeypadEnabled(true);
+
+				m_finishedLoading = true;
 			})
 			.expect([&](std::string const& error) {
 				FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({})", error), "OK")->show();
@@ -682,12 +698,14 @@ void DPLayer::reloadList(int type) {
 		if (fullTitle.length() > 25) { packText->setScale(0.425f); }
 		packText->setAnchorPoint({ 0, 1 });
 		packText->setPosition({ 53, 49 });
+		packText->setID("pack-text");
 
 		if (listSave.completed) {
 			packText->setFntFile("goldFont.fnt");
 		}
 
 		CCNode* packSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
+		packSpr->setID("pack-sprite");
 
 		if (fullSprite != "DP_Invisible.png") {
 			packSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSprite.c_str()));
@@ -704,25 +722,65 @@ void DPLayer::reloadList(int type) {
 		packPlusSpr->setAnchorPoint({ 0.5, 0.5 });
 		packPlusSpr->setPosition({ 28.5, 25 });
 		packPlusSpr->setVisible(false);
+		packPlusSpr->setID("pack-plus-sprite");
 
-		/*auto packProgressBack = CCSprite::create("GJ_progressBar_001.png");
+		auto packProgressBack = CCSprite::create("GJ_progressBar_001.png");
 		packProgressBack->setAnchorPoint({0, 0.5});
 		packProgressBack->setPosition({53, 15});
-		packProgressBack->setScaleX(0.48f);
-		packProgressBack->setScaleY(0.64f);
 		packProgressBack->setColor({0, 0, 0});
+		packProgressBack->setOpacity(128);
+		packProgressBack->setID("progress-bar");
 
 		auto packProgressFront = CCSprite::create("GJ_progressBar_001.png");
-		packProgressFront->setAnchorPoint({0, 0.5});
-		packProgressFront->setPosition({3.74f, 10});
-		packProgressFront->setScaleX(0.975f);
-		packProgressFront->setScaleY(0.76f);
-		packProgressFront->setColor({255, 84, 50});
+		packProgressFront->setAnchorPoint({ 0, 0.5 });
+		packProgressFront->setPosition({ 0.0f, 10.f });
+		packProgressFront->setScaleX(0.98f);
+		packProgressFront->setScaleY(0.75f);
+		packProgressFront->setZOrder(1);
 
-		CCNode* packProgressText = CCLabelBMFont::create("0/13", "bigFont.fnt");
-		packProgressText->setPosition({170, 11});
-		packProgressFront->setScaleX(1);
-		packProgressFront->setScaleY(0.65f);*/
+		if (listSave.completed) {
+			packProgressFront->setColor({ 255, 255, 0 });
+		}
+		else if (type == static_cast<int>(DPListType::Main) && !listSave.hasRank) {
+			packProgressFront->setColor({ 255, 84, 50 });
+		}
+		else {
+			packProgressFront->setColor({ 80, 190, 255 });
+		}
+
+		auto progressPercent = 0.0f;
+
+		if (type == static_cast<int>(DPListType::Monthly)) {
+			if (listSave.progress >= 5) {
+				progressPercent = (float)listSave.progress / 6.f;
+			}
+			else {
+				progressPercent = (float)listSave.progress / 5.f;
+			}
+		}
+		else if (listSave.hasRank || type != static_cast<int>(DPListType::Main)) {
+			progressPercent = (float)listSave.progress / (float)totalLevels;
+		}
+		else {
+			progressPercent = (float)listSave.progress / (float)reqLevels;
+		}
+		
+		auto clippingNode = CCClippingNode::create();
+		auto stencil = CCScale9Sprite::create("square02_001.png");
+		stencil->setAnchorPoint({ 0, 0.5f });
+		stencil->setContentWidth(packProgressFront->getScaledContentSize().width);
+		stencil->setScaleX(progressPercent);
+		stencil->setContentHeight(20);
+		clippingNode->setStencil(stencil);
+		clippingNode->setAnchorPoint({ 0, 0.5f });
+		clippingNode->setPosition({ 3.25f, 10.5f });
+		clippingNode->setContentWidth(packProgressFront->getContentWidth() - 2.f);
+		clippingNode->setContentHeight(20);
+		clippingNode->addChild(packProgressFront);
+		packProgressBack->addChild(clippingNode);
+
+		packProgressBack->setScaleX(0.6f);
+		packProgressBack->setScaleY(0.65f);
 
 		std::string progStr = "...";
 		CCLabelBMFont* progText = CCLabelBMFont::create("...", "bigFont.fnt");
@@ -768,9 +826,10 @@ void DPLayer::reloadList(int type) {
 		}
 
 		progText->setCString(progStr.c_str());
-		progText->setPosition({ 53, 16 });
-		progText->setAnchorPoint({ 0, 0.5 });
+		progText->setPosition({ 155, 15 });
+		progText->setAnchorPoint({ 0.5, 0.5 });
 		progText->setScale(0.30f);
+		progText->setID("progress-text");
 
 		if (type == static_cast<int>(DPListType::Monthly)) {
 			std::string months[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
@@ -781,8 +840,9 @@ void DPLayer::reloadList(int type) {
 			monthlyText->setColor(monthColor[month - 1]);
 			monthlyText->setScale(0.35f);
 			monthlyText->setAnchorPoint({ 0, 1 });
-			monthlyText->setPosition({ 53, 30 });
+			monthlyText->setPosition({ 53, 32 });
 			monthlyText->setZOrder(1);
+			monthlyText->setID("monthly-text");
 			cell->addChild(monthlyText);
 		}
 
@@ -823,6 +883,7 @@ void DPLayer::reloadList(int type) {
 
 		if (i == 0 && type == static_cast<int>(DPListType::Monthly)) {
 			auto goldBG = CCLayerColor::create({255, 200, 0, 255});
+			goldBG->setID("gold-bg");
 			cell->addChild(goldBG);
 
 			cellMenu->setZOrder(1);
@@ -838,11 +899,13 @@ void DPLayer::reloadList(int type) {
 			michiSpikes->setScale(0.5f);
 			michiSpikes->setPositionX(packText->getContentWidth() - 42);
 			michiSpikes->setPositionY(35);
+			michiSpikes->setID("michigun-spikes");
 
 			michiHeart->setScale(0.35f);
 			michiHeart->setPositionX(packText->getContentWidth() - 42);
 			michiHeart->setPositionY(44);
 			michiHeart->setColor({0, 0, 0});
+			michiHeart->setID("michigun-heart");
 
 			cell->addChild(michiSpikes);
 			cell->addChild(michiHeart);
@@ -858,6 +921,7 @@ void DPLayer::reloadList(int type) {
 				auto lockIcon = CCSprite::createWithSpriteFrameName("GJ_lock_001.png");
 				lockIcon->setPosition({180, 20});
 				lockIcon->setAnchorPoint({0.5f, 0});
+				lockIcon->setID("lock-icon");
 
 				std::string rankText = "???";
 				if (i > 1) {
@@ -880,18 +944,17 @@ void DPLayer::reloadList(int type) {
 				lockText->setPosition({ 180, 5 });
 				lockText->setAnchorPoint({ 0.5f, 0 });
 				lockText->setScale(0.5f);
+				lockText->setID("lock-text");
 
 				cell->addChild(lockIcon);
 				cell->addChild(lockText);
 			}
 			else {
-				//packProgressBack->addChild(packProgressFront);
-				//packProgressBack->addChild(packProgressText);
 				cell->addChild(cellMenu);
 				cell->addChild(packText);
 				cell->addChild(packSpr);
 				cell->addChild(packPlusSpr);
-				//cell->addChild(packProgressBack);
+				cell->addChild(packProgressBack);
 				cell->addChild(progText);
 			}
 		}
@@ -905,6 +968,7 @@ void DPLayer::reloadList(int type) {
 				auto lockIcon = CCSprite::createWithSpriteFrameName("GJ_lock_001.png");
 				lockIcon->setPosition({ 180, 20 });
 				lockIcon->setAnchorPoint({ 0.5f, 0 });
+				lockIcon->setID("lock-icon");
 
 				std::string rankText = "???";
 				if (mainPack > 0) {
@@ -926,29 +990,26 @@ void DPLayer::reloadList(int type) {
 				lockText->setPosition({ 180, 5 });
 				lockText->setAnchorPoint({ 0.5f, 0 });
 				lockText->setScale(0.5f);
+				lockText->setID("lock-text");
 
 				cell->addChild(lockIcon);
 				cell->addChild(lockText);
 			}
 			else {
-				//packProgressBack->addChild(packProgressFront);
-				//packProgressBack->addChild(packProgressText);
 				cell->addChild(cellMenu);
 				cell->addChild(packText);
 				cell->addChild(packSpr);
 				cell->addChild(packPlusSpr);
-				//cell->addChild(packProgressBack);
+				cell->addChild(packProgressBack);
 				cell->addChild(progText);
 			}
 		}
 		else {
-			//packProgressBack->addChild(packProgressFront);
-			//packProgressBack->addChild(packProgressText);
 			cell->addChild(cellMenu);
 			cell->addChild(packText);
 			cell->addChild(packSpr);
 			cell->addChild(packPlusSpr);
-			//cell->addChild(packProgressBack);
+			cell->addChild(packProgressBack);
 			cell->addChild(progText);
 		}
 

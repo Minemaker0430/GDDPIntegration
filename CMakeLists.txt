@@ -15,6 +15,7 @@ add_library(${PROJECT_NAME} SHARED
     src/LevelInfoLayer.cpp
     src/LevelCell.cpp
     src/ListManager.cpp
+    src/StatsPopup.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

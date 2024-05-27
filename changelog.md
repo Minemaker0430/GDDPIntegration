@@ -1,3 +1,12 @@
+# v1.0.0-beta.21
+
+* Added Progress Bars
+	* Progress Bar colors in the Lists now match the ones in the menus
+* Added as many Node IDs to the GDDP Stuff as I could
+* Patched up Beta 20 stuff
+	* Insane/Extreme Demon ratings now rely on GDDL Tiers as opposed to 3 seperate APIs
+* Fixed Main Menu related issues (I think)
+
 # v1.0.0-beta.20
 
 * Added skillset badges

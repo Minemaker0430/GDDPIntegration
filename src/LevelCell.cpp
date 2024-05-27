@@ -69,6 +69,15 @@ class $modify(DemonProgression, LevelCell) {
 			if (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 				gddpDiff = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["difficulty"].as_int();
 				skillsets = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["skillsets"].as_array();
+
+				if (this->m_level->m_normalPercent.value() == 100) {
+					auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
+					
+					if (std::find(completedLvls.begin(), completedLvls.end(), this->m_level->m_levelID.value()) == completedLvls.end()) {
+						completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
+						Mod::get()->setSavedValue<matjson::Array>("completed-levels", completedLvls);
+					}
+				}
 			}
 
 			//skillset badges
