@@ -2,12 +2,15 @@
 #include <Geode/Geode.hpp>
 
 //other headers
+#include <Geode/modify/MenuLayer.hpp>
 #include <Geode/utils/web.hpp>
+#include <Geode/loader/Event.hpp>
 
 #include "DPLayer.hpp"
 #include "Settings.hpp"
 #include "ListManager.hpp"
 #include "StatsPopup.hpp"
+#include "Utils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -77,114 +80,105 @@ void DPLayer::soonCallback(CCObject*) {
 	FLAlertLayer::create("Coming Soon!", "This feature hasn't been implemented yet but will be in the future!", "OK")->show();
 }
 
-std::vector<std::string> getWords(std::string s, std::string d) {
-	std::vector<std::string> res;
-	std::string delim = d;
-	std::string token = "";
-	for (int i = 0; i < s.size(); i++) {
-		bool flag = true;
-		for (int j = 0; j < delim.size(); j++) {
-			if (s[i + j] != delim[j]) flag = false;
-		}
-		if (flag) {
-			if (token.size() > 0) {
-				res.push_back(token);
-				token = "";
-				i += delim.size() - 1;
-			}
-		}
-		else {
-			token += s[i];
-		}
-	}
-	res.push_back(token);
-	return res;
+void DPLayer::reloadCallback(CCObject*) {
+	reloadData(false);
 }
 
-void DPLayer::reloadData(CCObject* sender) {
-	if (!m_finishedLoading) {
-		return;
-	}
+void DPLayer::reloadData(bool isInit) {
 
-	m_finishedLoading = false;
-	
-	if (m_list) {
-		m_list->removeAllChildrenWithCleanup(true);
-		m_list->removeMeAndCleanup();
-	}
+	if (m_finishedLoading || isInit) {
 
-	m_loadcircle = LoadingCircle::create();
-	m_loadcircle->show();
+		m_finishedLoading = false;
 
-	//m_reload->setVisible(false);
-	m_tabs->setVisible(false);
-	//m_backMenu->setVisible(false);
+		if (!isInit) {
+			m_list->removeAllChildrenWithCleanup(true);
+			m_list->removeMeAndCleanup();
+		}
+		
+		m_loadcircle = LoadingCircle::create();
+		m_loadcircle->m_parentLayer = this;
+		m_loadcircle->show();
 
-	//this->setKeyboardEnabled(false);
-	//this->setKeypadEnabled(false);
+		//m_reload->setVisible(false);
+		m_tabs->setVisible(false);
+		//m_backMenu->setVisible(false);
 
-	if (!Mod::get()->getSettingValue<bool>("enable-cache")) {
-		Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
-	}
+		//this->setKeyboardEnabled(false);
+		//this->setKeypadEnabled(false);
 
-	std::string dataURL;
+		if (!Mod::get()->getSettingValue<bool>("enable-cache")) {
+			Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
+		}
 
-	//log::info("{}", GameManager::sharedState()->m_playerName);
-	if (GameManager::sharedState()->m_playerName == "Minemaker0430") {
-		log::info("Hello, me");
-		dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/dev-list.json";
-	}
-	else {
-		dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json";
-	}
+		std::string dataURL;
 
-	// download data
-	web::AsyncWebRequest()
-		.fetch(dataURL)
-		.text()
-		.then([&](std::string const& response) {
-			
-			Mod::get()->setSavedValue<matjson::Value>("cached-data", matjson::parse(response));
-			m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data", matjson::parse("{\"main\": [], \"legacy\": [], \"bonus\": [], \"monthly\": [], \"database-version\": 0, \"level-data\": {}}"));
-			reloadList(m_currentTab);
+		//log::info("{}", GameManager::sharedState()->m_playerName);
+		if (GameManager::sharedState()->m_playerName == "Minemaker0430") {
+			log::info("Hello, me");
+			dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/dev-list.json";
+		}
+		else {
+			dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json";
+		}
 
-			m_loadcircle->fadeAndRemove();
-			m_reload->setVisible(true);
-			m_tabs->setVisible(true);
-			m_backMenu->setVisible(true);
+		// download data
 
-			this->setKeyboardEnabled(true);
-			this->setKeypadEnabled(true);
+		//list
+		m_listListener.bind([&](web::WebTask::Event* e) {
+			if (auto res = e->getValue()) {
+				//log::info("{}", res->string().unwrapOr("Uh oh!"));
+				if (res->ok() && res->json().isOk()) {
+					Mod::get()->setSavedValue<matjson::Value>("cached-data", res->json().unwrap());
+					m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data", matjson::parse("{\"main\": [], \"legacy\": [], \"bonus\": [], \"monthly\": [], \"database-version\": 0, \"level-data\": {}}"));
+					reloadList(m_currentTab);
 
-			m_finishedLoading = true;
-		})
-		.expect([&](std::string const& error) {
-			FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({})", error), "OK")->show();
+					m_tabs->setVisible(true);
+					m_loadcircle->fadeAndRemove();
 
-			m_loadcircle->fadeAndRemove();
-			m_reload->setVisible(true);
-			//m_tabs->setVisible(true);
-			m_backMenu->setVisible(true);
-
-			this->setKeyboardEnabled(true);
-			this->setKeypadEnabled(true);
-		});
-
-	web::AsyncWebRequest()
-		.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/skill-badges.json")
-		.text()
-		.then([&](std::string const& response) {
-			if (matjson::parse(response) != Mod::get()->getSavedValue<matjson::Value>("skillset-info", {})) {
-				Mod::get()->setSavedValue<matjson::Value>("skillset-info", matjson::parse(response));
-				log::info("Updated skillset info.");
+					m_finishedLoading = true;
+					log::info("List data loaded!");
+				}
+				else {
+					m_loadcircle->fadeAndRemove();
+					FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({})", res->code()), "OK")->show();
+				}
 			}
-			else {
-				log::info("No skillset updates found.");
+			else if (e->isCancelled()) {
+				log::info("Cancelled List request.");
 			}
-		})
-		.expect([&](std::string const& error) {
-			FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the Skillset Data. ({})", error), "OK")->show();
-		});
+			});
+
+		auto listReq = web::WebRequest();
+		m_listListener.setFilter(listReq.get(dataURL));
+
+		//skillsets
+		m_skillListener.bind([&](web::WebTask::Event* e) {
+			if (web::WebResponse* res = e->getValue()) {
+				//log::info("{}", res->string().unwrapOr("Uh oh!"));
+				if (res->ok() && res->json().isOk()) {
+					if (res->json().unwrap() != Mod::get()->getSavedValue<matjson::Value>("skillset-info", {})) {
+						Mod::get()->setSavedValue<matjson::Value>("skillset-info", res->json().unwrap());
+						log::info("Updated skillset info.");
+					}
+					else {
+						log::info("No skillset updates found.");
+					}
+				}
+				else {
+					FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the Skillset Data. ({})", res->code()), "OK")->show();
+				}
+			}
+			else if (e->isCancelled()) {
+				log::info("Cancelled Skillsets request.");
+			}
+			});
+
+		auto skillReq = web::WebRequest();
+		m_skillListener.setFilter(skillReq.get("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/skill-badges.json"));
+
+	}
+
+	return;
 }
 
 void DPLayer::openList(CCObject* sender) {
@@ -192,7 +186,7 @@ void DPLayer::openList(CCObject* sender) {
 	auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
 	auto id = btn->getTag();
 	auto type = btn->getID();
-	
+
 	if (type == "main-practice") {
 		Mod::get()->setSavedValue<bool>("is-practice", true);
 		type = "main";
@@ -234,121 +228,134 @@ void DPLayer::openList(CCObject* sender) {
 	}
 
 	m_loadcircle = LoadingCircle::create();
+	m_loadcircle->m_parentLayer = this;
 	m_loadcircle->show();
 
 	std::string const& url = "https://www.boomlings.com/database/getGJLevelLists.php";
 	std::string const& fields = "secret=Wmfd2893gb7&type=0&diff=-&len=-&count=1&str=" + std::to_string(fetchID); //thank you gd cologne :pray:
-	web::AsyncWebRequest()
-		.bodyRaw(fields)
-		.postRequest()
-		.fetch(url).text()
-		.then([&](std::string& response) {
-		//std::cout << response << std::endl;
-		if (response != "-1") {
-			auto scene = CCScene::create();
 
-			/*
-			Response IDs:
-			1 - List ID (int)
-			2 - Name (str)
-			3 - Description? (encoded with Base64)
-			4 - ???
-			5 - Version (int)
-			7 - ??? (int)
-			10 - Downloads (int)
-			14 - Likes (int)
-			19 - ??? (empty)
-			49 - ??? (int)
-			50 - Account Name (str)
-			51 - ID List (ints)
-			55 - ??? (int)
-			56 - ??? (int)
+	m_listener.bind([this](web::WebTask::Event* e) {
+		if (web::WebResponse* res = e->getValue()) {
+			//log::info("{}", res->string().unwrapOr("Uh oh!"));
+			if (res->ok() && res->string().isOk()) {
 
-			(i'll probably only use 1, 2, 3, and 51)
-			*/
+				auto response = res->string().unwrap();
 
-			auto cachedData = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-			auto cachedType = Mod::get()->getSavedValue<std::string>("current-pack-type");
-			auto cachedID = Mod::get()->getSavedValue<int>("current-pack-index");
+				if (response != "-1") {
+					auto scene = CCScene::create();
 
-			auto mainPack = 0;
-			if (cachedType == "legacy") { mainPack = cachedData[cachedType][cachedID]["mainPack"].as_int(); }
-			auto totalLevels = 0;
-			if (cachedType != "monthly") { totalLevels = cachedData[cachedType][cachedID]["totalLevels"].as_int(); }
+					/*
+					Response IDs:
+					1 - List ID (int)
+					2 - Name (str)
+					3 - Description? (encoded with Base64)
+					4 - ???
+					5 - Version (int)
+					7 - ??? (int)
+					10 - Downloads (int)
+					14 - Likes (int)
+					19 - ??? (empty)
+					49 - ??? (int)
+					50 - Account Name (str)
+					51 - ID List (ints)
+					55 - ??? (int)
+					56 - ??? (int)
 
-			auto data = getWords(response, ":");
-			log::info("{}", data);
+					(i'll probably only use 1, 2, 3, and 51)
+					*/
 
-			gd::vector<std::string> levelIDstr = getWords(data[20], ",");
-			log::info("{}", levelIDstr);
+					auto cachedData = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+					auto cachedType = Mod::get()->getSavedValue<std::string>("current-pack-type");
+					auto cachedID = Mod::get()->getSavedValue<int>("current-pack-index");
 
-			std::vector<int> IDs;
-			
-			if (cachedType == "main" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
-				for (int i = 0; i < totalLevels; i++)
-				{
-					int num = atoi(levelIDstr.at(i).c_str());
-					IDs.push_back(num);
-				}
-			}
-			else if (cachedType == "legacy" && Mod::get()->getSavedValue<bool>("is-practice", false))  {
-				for (int i = cachedData["main"][mainPack]["totalLevels"].as_int(); i < levelIDstr.size(); i++)
-				{
-					int num = atoi(levelIDstr.at(i).c_str());
-					IDs.push_back(num);
-				}
-			}
-			else {
-				for (int i = 0; i < levelIDstr.size(); i++)
-				{
-					int num = atoi(levelIDstr.at(i).c_str());
-					IDs.push_back(num);
-				}
-			}
+					auto mainPack = 0;
+					if (cachedType == "legacy") { mainPack = cachedData[cachedType][cachedID]["mainPack"].as_int(); }
+					auto totalLevels = 0;
+					if (cachedType != "monthly") { totalLevels = cachedData[cachedType][cachedID]["totalLevels"].as_int(); }
 
-			//gd::string desc = ZipUtils::base64URLDecode(data[5]);
+					auto data = Utils::substring(response, ":");
+					log::info("{}", data);
 
-			gd::string packTitle = "null";
+					gd::vector<std::string> levelIDstr = Utils::substring(data[20], ",");
+					log::info("{}", levelIDstr);
 
-			if (cachedType == "main" || cachedType == "legacy") {
-				if (Mod::get()->getSavedValue<bool>("is-practice", false)) {
-					packTitle = fmt::format("{} Demons (Practice)", cachedData[cachedType][cachedID]["name"].as_string());
+					std::vector<int> IDs;
+
+					if (cachedType == "main" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
+						for (int i = 0; i < totalLevels; i++)
+						{
+							int num = atoi(levelIDstr.at(i).c_str());
+							IDs.push_back(num);
+						}
+					}
+					else if (cachedType == "legacy" && Mod::get()->getSavedValue<bool>("is-practice", false)) {
+						for (int i = cachedData["main"][mainPack]["totalLevels"].as_int(); i < levelIDstr.size(); i++)
+						{
+							int num = atoi(levelIDstr.at(i).c_str());
+							IDs.push_back(num);
+						}
+					}
+					else {
+						for (int i = 0; i < levelIDstr.size(); i++)
+						{
+							int num = atoi(levelIDstr.at(i).c_str());
+							IDs.push_back(num);
+						}
+					}
+
+					//gd::string desc = ZipUtils::base64URLDecode(data[5]);
+
+					gd::string packTitle = "null";
+
+					if (cachedType == "main" || cachedType == "legacy") {
+						if (Mod::get()->getSavedValue<bool>("is-practice", false)) {
+							packTitle = fmt::format("{} Demons (Practice)", cachedData[cachedType][cachedID]["name"].as_string());
+						}
+						else {
+							packTitle = fmt::format("{} Demons", cachedData[cachedType][cachedID]["name"].as_string());
+						}
+					}
+					else {
+						packTitle = cachedData[cachedType][cachedID]["name"].as_string();
+					}
+
+					gd::string description = cachedData[cachedType][cachedID]["description"].as_string();
+
+					auto list = GJLevelList::create();
+					list->m_listID = std::stoi(data[1]);
+					list->m_listName = packTitle;
+					//list->m_listName = data[3];
+					list->m_downloads = std::stoi(data[13]);
+					list->m_likes = std::stoi(data[17]);
+					//list->m_creatorName = data[29];
+					list->m_levels = IDs;
+					list->m_listDesc = ZipUtils::base64URLEncode(description); //LevelTools::base64EncodeString(description); 
+
+					auto layer = LevelListLayer::create(list);
+
+					m_loadcircle->fadeAndRemove();
+
+					scene->addChild(layer);
+					CCDirector::sharedDirector()->pushScene(cocos2d::CCTransitionFade::create(0.5f, scene));
 				}
 				else {
-					packTitle = fmt::format("{} Demons", cachedData[cachedType][cachedID]["name"].as_string());
+					FLAlertLayer::create("ERROR", "This pack doesn't exist! Check back later.", "OK")->show();
+					m_loadcircle->fadeAndRemove();
 				}
 			}
 			else {
-				packTitle = cachedData[cachedType][cachedID]["name"].as_string();
+				m_loadcircle->fadeAndRemove();
+				FLAlertLayer::create("ERROR", fmt::format("Something went wrong opening the list. ({})", res->code()), "OK")->show();
 			}
-
-			gd::string description = cachedData[cachedType][cachedID]["description"].as_string();
-
-			auto list = GJLevelList::create();
-			list->m_listID = std::stoi(data[1]);
-			list->m_listName = packTitle;
-			//list->m_listName = data[3];
-			list->m_downloads = std::stoi(data[13]);
-			list->m_likes = std::stoi(data[17]);
-			//list->m_creatorName = data[29];
-			list->m_levels = IDs;
-			list->m_listDesc = LevelTools::base64EncodeString(description);
-
-			auto layer = LevelListLayer::create(list);
-
-			m_loadcircle->fadeAndRemove();
-
-			scene->addChild(layer);
-			CCDirector::sharedDirector()->pushScene(cocos2d::CCTransitionFade::create(0.5f, scene));
 		}
-		else {
-			FLAlertLayer::create("ERROR", "This pack doesn't exist! Check back later.", "OK")->show();
-			m_loadcircle->fadeAndRemove();
+		else if (e->isCancelled()) {
+			log::info("Cancelled open list request.");
 		}
-		}).expect([&](std::string const& error) {
-			FLAlertLayer::create("ERROR", fmt::format("Something went wrong! ({})", error), "OK")->show();
-			m_loadcircle->fadeAndRemove();
-		});
+	});
+
+	auto req = web::WebRequest();
+	req.bodyString(fields);
+	m_listener.setFilter(req.get(url));
 }
 
 void DPLayer::achievementsCallback(CCObject* sender) {
@@ -430,15 +437,11 @@ bool DPLayer::init() {
 		this->addChild(listTop);
 		this->addChild(listBottom);
 
-		m_loadcircle = LoadingCircle::create();
-		m_loadcircle->m_parentLayer = this;
-        m_loadcircle->show();
-
 		//reload menu
 		auto reloadMenu = CCMenu::create();
 		reloadMenu->setPosition({ 0, 0 });
 		auto reloadBtnSprite = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
-		auto reloadBtn = CCMenuItemSpriteExtra::create(reloadBtnSprite, this, menu_selector(DPLayer::reloadData));
+		auto reloadBtn = CCMenuItemSpriteExtra::create(reloadBtnSprite, this, menu_selector(DPLayer::reloadCallback));
 		reloadBtn->setPosition({ 30, 30 });
 		reloadMenu->addChild(reloadBtn);
 		reloadMenu->setID("reload-menu");
@@ -452,67 +455,11 @@ bool DPLayer::init() {
 			Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
 		}
 
-		std::string dataURL;
-
-		if (GameManager::sharedState()->m_playerName == "Minemaker0430") {
-			log::info("Hello, me");
-			dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/dev-list.json";
-		}
-		else {
-			dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json";
-		}
-
-		// download data
-		web::AsyncWebRequest()
-			.fetch(dataURL)
-			.text()
-			.then([&](std::string const& response) {
-				Mod::get()->setSavedValue<matjson::Value>("cached-data", matjson::parse(response));
-
-				m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data", matjson::parse("{\"main\": [], \"legacy\": [], \"bonus\": [], \"monthly\": [], \"database-version\": 0, \"level-data\": {}}"));
-				reloadList(static_cast<int>(DPListType::Main));
-				m_loadcircle->fadeAndRemove();
-				m_reload->setVisible(true);
-				m_tabs->setVisible(true);
-				m_backMenu->setVisible(true);
-
-				this->setKeyboardEnabled(true);
-				this->setKeypadEnabled(true);
-
-				m_finishedLoading = true;
-			})
-			.expect([&](std::string const& error) {
-				FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({})", error), "OK")->show();
-				m_loadcircle->fadeAndRemove();
-				m_reload->setVisible(true);
-				m_tabs->setVisible(false);
-				m_backMenu->setVisible(true);
-
-				this->setKeyboardEnabled(true);
-				this->setKeypadEnabled(true);
-			});
-		
-		web::AsyncWebRequest()
-			.fetch("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/skill-badges.json")
-			.text()
-			.then([&](std::string const& response) {
-				if (matjson::parse(response) != Mod::get()->getSavedValue<matjson::Value>("skillset-info", {})) {
-					Mod::get()->setSavedValue<matjson::Value>("skillset-info", matjson::parse(response));
-					log::info("Updated skillset info.");
-				}
-				else {
-					log::info("No skillset updates found.");
-				}
-			})
-			.expect([&](std::string const& error) {
-				FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the Skillset Data. ({})", error), "OK")->show();
-			});
-
 		//extra buttons
 		auto achievementBtnSprite = CCSprite::createWithSpriteFrameName("GJ_achBtn_001.png");
 		auto leaderboardsBtnSprite = CCSprite::createWithSpriteFrameName("GJ_statsBtn_001.png");
 		auto leaderboardButton = CCMenuItemSpriteExtra::create(leaderboardsBtnSprite, this, menu_selector(DPLayer::soonCallback));
-		auto achievementButton = CCMenuItemSpriteExtra::create(achievementBtnSprite, this, menu_selector(DPLayer::soonCallback));
+		auto achievementButton = CCMenuItemSpriteExtra::create(achievementBtnSprite, this, menu_selector(DPLayer::achievementsCallback));
 		achievementButton->setPosition({ size.width - 30, 30 });
 		leaderboardButton->setPosition({ size.width - 30, 80 });
 		auto extrasMenu = CCMenu::create();
@@ -574,8 +521,11 @@ bool DPLayer::init() {
 
 		this->addChild(m_databaseVer);
 
-		this->setKeyboardEnabled(false);
-		this->setKeypadEnabled(false);
+		// download data
+		reloadData(true);
+
+		this->setKeyboardEnabled(true);
+		this->setKeypadEnabled(true);
 
         return true;
 }
@@ -602,19 +552,15 @@ void DPLayer::reloadList(int type) {
 
 	if (type == static_cast<int>(DPListType::Main)) {
 		dataIdx = "main";
-		demonCountMain = 0;
 	} 
 	else if (type == static_cast<int>(DPListType::Legacy)) {
 		dataIdx = "legacy";
-		demonCountLegacy = 0;
 	}
 	else if (type == static_cast<int>(DPListType::Bonus)) {
 		dataIdx = "bonus";
-		demonCountBonus = 0;
 	}
 	else if (type == static_cast<int>(DPListType::Monthly)) {
 		dataIdx = "monthly";
-		demonCountMonthly = 0;
 	}
 	
 	auto packs = m_data[dataIdx].as_array();
@@ -653,19 +599,6 @@ void DPLayer::reloadList(int type) {
 		//get list save
 		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
 
-		if (type == static_cast<int>(DPListType::Main)) {
-			demonCountMain += listSave.progress;
-		}
-		else if (type == static_cast<int>(DPListType::Legacy)) {
-			demonCountLegacy += listSave.progress;
-		}
-		else if (type == static_cast<int>(DPListType::Bonus)) {
-			demonCountBonus += listSave.progress;
-		}
-		else if (type == static_cast<int>(DPListType::Monthly)) {
-			demonCountMonthly += listSave.progress;
-		}
-
 		auto fullTitle = name;
 		if (type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) { 
 			if (listSave.hasRank && type == static_cast<int>(DPListType::Main)) {
@@ -682,11 +615,11 @@ void DPLayer::reloadList(int type) {
 		auto fullPlusSprite = fmt::format("{}.png", plusSprite);
 
 		//fallbacks
-		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSprite.c_str())) == nullptr) {
+		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSprite).data()) == nullptr) {
 			fullSprite = "DP_Invisible.png";
 		}
 
-		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSprite.c_str())) == nullptr) {
+		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSprite).data()) == nullptr) {
 			fullPlusSprite = "DP_Invisible.png";
 		}
 
@@ -705,10 +638,9 @@ void DPLayer::reloadList(int type) {
 		}
 
 		CCNode* packSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
-		packSpr->setID("pack-sprite");
 
 		if (fullSprite != "DP_Invisible.png") {
-			packSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSprite.c_str()));
+			packSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSprite).data());
 			packSpr->setScale(1.0f);
 			packSpr->setAnchorPoint({ 0.5, 0.5 });
 			packSpr->setPosition({ 28.5, 25 });
@@ -716,8 +648,9 @@ void DPLayer::reloadList(int type) {
 		else {
 			packSpr->setVisible(false);
 		}
+		packSpr->setID("pack-sprite");
 		
-		CCNode* packPlusSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSprite.c_str()));
+		CCNode* packPlusSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSprite).data());
 		packPlusSpr->setScale(1.0f);
 		packPlusSpr->setAnchorPoint({ 0.5, 0.5 });
 		packPlusSpr->setPosition({ 28.5, 25 });
@@ -770,7 +703,7 @@ void DPLayer::reloadList(int type) {
 		stencil->setAnchorPoint({ 0, 0.5f });
 		stencil->setContentWidth(packProgressFront->getScaledContentSize().width);
 		stencil->setScaleX(progressPercent);
-		stencil->setContentHeight(20);
+		stencil->setContentHeight(100);
 		clippingNode->setStencil(stencil);
 		clippingNode->setAnchorPoint({ 0, 0.5f });
 		clippingNode->setPosition({ 3.25f, 10.5f });
@@ -813,15 +746,22 @@ void DPLayer::reloadList(int type) {
 			}
 		}
 		else if (type == static_cast<int>(DPListType::Monthly)) {
+
+			auto epicSprite = CCSprite::createWithSpriteFrameName("GJ_epicCoin_001.png");
+			epicSprite->setPosition({ 21.75f, 18.f });
+			epicSprite->setZOrder(-1);
+
 			if (listSave.completed) {
 				progStr = "100% Complete!";
 				progText->setFntFile("goldFont.fnt");
+				packSpr->addChild(epicSprite);
 			}
 			else if (listSave.progress < 5) {
 				progStr = fmt::format("{}/5 to Partial Completion", std::to_string(listSave.progress));
 			}
 			else {
 				progStr = fmt::format("{}/6 to Completion", std::to_string(listSave.progress));
+				packSpr->addChild(epicSprite);
 			}
 		}
 

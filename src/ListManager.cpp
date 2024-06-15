@@ -4,6 +4,7 @@
 */
 
 #include "ListManager.hpp"
+#include <Geode/loader/Event.hpp>
 #include <Geode/utils/web.hpp>
 
 using namespace geode::prelude;
@@ -24,20 +25,7 @@ std::string getUserAgent() {
 }
 
 void ListManager::init() {
-    
-    if (!ListManager::fetchedGDDLRatings) {
-        web::AsyncWebRequest()
-            .userAgent(getUserAgent())
-            .fetch(GDDL_API_URL)
-            .json()
-            .then([](const matjson::Value& val) {
-                ListManager::fetchedGDDLRatings = true;
-                ListManager::parseResponse(val);
-            })
-            .expect([](const std::string& error) {
-                ListManager::fetchedGDDLRatings = true;
-            });
-    }
+    GDDLListener::create();
 }
 
 void ListManager::parseResponse(matjson::Value val) {
@@ -150,4 +138,47 @@ std::string ListManager::getSpriteName(GJGameLevel* level) {
     else {
         return "";
     }
+}
+
+GDDLListener* GDDLListener::create() {
+    auto pRet = new GDDLListener();
+    if (pRet && pRet->init()) {
+        pRet->enable();
+        return pRet;
+    }
+    CC_SAFE_DELETE(pRet); //don't crash if it fails
+    return nullptr;
+}
+
+bool GDDLListener::init() {
+
+    if (!ListManager::fetchedGDDLRatings) {
+        this->bind([this](web::WebTask::Event* e) {
+            if (auto res = e->getValue()) {
+                if (res->ok() && res->json().isOk()) {
+                    auto response = res->json().unwrap();
+
+                    ListManager::fetchedGDDLRatings = true;
+                    ListManager::parseResponse(response);
+                }
+                else {
+                    ListManager::fetchedGDDLRatings = true;
+                    log::info("Something went wrong obtaining the GDDL Data.");
+                }
+            }
+            else if (e->isCancelled()) {
+                log::info("Cancelled GDDL request.");
+            }
+
+            return;
+        });
+
+        auto req = web::WebRequest();
+        req.userAgent(getUserAgent());
+        this->setFilter(req.get(GDDL_API_URL));
+    }
+}
+
+GDDLListener::~GDDLListener() {
+    this->getFilter().cancel();
 }

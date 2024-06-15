@@ -1,4 +1,6 @@
 #include <Geode/Geode.hpp>
+#include <Geode/utils/web.hpp>
+#include <Geode/loader/Event.hpp>
 
 //geode namespace
 using namespace geode::prelude;
@@ -17,13 +19,20 @@ protected:
 	CCMenu* m_reload;
 	CCLabelBMFont* m_databaseVer;
 	bool m_finishedLoading = false;
+
+	//listeners
+	EventListener<web::WebTask> m_listListener;
+	EventListener<web::WebTask> m_skillListener;
+	EventListener<web::WebTask> m_listener; //default
+
 	virtual ~DPLayer();
 public:
 	static DPLayer* create(); //to create the layer
 	void callback(CCObject*); //callback for the button to go to this layer
 	void onTab(CCObject*); //tabs switched?
 	void openList(CCObject*); //open list with the id tagged on the btn
-	void reloadData(CCObject*); //when reload button is pressed
+	void reloadCallback(CCObject*); //when reload is pressed
+	void reloadData(bool); //reload all data
 	void reloadList(int type);
 	void infoCallback(CCObject*);
 	void soonCallback(CCObject*); //Coming Soon

@@ -106,12 +106,12 @@ class $modify(LevelListLayer) {
 			}
 
 			//fallbacks
-			if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName.c_str())) == nullptr) {
+			if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data()) == nullptr) {
 				sprName = "DP_Invisible.png";
 			}
 
 			if (sprName != "DP_Invisible.png") {
-				auto dpIcon = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName.c_str()));
+				auto dpIcon = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
 				dpIcon->setPosition(diffIcon->getPosition());
 				dpIcon->setZOrder(diffIcon->getZOrder());
 				dpIcon->setID("gddp-difficulty");
@@ -187,6 +187,15 @@ class $modify(LevelListLayer) {
 			}
 			else if ((type == "monthly") && (packProgress > 5)) {
 				completed = true;
+			}
+
+			if (type == "monthly" && packProgress >= 5) {
+				auto completedMonthlies = Mod::get()->getSavedValue<matjson::Array>("monthly-completions");
+
+				if (std::find(completedMonthlies.begin(), completedMonthlies.end(), listID) == completedMonthlies.end()) {
+					completedMonthlies.insert(completedMonthlies.begin(), listID);
+					Mod::get()->setSavedValue<matjson::Array>("monthly-completions", completedMonthlies);
+				}
 			}
 
 			Mod::get()->setSavedValue<ListSaveFormat>(std::to_string(listID), ListSaveFormat { .progress = packProgress, .completed = completed, .hasRank = hasRank });

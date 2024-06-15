@@ -1,3 +1,11 @@
+# v1.0.0-beta.22
+
+* Ported to 2.206
+	* Fixed a visual bug with progress bars
+	* Ported web requests to the new system
+* Added the Stats Menu
+* Partially Completed/Completed Monthly Packs now have Epic Fire
+
 # v1.0.0-beta.21
 
 * Added Progress Bars

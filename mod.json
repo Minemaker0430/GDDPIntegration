@@ -1,10 +1,10 @@
 {
-		"geode": "2.0.0-beta.27",
+		"geode": "3.0.0-beta.1",
 		"gd": {
-			"win": "2.204",
-			"android": "2.205"
+			"win": "2.206",
+			"android": "2.206"
 		},
-		"version": "v1.0.0-beta.21",
+		"version": "v1.0.0-beta.22",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
@@ -32,15 +32,17 @@
 		},
 
 		"tags": [
-			"Gameplay",
-			"Convenience",
-			"Integration"
+			"gameplay",
+			"utility",
+			"interface",
+			"online",
+			"content"
 		],
 
 		"dependencies": [
 			{
 				"id": "geode.node-ids",
-				"version": ">=v1.11.0",
+				"version": ">=1.12.0",
 				"importance": "required"
 			}
 		],

@@ -4,12 +4,19 @@
       "name": "default",
       "generator": "Ninja",
       "configurationType": "RelWithDebInfo",
-      "inheritEnvironments": [ "msvc_x86" ],
+      "inheritEnvironments": [ "msvc_x64" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
-      "ctestCommandArgs": ""
+      "ctestCommandArgs": "",
+      "variables": [
+        {
+          "name": "GEODE_CLI",
+          "value": "M:/SteamLibrary/steamapps/common/Geometry Dash/Modding/cli/geode.exe",
+          "type": "FILEPATH"
+        }
+      ]
     }
   ]
 }

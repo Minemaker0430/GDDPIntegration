@@ -12,6 +12,11 @@
 #include <string>
 #include <map>
 #include <Geode/Geode.hpp>
+#include <Geode/utils/web.hpp>
+#include <Geode/loader/Event.hpp>
+
+//geode namespace
+using namespace geode::prelude;
 
 struct ListRating {
     int tier = 0;
@@ -53,6 +58,15 @@ struct ListManager {
     //static void throwError(std::string message);
     static std::optional<ListRating> getRating(int levelID);
     static std::string getSpriteName(GJGameLevel* level);
+};
+
+class GDDLListener : public EventListener<web::WebTask> {
+protected:
+    virtual bool init();
+    virtual ~GDDLListener();
+public:
+    static GDDLListener* create();
+
 };
 
 #endif

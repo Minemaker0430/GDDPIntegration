@@ -39,7 +39,7 @@ class $modify(DemonProgression, LevelCell) {
 
 		if (inGDDP && (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value())) || Mod::get()->getSettingValue<bool>("all-demons-rated"))) {
 
-			//if not on the GDDP, IDS, NLW, or Pointercrate, return
+			//if not on the GDDP or GDDL, return
 			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars == 10 && ListManager::getSpriteName(this->m_level) == "") {
 				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 					return;
@@ -131,12 +131,12 @@ class $modify(DemonProgression, LevelCell) {
 					auto spriteName = fmt::format("{}.png", skillsetData[skillID]["sprite"].as_string());
 					
 					CCSprite* sprite;
-					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName.c_str())) == nullptr) {
+					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr) {
 						spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].as_string());
-						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName.c_str()));
+						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
 					}
 					else {
-						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName.c_str()));
+						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
 					}
 
 					auto skillsetBtn = CCMenuItemSpriteExtra::create(sprite, this, menu_selector(DemonProgression::skillInfoPopup));
@@ -191,11 +191,11 @@ class $modify(DemonProgression, LevelCell) {
 					}
 					
 					//fallbacks
-					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite).c_str())) == nullptr) {
+					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data()) == nullptr) {
 						sprite = "DP_Invisible";
 					}
 
-					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSprite).c_str())) == nullptr) {
+					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSprite)).data()) == nullptr) {
 						plusSprite = "DP_Invisible";
 					}
 
@@ -203,15 +203,15 @@ class $modify(DemonProgression, LevelCell) {
 					std::string fullPlusSpr = fmt::format("{}SmallText.png", plusSprite);
 
 					if (sprite != "DP_Invisible") {
-						auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
+						auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr).data());
 
 						if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible") {
 							typeinfo_cast<CCSprite*>(diffIcon->getChildren()->objectAtIndex(0))->setVisible(false);
-							customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+							customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr).data());
 						}
 
 						if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank && plusSprite != "DP_Invisible") {
-							customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+							customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr).data());
 						}
 
 						customSpr->setID("gddp-difficulty");
@@ -241,11 +241,11 @@ class $modify(DemonProgression, LevelCell) {
 					}
 
 					//fallbacks
-					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite).c_str())) == nullptr) {
+					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data()) == nullptr) {
 						sprite = "DP_Invisible";
 					}
 
-					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSprite).c_str())) == nullptr) {
+					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSprite)).data()) == nullptr) {
 						plusSprite = "DP_Invisible";
 					}
 
@@ -253,15 +253,15 @@ class $modify(DemonProgression, LevelCell) {
 					std::string fullPlusSpr = fmt::format("{}SmallText.png", plusSprite);
 
 					if (sprite != "DP_Invisible") {
-						auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr.c_str()));
+						auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr).data());
 
 						if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible") {
 							typeinfo_cast<CCSprite*>(diffIcon->getChildren()->objectAtIndex(0))->setVisible(false);
-							customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+							customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr).data());
 						}
 
 						if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank && plusSprite != "DP_Invisible") {
-							customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr.c_str()));
+							customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr).data());
 						}
 
 						customSpr->setID("gddp-difficulty");
