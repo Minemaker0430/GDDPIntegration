@@ -1,3 +1,8 @@
+# v1.0.0-beta.23
+
+* Fixed Crash
+* Fixed a few Graphical Errors
+
 # v1.0.0-beta.22
 
 * Ported to 2.206
