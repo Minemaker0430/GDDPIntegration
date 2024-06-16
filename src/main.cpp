@@ -635,6 +635,9 @@ void DPLayer::reloadList(int type) {
 
 		if (listSave.completed) {
 			packText->setFntFile("goldFont.fnt");
+			packText->setScale(0.85f);
+			if (fullTitle.length() > 18) { packText->setScale(0.65f); }
+			if (fullTitle.length() > 25) { packText->setScale(0.55f); }
 		}
 
 		CCNode* packSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
@@ -766,9 +769,10 @@ void DPLayer::reloadList(int type) {
 		}
 
 		progText->setCString(progStr.c_str());
-		progText->setPosition({ 155, 15 });
+		progText->setPosition({ 155.f, 16.f });
 		progText->setAnchorPoint({ 0.5, 0.5 });
-		progText->setScale(0.30f);
+		progText->setScale(0.35f);
+		if (listSave.completed) { progText->setScale(0.45f); }
 		progText->setID("progress-text");
 
 		if (type == static_cast<int>(DPListType::Monthly)) {

@@ -158,25 +158,27 @@ bool GDDLListener::init() {
                 if (res->ok() && res->json().isOk()) {
                     auto response = res->json().unwrap();
 
+                    log::info("Successfully obtained GDDL Data.");
+
                     ListManager::fetchedGDDLRatings = true;
                     ListManager::parseResponse(response);
                 }
                 else {
                     ListManager::fetchedGDDLRatings = true;
-                    log::info("Something went wrong obtaining the GDDL Data.");
+                    log::info("Something went wrong obtaining the GDDL Data. ({})", res->code());
                 }
             }
             else if (e->isCancelled()) {
                 log::info("Cancelled GDDL request.");
             }
-
-            return;
         });
 
         auto req = web::WebRequest();
         req.userAgent(getUserAgent());
         this->setFilter(req.get(GDDL_API_URL));
     }
+
+    return true;
 }
 
 GDDLListener::~GDDLListener() {

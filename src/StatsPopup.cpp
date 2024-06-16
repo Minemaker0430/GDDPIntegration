@@ -37,7 +37,7 @@ bool StatsPopup::setup() {
 	mainBtn->setTag(static_cast<int>(StatsTab::Main));
 	mainBtn->toggle(true);
 	auto mainText = CCLabelBMFont::create("Summary", "bigFont.fnt");
-	mainText->setPosition({ 57.5f, 12.5f });
+	mainText->setPosition({ 57.5f, 14.f });
 	mainText->setScale(0.65f);
 	mainBtn->addChild(mainText);
 	tabs->addChild(mainBtn);
@@ -48,7 +48,7 @@ bool StatsPopup::setup() {
 	ranksBtn->setTag(static_cast<int>(StatsTab::Ranks));
 	ranksBtn->toggle(false);
 	auto ranksText = CCLabelBMFont::create("Ranks", "bigFont.fnt");
-	ranksText->setPosition({ 57.5f, 12.5f });
+	ranksText->setPosition({ 57.5f, 14.f });
 	ranksText->setScale(0.65f);
 	ranksBtn->addChild(ranksText);
 	tabs->addChild(ranksBtn);
@@ -59,7 +59,7 @@ bool StatsPopup::setup() {
 	titlesBtn->setTag(static_cast<int>(StatsTab::Titles));
 	titlesBtn->toggle(false);
 	auto titlesText = CCLabelBMFont::create("Titles", "bigFont.fnt");
-	titlesText->setPosition({ 57.5f, 12.5f });
+	titlesText->setPosition({ 57.5f, 14.f });
 	titlesText->setScale(0.65f);
 	titlesBtn->addChild(titlesText);
 	tabs->addChild(titlesBtn);
@@ -103,7 +103,7 @@ void StatsPopup::loadTab(int id) {
 		scoreValue->setID("score-value");
 
 		auto infoMenu = CCMenu::create();
-		infoMenu->setPosition({ 35.f, 25.f });
+		infoMenu->setPosition({ 37.f, 25.f });
 		infoMenu->setContentSize({ 0.f, 0.f });
 		infoMenu->setScale(0.6f);
 		infoMenu->setZOrder(1);
@@ -160,7 +160,7 @@ void StatsPopup::loadTab(int id) {
 		}
 
 		auto monthlyInfoMenu = CCMenu::create();
-		monthlyInfoMenu->setPosition({ 45.f, 25.f });
+		monthlyInfoMenu->setPosition({ 49.f, 25.f });
 		monthlyInfoMenu->setContentSize({ 0.f, 0.f });
 		monthlyInfoMenu->setScale(0.6f);
 		monthlyInfoMenu->setZOrder(1);
@@ -722,6 +722,7 @@ void StatsPopup::loadTab(int id) {
 			title->setID(fmt::format("normal-title-{}", i + 1));
 
 			auto titleHeader = CCLabelBMFont::create(NormalTitles[i].c_str(), "bigFont.fnt");
+			titleHeader->setPositionY(1.f);
 			titleHeader->setScale(0.75f);
 			titleHeader->setColor(NormalTitleColors[i]);
 			titleHeader->setID("title-header");
@@ -761,7 +762,7 @@ void StatsPopup::loadTab(int id) {
 			packProgressBack->setScaleY(0.65f);
 
 			auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clamp(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
-			progressLabel->setPosition({ 170.f, 10.5f });
+			progressLabel->setPosition({ 170.f, 12.f });
 			progressLabel->setScale(0.65f);
 			progressLabel->setZOrder(2);
 			progressLabel->setID("progress-label");
@@ -804,6 +805,7 @@ void StatsPopup::loadTab(int id) {
 			title->setTag(i);
 
 			auto titleHeader = CCLabelBMFont::create(PlusTitles[i].c_str(), "bigFont.fnt");
+			titleHeader->setPositionY(1.f);
 			titleHeader->setScale(0.75f);
 			titleHeader->setColor(PlusTitleColors[i]);
 			titleHeader->setID("title-header");
@@ -843,7 +845,7 @@ void StatsPopup::loadTab(int id) {
 			packProgressBack->setScaleY(0.65f);
 
 			auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clamp(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
-			progressLabel->setPosition({ 170.f, 10.5f });
+			progressLabel->setPosition({ 170.f, 12.f });
 			progressLabel->setScale(0.65f);
 			progressLabel->setZOrder(2);
 			progressLabel->setID("progress-label");
@@ -875,6 +877,7 @@ void StatsPopup::loadTab(int id) {
 		title->setTag(-1);
 
 		auto titleHeader = CCLabelBMFont::create("ABSOLUTE PERFECTION", "bigFont.fnt");
+		titleHeader->setPositionY(1.f);
 		titleHeader->setScale(0.75f);
 		titleHeader->setColor({ 255, 190, 255 });
 		titleHeader->setID("title-header");
@@ -929,7 +932,7 @@ void StatsPopup::loadTab(int id) {
 		packProgressBack->setScaleY(0.65f);
 
 		auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clamp(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
-		progressLabel->setPosition({ 170.f, 10.5f });
+		progressLabel->setPosition({ 170.f, 12.f });
 		progressLabel->setScale(0.65f);
 		progressLabel->setZOrder(2);
 		progressLabel->setID("progress-label");
