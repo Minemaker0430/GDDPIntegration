@@ -1,3 +1,7 @@
+# v1.0.0-beta.25
+
+* Added missing nullptr checks (Thanks Alphalaneous!)
+
 # v1.0.0-beta.24
 
 * Fixed a weirdly specific crash
