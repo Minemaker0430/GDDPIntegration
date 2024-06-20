@@ -24,44 +24,47 @@ bool StatsPopup::setup() {
 
 	//create tabs
 	auto tabs = CCMenu::create();
-
-	auto tabOff = CCScale9Sprite::create("GJ_button_01.png");
-	tabOff->setContentSize({115.f, 25.f});
-
-	auto tabOn = CCScale9Sprite::create("GJ_button_02.png");
-	tabOn->setContentSize({ 115.f, 25.f });
 	
-	auto mainBtn = CCMenuItemToggler::create(tabOff, tabOn, this, menu_selector(StatsPopup::onTab));
+	auto mainBtnSprOff = ButtonSprite::create("Summary", "bigFont.fnt", "GJ_button_01.png", 0.65f);
+	mainBtnSprOff->m_BGSprite->setContentSize({ 115.f, 25.f });
+
+	auto mainBtnSprOn = ButtonSprite::create("Summary", "bigFont.fnt", "GJ_button_02.png", 0.65f);
+	mainBtnSprOn->m_BGSprite->setContentSize({ 115.f, 25.f });
+
+	auto mainBtn = CCMenuItemToggler::create(mainBtnSprOff, mainBtnSprOn, this, menu_selector(StatsPopup::onTab));
+	mainBtn->setContentSize({ 115.f, 25.f });
 	mainBtn->setPosition({ 90.f, 0.f });
 	mainBtn->setID("main");
 	mainBtn->setTag(static_cast<int>(StatsTab::Main));
 	mainBtn->toggle(true);
-	auto mainText = CCLabelBMFont::create("Summary", "bigFont.fnt");
-	mainText->setPosition({ 57.5f, 14.f });
-	mainText->setScale(0.65f);
-	mainBtn->addChild(mainText);
 	tabs->addChild(mainBtn);
 
-	auto ranksBtn = CCMenuItemToggler::create(tabOff, tabOn, this, menu_selector(StatsPopup::onTab));
+	auto ranksBtnSprOff = ButtonSprite::create("Ranks", "bigFont.fnt", "GJ_button_01.png", 0.65f);
+	ranksBtnSprOff->m_BGSprite->setContentSize({ 115.f, 25.f });
+
+	auto ranksBtnSprOn = ButtonSprite::create("Ranks", "bigFont.fnt", "GJ_button_02.png", 0.65f);
+	ranksBtnSprOn->m_BGSprite->setContentSize({ 115.f, 25.f });
+
+	auto ranksBtn = CCMenuItemToggler::create(ranksBtnSprOff, ranksBtnSprOn, this, menu_selector(StatsPopup::onTab));
+	ranksBtn->setContentSize({ 115.f, 25.f });
 	ranksBtn->setPosition({ 210.f, 0.f });
 	ranksBtn->setID("ranks");
 	ranksBtn->setTag(static_cast<int>(StatsTab::Ranks));
 	ranksBtn->toggle(false);
-	auto ranksText = CCLabelBMFont::create("Ranks", "bigFont.fnt");
-	ranksText->setPosition({ 57.5f, 14.f });
-	ranksText->setScale(0.65f);
-	ranksBtn->addChild(ranksText);
 	tabs->addChild(ranksBtn);
 
-	auto titlesBtn = CCMenuItemToggler::create(tabOff, tabOn, this, menu_selector(StatsPopup::onTab));
+	auto titlesBtnSprOff = ButtonSprite::create("Titles", "bigFont.fnt", "GJ_button_01.png", 0.65f);
+	titlesBtnSprOff->m_BGSprite->setContentSize({ 115.f, 25.f });
+
+	auto titlesBtnSprOn = ButtonSprite::create("Titles", "bigFont.fnt", "GJ_button_02.png", 0.65f);
+	titlesBtnSprOn->m_BGSprite->setContentSize({ 115.f, 25.f });
+
+	auto titlesBtn = CCMenuItemToggler::create(titlesBtnSprOff, titlesBtnSprOn, this, menu_selector(StatsPopup::onTab));
+	titlesBtn->setContentSize({ 115.f, 25.f });
 	titlesBtn->setPosition({ 330.f, 0.f });
 	titlesBtn->setID("titles");
 	titlesBtn->setTag(static_cast<int>(StatsTab::Titles));
 	titlesBtn->toggle(false);
-	auto titlesText = CCLabelBMFont::create("Titles", "bigFont.fnt");
-	titlesText->setPosition({ 57.5f, 14.f });
-	titlesText->setScale(0.65f);
-	titlesBtn->addChild(titlesText);
 	tabs->addChild(titlesBtn);
 
 	tabs->setPosition({0.f, 200.f});
@@ -931,7 +934,7 @@ void StatsPopup::loadTab(int id) {
 		packProgressBack->setScaleX(0.6f);
 		packProgressBack->setScaleY(0.65f);
 
-		auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clamp(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
+		auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clamp(floor(totalPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
 		progressLabel->setPosition({ 170.f, 12.f });
 		progressLabel->setScale(0.65f);
 		progressLabel->setZOrder(2);

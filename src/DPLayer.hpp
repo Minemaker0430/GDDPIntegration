@@ -34,7 +34,6 @@ public:
 	void reloadCallback(CCObject*); //when reload is pressed
 	void reloadData(bool); //reload all data
 	void reloadList(int type);
-	void infoCallback(CCObject*);
 	void soonCallback(CCObject*); //Coming Soon
 	void achievementsCallback(CCObject*);
 };

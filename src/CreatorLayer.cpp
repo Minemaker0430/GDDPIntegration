@@ -62,13 +62,21 @@ class $modify(CreatorLayer) {
 			}
 
 			auto dpBtn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(DPLayer::callback));
-			dpBtn->setPosition({ 451, 153 });
+			dpBtn->setContentSize({ 83.6f, 83.6f });
+			dpBtn->setPosition({ 450.f, 155.f });
 			dpBtn->setID("demon-progression-button");
+			typeinfo_cast<CCSprite*>(dpBtn->getChildren()->objectAtIndex(0))->setPositionX(44.f);
 			menu->addChild(dpBtn);
 
 			if (menu->getChildByID("map-packs-button")) {
-				dpBtn->setPosition({ menu->getChildByID("map-packs-button")->getPositionX() + 2.2f, menu->getChildByID("map-packs-button")->getPositionY() - 2 });
-				menu->getChildByID("map-packs-button")->setVisible(false);
+				dpBtn->setPosition({ menu->getChildByID("map-packs-button")->getPositionX(), menu->getChildByID("map-packs-button")->getPositionY() });
+
+				if (Loader::get()->isModLoaded("alphalaneous.pages_api")) {
+					menu->getChildByID("map-packs-button")->removeMeAndCleanup();
+				}
+				else {
+					menu->getChildByID("map-packs-button")->setVisible(false);
+				}
 			}
 		}
 		else {
@@ -86,8 +94,10 @@ class $modify(CreatorLayer) {
 			}
 
 			auto dpBtn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(DPLayer::callback));
-			dpBtn->setPosition({ 451, 153 });
+			dpBtn->setContentSize({ 83.6f, 83.6f });
+			dpBtn->setPosition({ 450.f, 155.f });
 			dpBtn->setID("demon-progression-button");
+			typeinfo_cast<CCSprite*>(dpBtn->getChildren()->objectAtIndex(0))->setPositionX(44.f);
 			menu->addChild(dpBtn);
 
 			if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {

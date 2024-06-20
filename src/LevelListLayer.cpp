@@ -130,6 +130,9 @@ class $modify(LevelListLayer) {
 
 		if (inGDDP && !Mod::get()->getSavedValue<bool>("is-practice", false)) {
 			auto progText = getChildOfType<CCLabelBMFont>(this, 2);
+
+			if (!progText) { return; }
+
 			std::string progressStr = progText->getString();
 
 			auto packProgress = 0;
@@ -168,16 +171,16 @@ class $modify(LevelListLayer) {
 			auto listID = data[type][id]["listID"].as_int();
 
 			//get list save
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID), ListSaveFormat { .progress = 0, .completed = false, .hasRank = false });
 
-			auto hasRank = false;
+			auto hasRank = listSave.hasRank;
 
 			auto progress = packProgress;
 			if ((packProgress >= reqLevels) && (type == "main")) {
 				hasRank = true;
 			}
 
-			auto completed = false;
+			auto completed = listSave.completed;
 
 			if ((packProgress == totalLevels) && type != "monthly") {
 				completed = true;
@@ -187,6 +190,9 @@ class $modify(LevelListLayer) {
 			}
 			else if ((type == "monthly") && (packProgress > 5)) {
 				completed = true;
+			}
+			else {
+				completed = false;
 			}
 
 			if (type == "monthly" && packProgress >= 5) {

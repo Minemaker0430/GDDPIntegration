@@ -72,10 +72,6 @@ DPLayer* DPLayer::create() {
 	return nullptr;
 }
 
-void DPLayer::infoCallback(CCObject*) { //unused
-	FLAlertLayer::create(nullptr, "GDDP Info", "OK", nullptr, "Beat the required number of levels in each pack to get a special rank and move on to the next pack.\n\nMod Developer: Minemaker0430\nGDDP Creator: Trusta\nSpecial Thanks: FireMario211 (Firee), HJFod, The GDP Discord Server, & The Geode Discord Server")->show();
-}
-
 void DPLayer::soonCallback(CCObject*) {
 	FLAlertLayer::create("Coming Soon!", "This feature hasn't been implemented yet but will be in the future!", "OK")->show();
 }
@@ -431,6 +427,7 @@ bool DPLayer::init() {
 		listTop->setZOrder(10);
 		listBottom->setZOrder(10);
 
+		//if (!Loader::get()->isModLoaded("alphalaneous.transparent_lists")) {}
 		this->addChild(listMiddle);
 		this->addChild(listLeft);
 		this->addChild(listRight);
@@ -462,12 +459,39 @@ bool DPLayer::init() {
 		auto achievementButton = CCMenuItemSpriteExtra::create(achievementBtnSprite, this, menu_selector(DPLayer::achievementsCallback));
 		achievementButton->setPosition({ size.width - 30, 30 });
 		leaderboardButton->setPosition({ size.width - 30, 80 });
+		achievementButton->setID("stats-btn");
+		leaderboardButton->setID("leaderboards-btn");
 		auto extrasMenu = CCMenu::create();
 		extrasMenu->setPosition({ 0, 0 });
 		//extrasMenu->addChild(leaderboardButton);
 		extrasMenu->addChild(achievementButton);
 		extrasMenu->setID("extras-menu");
 		this->addChild(extrasMenu);
+
+		//utility tabs
+		auto skillsetsSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
+		auto rouletteSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
+		auto recommendedSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
+
+		auto skillsetsBtn = CCMenuItemSpriteExtra::create(skillsetsSpr, this, menu_selector(DPLayer::soonCallback));
+		auto rouletteBtn = CCMenuItemSpriteExtra::create(rouletteSpr, this, menu_selector(DPLayer::soonCallback));
+		auto recommendedBtn = CCMenuItemSpriteExtra::create(recommendedSpr, this, menu_selector(DPLayer::soonCallback));
+
+		skillsetsBtn->setPositionY(50.f);
+		rouletteBtn->setPositionY(0.f);
+		recommendedBtn->setPositionY(-50.f);
+
+		skillsetsBtn->setID("skillsets-btn");
+		rouletteBtn->setID("roulette-btn");
+		recommendedBtn->setID("recommended-btn");
+
+		auto utilityMenu = CCMenu::create();
+		utilityMenu->setPosition({ 63.f, 167.f });
+		utilityMenu->addChild(skillsetsBtn);
+		utilityMenu->addChild(rouletteBtn);
+		utilityMenu->addChild(recommendedBtn);
+		utilityMenu->setID("utility-menu");
+		//this->addChild(utilityMenu);
 
 		//list tabs
 		auto listTabs = CCMenu::create();
@@ -597,7 +621,7 @@ void DPLayer::reloadList(int type) {
 		if (type == static_cast<int>(DPListType::Legacy)) { mainPack = m_data[dataIdx][i]["mainPack"].as_int(); }
 
 		//get list save
-		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID), ListSaveFormat{ .progress = 0, .completed = false, .hasRank = false });
 
 		auto fullTitle = name;
 		if (type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) { 
@@ -827,6 +851,7 @@ void DPLayer::reloadList(int type) {
 
 		if (i == 0 && type == static_cast<int>(DPListType::Monthly)) {
 			auto goldBG = CCLayerColor::create({255, 200, 0, 255});
+			//if (Loader::get()->isModLoaded("alphalaneous.transparent_lists")) { goldBG->setOpacity(50); }
 			goldBG->setID("gold-bg");
 			cell->addChild(goldBG);
 

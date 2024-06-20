@@ -1,3 +1,13 @@
+# v1.0.0-beta.24
+
+* Fixed a weirdly specific crash
+* Converted Stats Menu tabs to ButtonSprites instead of whatever I did
+* Pages API Compatibility
+* Fixed some sprite alignment issues
+* Fixed Settings Page crash
+* Attempted to fix save file bugs
+* ABSOLUTE PERFECTION now shows the correct percentage
+
 # v1.0.0-beta.23
 
 * Fixed Crash
