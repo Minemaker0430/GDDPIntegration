@@ -33,8 +33,11 @@ class $modify(CreatorLayer) {
 
 			if (Loader::get()->isModLoaded("cvolton.betterinfo")) {
 				log::info("BetterInfo Detected. Added Button.");
-				this->getChildByID("cvolton.betterinfo/center-right-menu")->addChild(dpBtn);
-				this->getChildByID("cvolton.betterinfo/center-right-menu")->setLayout(AxisLayout::create(Axis::Column), true, true);
+
+				if(auto menu = this->getChildByID("cvolton.betterinfo/center-right-menu")){
+					menu->addChild(dpBtn);
+					menu->setLayout(AxisLayout::create(Axis::Column), true, true);
+				}
 			}
 			else {
 				auto size = CCDirector::sharedDirector()->getWinSize();
@@ -107,7 +110,9 @@ class $modify(CreatorLayer) {
 
 			if (Loader::get()->isModLoaded("cvolton.betterinfo") && !Mod::get()->getSettingValue<bool>("dont-move-side-btns")) {
 				log::info("BetterInfo Detected. Moved Button.");
-				this->getChildByID("cvolton.betterinfo/center-right-menu")->setPositionY(260);
+				if(auto menu = this->getChildByID("cvolton.betterinfo/center-right-menu")){
+					menu->setPositionY(260);
+				}
 			}
 
 			if (Loader::get()->isModLoaded("spaghettdev.gd-roulette") && !Mod::get()->getSettingValue<bool>("dont-move-side-btns")) {
@@ -115,13 +120,11 @@ class $modify(CreatorLayer) {
 				if (auto menu = this->getChildByID("spaghettdev.gd-roulette/creator-layer-menu")) {
 					menu->setPositionY(92);
 				}
-				else {
-					this->getChildByID("spaghettdev.gd-roulette/center-left-menu")->setPositionY(255);
+				else if (auto menu = this->getChildByID("spaghettdev.gd-roulette/center-left-menu")){
+					menu->setPositionY(255);
 				}
 			}
 		}
-
 		return true;
 	}
-
 };
