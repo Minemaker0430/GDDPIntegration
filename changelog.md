@@ -1,3 +1,7 @@
+# v1.0.0-beta.26
+
+* Fixed Settings Page Crash (again)
+
 # v1.0.0-beta.25
 
 * Added missing nullptr checks (Thanks Alphalaneous!)

@@ -25,20 +25,18 @@ protected:
         if (!SettingNode::init(value))
             return false;
         this->setContentSize({ width, 40.f });
-        if (Mod::get()->getSettingDefinition(value->getKey())->get<CustomSetting>()->json->try_get<std::string>("name")) {
-            std::string name = Mod::get()->getSettingDefinition(value->getKey())->get<CustomSetting>()->json->get<std::string>("name");
+        
+        std::string name = Mod::get()->getSettingDefinition(value->getKey())->get<CustomSetting>()->json->get<std::string>("name");
             
-            auto theMenu = CCMenu::create();
-            auto theLabel = CCLabelBMFont::create(name.c_str(), "bigFont.fnt");
+        auto theMenu = CCMenu::create();
+        auto theLabel = CCLabelBMFont::create(name.c_str(), "bigFont.fnt");
 
-            theLabel->setScale(.5);
-            theLabel->setPositionX(0);
-            theMenu->addChild(theLabel);
-            theMenu->setPosition(width / 2, 20.f);
+        theLabel->setScale(.5);
+        theLabel->setPositionX(0);
+        theMenu->addChild(theLabel);
+        theMenu->setPosition(width / 2, 20.f);
 
-            this->addChild(theMenu);
-
-        }
+        this->addChild(theMenu);
 
         return true;
     }
