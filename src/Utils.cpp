@@ -1,5 +1,13 @@
+//geode header
+#include <Geode/Geode.hpp>
+
+#include <Geode/loader/Event.hpp>
+#include <Geode/utils/web.hpp>
 
 #include "Utils.hpp"
+
+//geode namespace
+using namespace geode::prelude;
 
 std::vector<std::string> Utils::substring(std::string s, std::string d) {
 	std::vector<std::string> res;

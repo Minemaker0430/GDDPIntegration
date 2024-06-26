@@ -58,7 +58,7 @@ class $modify(DemonProgression, LevelCell) {
 			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
 			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
 
-			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(data[type][id]["listID"].as_int())).hasRank;
+			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(data[type][id]["saveID"].as_string()).hasRank;
 
 			auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 			auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::parse("{\"unknown\": {\"display-name\": \"Unknown\",\"description\": \"This skill does not have a description.\",\"sprite\": \"DP_Skill_Unknown\"}}"));
@@ -70,7 +70,7 @@ class $modify(DemonProgression, LevelCell) {
 				gddpDiff = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["difficulty"].as_int();
 				skillsets = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["skillsets"].as_array();
 
-				if (this->m_level->m_normalPercent.value() == 100) {
+				if (typeinfo_cast<CCSprite*>(this->m_mainLayer->getChildByID("completed-icon"))) {
 					auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
 					
 					if (std::find(completedLvls.begin(), completedLvls.end(), this->m_level->m_levelID.value()) == completedLvls.end()) {

@@ -135,7 +135,8 @@ void StatsPopup::loadTab(int id) {
 		m_mainLayer->addChild(scoreSection);
 
 		//Monthly Check
-		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(data["monthly"][0]["listID"].as_int()));
+		auto listSaveID = fmt::format("{}-{}", data["monthly"][0]["month"].as_int(), data["monthly"][0]["year"].as_int());
+		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(listSaveID);
 
 		auto monthlySection = CCNode::create();
 		monthlySection->setPosition({ 210.f, 150.f });
@@ -237,8 +238,8 @@ void StatsPopup::loadTab(int id) {
 		auto highestRankSprite = CCSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
 
 		for (int i = 0; i < data["main"].as_array().size(); i++) {
-			auto listID = data["main"][i]["listID"].as_int();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+			auto saveID = data["main"][i]["saveID"].as_string();
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 			if (listSave.hasRank) {
 				auto sprName = fmt::format("{}.png", data["main"][i]["sprite"].as_string());
@@ -274,8 +275,8 @@ void StatsPopup::loadTab(int id) {
 		auto highestPlusSprite = CCSprite::createWithSpriteFrameName("DP_BeginnerPlus.png"_spr);
 
 		for (int i = 0; i < data["main"].as_array().size(); i++) {
-			auto listID = data["main"][i]["listID"].as_int();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+			auto saveID = data["main"][i]["saveID"].as_string();
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 			if (listSave.completed) {
 				auto sprName = fmt::format("{}.png", data["main"][i]["plusSprite"].as_string());
@@ -312,15 +313,15 @@ void StatsPopup::loadTab(int id) {
 
 		for (int i = 0; i < data["main"].as_array().size(); i++) {
 
-			if (i == data["main"].as_array().size()) {
+			auto saveID = data["main"][i]["saveID"].as_string();
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
+
+			if (i + 1 >= data["main"].as_array().size() && listSave.hasRank) {
+				nextRankSprite = CCSprite::createWithSpriteFrameName("DP_Obsidian.png"_spr);
 				nextRankSprite->setColor({ 0, 0, 0 });
 				break;
 			}
-
-			auto listID = data["main"][i]["listID"].as_int();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
-
-			if (listSave.hasRank) {
+			else if (listSave.hasRank) {
 				auto sprName = fmt::format("{}.png", data["main"][i + 1]["sprite"].as_string());
 				nextRankSprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
 			}
@@ -349,15 +350,15 @@ void StatsPopup::loadTab(int id) {
 
 		for (int i = 0; i < data["main"].as_array().size(); i++) {
 
-			if (i == data["main"].as_array().size()) {
-				nextRankSprite->setColor({ 0, 0, 0 });
+			auto saveID = data["main"][i]["saveID"].as_string();
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
+
+			if (i + 1 >= data["main"].as_array().size() && listSave.completed) {
+				nextPlusSprite = CCSprite::createWithSpriteFrameName("DP_ObsidianPlus.png"_spr);
+				nextPlusSprite->setColor({ 0, 0, 0 });
 				break;
 			}
-
-			auto listID = data["main"][i]["listID"].as_int();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
-
-			if (listSave.completed) {
+			else if (listSave.completed) {
 				auto sprName = fmt::format("{}.png", data["main"][i + 1]["plusSprite"].as_string());
 				nextPlusSprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
 			}
@@ -429,9 +430,9 @@ void StatsPopup::loadTab(int id) {
 		auto bonusProgress = 0;
 		auto bonusTotalLevels = 0;
 		for (int i = 0; i < data["bonus"].as_array().size(); i++) {
-			auto listID = data["bonus"][i]["listID"].as_int();
-			auto totalLevels = data["bonus"][i]["totalLevels"].as_int();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+			auto saveID = data["bonus"][i]["saveID"].as_string();
+			auto totalLevels = data["bonus"][i]["levelIDs"].as_array().size();
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 			bonusProgress += listSave.progress;
 			bonusTotalLevels += totalLevels;
@@ -509,8 +510,8 @@ void StatsPopup::loadTab(int id) {
 
 		for (int i = 0; i < data["main"].as_array().size(); i++) {
 
-			auto listID = data["main"][i]["listID"].as_int();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+			auto saveID = data["main"][i]["saveID"].as_string();
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 			auto sprName = fmt::format("{}.png", data["main"][i]["sprite"].as_string());
 			auto plusSprName = fmt::format("{}.png", data["main"][i]["plusSprite"].as_string());
@@ -579,8 +580,8 @@ void StatsPopup::loadTab(int id) {
 
 		for (int i = 0; i < data["legacy"].as_array().size(); i++) {
 
-			auto listID = data["legacy"][i]["listID"].as_int();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+			auto saveID = data["legacy"][i]["saveID"].as_string();
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 			auto mainPack = data["legacy"][i]["mainPack"].as_int();
 
@@ -647,8 +648,8 @@ void StatsPopup::loadTab(int id) {
 
 		for (int i = 0; i < data["bonus"].as_array().size(); i++) {
 
-			auto listID = data["bonus"][i]["listID"].as_int();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+			auto saveID = data["bonus"][i]["saveID"].as_string();
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 			auto sprName = fmt::format("{}.png", data["bonus"][i]["sprite"].as_string());
 
@@ -792,7 +793,7 @@ void StatsPopup::loadTab(int id) {
 
 		//Plus Titles
 		auto plusSection = CCNode::create();
-		plusSection->setPosition({ 200.f, -30.f });
+		plusSection->setPosition({ 200.f, -60.f });
 		plusSection->setID("plus-section");
 
 		auto plusHeader = CCLabelBMFont::create("Plus Titles", "bigFont.fnt");
@@ -906,9 +907,9 @@ void StatsPopup::loadTab(int id) {
 		auto bonusProgress = 0;
 		auto bonusTotalLevels = 0;
 		for (int i = 0; i < data["bonus"].as_array().size(); i++) {
-			auto listID = data["bonus"][i]["listID"].as_int();
-			auto totalLevels = data["bonus"][i]["totalLevels"].as_int();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+			auto saveID = data["bonus"][i]["saveID"].as_string();
+			auto totalLevels = data["bonus"][i]["levelIDs"].as_array().size();
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 			bonusProgress += listSave.progress;
 			bonusTotalLevels += totalLevels;
@@ -966,9 +967,9 @@ void StatsPopup::loadTab(int id) {
 		contentLayer->addChild(normalSection);
 		contentLayer->addChild(plusSection);
 
-		contentLayer->setPositionY(320.f);
-		scrollLayer->m_contentLayer->setPositionY(-355.f);
-		scrollLayer->m_contentLayer->setContentHeight(530.f);
+		contentLayer->setPositionY(350.f);
+		scrollLayer->m_contentLayer->setPositionY(-385.f);
+		scrollLayer->m_contentLayer->setContentHeight(560.f);
 
 		scrollLayer->m_contentLayer->addChild(contentLayer);
 	}
@@ -1011,17 +1012,17 @@ void StatsPopup::rankInfoCallback(CCObject* sender) {
 	auto type = btn->getID();
 	auto id = btn->getTag();
 
-	auto listID = data[type][id]["listID"].as_int();
-	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+	auto saveID = data[type][id]["saveID"].as_string();
+	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 	if (type == "main") {
-		FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Rank\n{}/{} to Plus Rank", data["main"][id]["name"].as_string(), listSave.progress, data["main"][id]["reqLevels"].as_int(), listSave.progress, data["main"][id]["totalLevels"].as_int()), "OK")->show();
+		FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Rank\n{}/{} to Plus Rank", data["main"][id]["name"].as_string(), listSave.progress, data["main"][id]["reqLevels"].as_int(), listSave.progress, data["main"][id]["levelIDs"].as_array().size()), "OK")->show();
 	}
 	else if (type == "legacy") {
-		FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Completion", data["legacy"][id]["name"].as_string(), listSave.progress, data["legacy"][id]["totalLevels"].as_int()), "OK")->show();
+		FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Completion", data["legacy"][id]["name"].as_string(), listSave.progress, data["legacy"][id]["levelIDs"].as_array().size()), "OK")->show();
 	}
 	else if (type == "bonus") {
-		FLAlertLayer::create("Rank Info", fmt::format("{}\n\n{}/{} to Completion", data["bonus"][id]["name"].as_string(), listSave.progress, data["bonus"][id]["totalLevels"].as_int()), "OK")->show();
+		FLAlertLayer::create("Rank Info", fmt::format("{}\n\n{}/{} to Completion", data["bonus"][id]["name"].as_string(), listSave.progress, data["bonus"][id]["levelIDs"].as_array().size()), "OK")->show();
 	}
 	else {
 		FLAlertLayer::create("Oops!!", "Something went wrong, you should probably tell the dev about this.", "OK")->show();
@@ -1075,8 +1076,8 @@ int StatsPopup::getScore() {
 
 	for (int i = 0; i < data["main"].as_array().size(); i++) {
 
-		auto listID = data["main"][i]["listID"].as_int();
-		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+		auto saveID = data["main"][i]["saveID"].as_string();
+		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 		score += listSave.progress;
 	}
@@ -1091,10 +1092,10 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 	auto totalLvls = 0;
 
 	if (rankID == 0) {
-		auto listID = data["main"][0]["listID"].as_int();
+		auto saveID = data["main"][0]["saveID"].as_string();
 		auto reqLevels = data["main"][0]["reqLevels"].as_int();
-		auto totalLevels = data["main"][0]["totalLevels"].as_int();
-		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+		auto totalLevels = data["main"][0]["levelIDs"].as_array().size();
+		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 		if (isPlus) {
 			progress += listSave.progress;
@@ -1107,10 +1108,10 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 	}
 	else {
 		for (int i = 0; i < rankID; i++) {
-			auto listID = data["main"][i]["listID"].as_int();
+			auto saveID = data["main"][i]["saveID"].as_string();
 			auto reqLevels = data["main"][i]["reqLevels"].as_int();
-			auto totalLevels = data["main"][i]["totalLevels"].as_int();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID));
+			auto totalLevels = data["main"][i]["levelIDs"].as_array().size();
+			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 			if (isPlus) {
 				progress += listSave.progress;

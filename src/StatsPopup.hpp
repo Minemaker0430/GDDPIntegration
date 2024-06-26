@@ -30,6 +30,7 @@ enum class StatsTab {
 };
 
 const std::vector<std::string> NormalTitles = { //String is the Title Name, int is the Rank Requirement
+	"ADEPT",
 	"PROFESSIONAL",
 	"MASTER",
 	"GRANDMASTER",
@@ -40,13 +41,15 @@ const std::vector<int> NormalTitleRequirements = {
 	6,
 	9,
 	11,
-	12
+	12,
+	13
 };
 
 const std::vector<ccColor3B> NormalTitleColors = {
-	{ 255, 120, 120 },
-	{ 255, 175, 120 },
-	{ 255, 240, 120 },
+	{ 107, 130, 255 },
+	{ 158, 97, 255 },
+	{ 255, 137, 107 },
+	{ 255, 207, 119 },
 	{ 0, 255, 255 }
 };
 
@@ -54,7 +57,8 @@ const std::vector<std::string> NormalTitleDescriptions = {
 	"Get the normal ranks from Beginner to Sapphire",
 	"Get the normal ranks from Beginner to Ruby",
 	"Get the normal ranks from Beginner to Onyx",
-	"Get the normal ranks from Beginner to Amethyst"
+	"Get the normal ranks from Beginner to Amethyst",
+	"Get the normal ranks from Beginner to Azurite"
 };
 
 const std::vector<std::string> PlusTitles = { //String is the Title Name, int is the Rank Requirement

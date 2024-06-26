@@ -11,12 +11,13 @@ add_library(${PROJECT_NAME} SHARED
     src/main.cpp
     # Add your cpp files here
     src/CreatorLayer.cpp
-    src/LevelListLayer.cpp
     src/LevelInfoLayer.cpp
     src/LevelCell.cpp
     src/ListManager.cpp
     src/StatsPopup.cpp
     src/Utils.cpp
+    src/DPListLayer.cpp
+    src/DPLayer.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

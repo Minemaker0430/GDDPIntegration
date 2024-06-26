@@ -1,3 +1,17 @@
+# v1.0.0-beta.27
+
+* Redid database systems
+	* Does not use in game lists anymore (significantly faster & easier to update)
+	* Comments are now disabled on packs
+	* Any previous saves will be automatically converted
+	* Obtaining levels in a pack is much easier
+	* Total Levels is now counted dynamically instead of being a number on the database
+* Added ADEPT Title
+* Various bugfixes
+	* Fixed crash when viewing stats with Obsidian or Obsidian+
+	* Fixed progress not registering
+	* Hopefully fixed crashes related to entering packs
+
 # v1.0.0-beta.26
 
 * Fixed Settings Page Crash (again)

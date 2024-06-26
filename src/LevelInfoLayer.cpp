@@ -66,7 +66,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
 			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
 
-			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(data[type][id]["listID"].as_int())).hasRank;
+			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(data[type][id]["saveID"].as_string()).hasRank;
 
 			auto diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
 			
@@ -78,6 +78,15 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			if (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 				gddpDiff = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["difficulty"].as_int();
 				skillsets = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["skillsets"].as_array();
+
+				if (this->m_level->m_normalPercent.value() == 100) {
+					auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
+
+					if (std::find(completedLvls.begin(), completedLvls.end(), this->m_level->m_levelID.value()) == completedLvls.end()) {
+						completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
+						Mod::get()->setSavedValue<matjson::Array>("completed-levels", completedLvls);
+					}
+				}
 			}
 
 			//skillset badges
@@ -291,6 +300,29 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					if (this->getChildByID("grd-infinity")) { this->getChildByID("grd-infinity")->setVisible(false); }
 
 					this->getChildByID("grd-difficulty")->removeMeAndCleanup();
+				}
+			}
+		}
+	}
+
+	void onBack(CCObject* sender) {
+		LevelInfoLayer::onBack(sender);
+
+		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+
+		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
+
+		if (Mod::get()->getSettingValue<bool>("show-outside-menus")) {
+			inGDDP = true;
+		}
+
+		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
+			if (this->m_level->m_normalPercent.value() == 100) {
+				auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
+
+				if (std::find(completedLvls.begin(), completedLvls.end(), this->m_level->m_levelID.value()) == completedLvls.end()) {
+					completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
+					Mod::get()->setSavedValue<matjson::Array>("completed-levels", completedLvls);
 				}
 			}
 		}

@@ -24,6 +24,7 @@ protected:
     bool init(SectionSettingValue* value, float width) {
         if (!SettingNode::init(value))
             return false;
+
         this->setContentSize({ width, 40.f });
         
         std::string name = Mod::get()->getSettingDefinition(value->getKey())->get<CustomSetting>()->json->get<std::string>("name");

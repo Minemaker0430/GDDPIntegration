@@ -120,7 +120,7 @@ class $modify(CreatorLayer) {
 
 			if (Loader::get()->isModLoaded("cvolton.betterinfo") && !Mod::get()->getSettingValue<bool>("dont-move-side-btns")) {
 				log::info("BetterInfo Detected. Moved Button.");
-				if(auto menu = this->getChildByID("cvolton.betterinfo/center-right-menu")){
+				if (auto menu = this->getChildByID("cvolton.betterinfo/center-right-menu")){
 					menu->setPositionY(260);
 				}
 			}
