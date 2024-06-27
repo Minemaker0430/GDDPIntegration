@@ -39,8 +39,8 @@ const std::vector<std::string> NormalTitles = { //String is the Title Name, int 
 
 const std::vector<int> NormalTitleRequirements = {
 	6,
-	9,
-	11,
+	8,
+	10,
 	12,
 	13
 };
@@ -55,8 +55,8 @@ const std::vector<ccColor3B> NormalTitleColors = {
 
 const std::vector<std::string> NormalTitleDescriptions = {
 	"Get the normal ranks from Beginner to Sapphire",
-	"Get the normal ranks from Beginner to Ruby",
-	"Get the normal ranks from Beginner to Onyx",
+	"Get the normal ranks from Beginner to Emerald",
+	"Get the normal ranks from Beginner to Diamond",
 	"Get the normal ranks from Beginner to Amethyst",
 	"Get the normal ranks from Beginner to Azurite"
 };

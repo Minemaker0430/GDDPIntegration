@@ -250,6 +250,8 @@ void DPListLayer::updateProgressBar() {
 	progressText->setZOrder(5);
 	progressText->setID("progress-text");
 	m_progressBar->addChild(progressText);
+
+	return;
 }
 
 void DPListLayer::updateSave() {
@@ -328,24 +330,32 @@ void DPListLayer::updateSave() {
 
 	//save
 	Mod::get()->setSavedValue<ListSaveFormat>(saveID, ListSaveFormat{ .progress = progress, .completed = completed, .hasRank = hasRank });
+	
+	return;
 }
 
 void DPListLayer::reloadLevels(CCObject* sender) {
 	if (m_levelsLoaded) {
 		loadLevels(m_page);
 	}
+
+	return;
 }
 
 void DPListLayer::pageLeft(CCObject* sender) {
 	m_page -= 1;
 
 	loadLevels(m_page);
+
+	return;
 }
 
 void DPListLayer::pageRight(CCObject* sender) {
 	m_page += 1;
 
 	loadLevels(m_page);
+
+	return;
 }
 
 void DPListLayer::loadLevels(int page) {
@@ -415,7 +425,12 @@ void DPListLayer::loadLevels(int page) {
 	if (storedLevels) {
 		loadLevelsFinished(storedLevels, "");
 	}
-	else glm->getOnlineLevels(searchObject);
+	else
+	{
+		glm->getOnlineLevels(searchObject);
+	}
+
+	return;
 }
 
 void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
@@ -518,6 +533,8 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 	}*/
 
 	updateProgressBar();
+
+	return;
 }
 
 void DPListLayer::loadLevelsFailed(const char*) {
@@ -528,6 +545,8 @@ void DPListLayer::loadLevelsFailed(const char*) {
 	auto alert = FLAlertLayer::create("ERROR", "Failed to load levels. Please try again later.", "OK");
 	alert->setParent(this);
 	alert->show();
+
+	return;
 }
 
 DPListLayer* DPListLayer::create(const char* type, int id, bool isPractice) {

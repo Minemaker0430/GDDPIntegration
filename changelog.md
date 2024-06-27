@@ -1,3 +1,9 @@
+# v1.0.0-beta.28
+
+* Attempted to fix some mobile crashes
+* Fixed Titles having incorrect requirements
+* Fixed a bug involving Your Plus Title in the Stats menu
+
 # v1.0.0-beta.27
 
 * Redid database systems

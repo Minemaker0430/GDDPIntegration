@@ -420,7 +420,7 @@ void StatsPopup::loadTab(int id) {
 
 		auto highestPlusTitle = -1;
 		for (int i = 0; i < PlusTitles.size(); i++) {
-			if (getPercentToRank(PlusTitleRequirements[i], false) >= 1.f) {
+			if (getPercentToRank(PlusTitleRequirements[i], true) >= 1.f) {
 				highestPlusTitle = i;
 			}
 		}
