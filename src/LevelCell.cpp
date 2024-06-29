@@ -34,6 +34,8 @@ class $modify(DemonProgression, LevelCell) {
 		if (Mod::get()->getSettingValue<bool>("show-outside-menus")) {
 			inGDDP = true;
 		}
+		
+		if (Mod::get()->getSavedValue<int>("database-version", 0) < 9) { return; }
 
 		//log::info("{}", inGDDP);
 

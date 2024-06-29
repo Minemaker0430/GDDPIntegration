@@ -16,6 +16,16 @@ class $modify(CreatorLayer) {
 
 	bool init() {
 		if (!CreatorLayer::init()) return false;
+		
+		if (Mod::get()->getSavedValue<int>("database-version", 9) < 9) { 
+			auto alert = FLAlertLayer::create(
+			"IMPORTANT",
+			"Your GDDP Data is outdated. Go into the menu to refresh it.\n\nCustom Difficulty Faces have been disabled for now.",
+			"OK"
+			); 
+			alert->m_scene = this;
+			alert->show();
+		}
 
 		Mod::get()->setSavedValue<bool>("in-gddp", false);
 

@@ -1,3 +1,7 @@
+# v1.0.0-beta.29
+
+* The mod now tells you to refresh your data if it's outdated and won't crash on saved levels
+
 # v1.0.0-beta.28
 
 * Attempted to fix some mobile crashes

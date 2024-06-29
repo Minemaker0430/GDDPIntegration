@@ -30,6 +30,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 	bool init(GJGameLevel* p0, bool p1) {
 		if (!LevelInfoLayer::init(p0, p1)) return false;
 
+		if (Mod::get()->getSavedValue<int>("database-version", 0) < 9) { return true; }
+
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
@@ -267,6 +269,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 		if (this->m_level->m_stars != 10) {
 			return;
 		}
+
+		if (Mod::get()->getSavedValue<int>("database-version", 0) < 9) { return; }
 
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
