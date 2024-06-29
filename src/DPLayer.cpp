@@ -342,7 +342,7 @@ bool DPLayer::init() {
 	this->addChild(extrasMenu);
 
 	//utility tabs
-	auto skillsetsSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
+	/*auto skillsetsSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
 	auto rouletteSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
 	auto recommendedSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
 
@@ -363,7 +363,7 @@ bool DPLayer::init() {
 	utilityMenu->addChild(skillsetsBtn);
 	utilityMenu->addChild(rouletteBtn);
 	utilityMenu->addChild(recommendedBtn);
-	utilityMenu->setID("utility-menu");
+	utilityMenu->setID("utility-menu");*/
 	//this->addChild(utilityMenu);
 
 	//list tabs
