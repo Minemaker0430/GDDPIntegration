@@ -64,9 +64,12 @@ bool DPListLayer::init(const char* type, int id, bool isPractice) {
 	backMenu->setID("back-menu");
 	this->addChild(backMenu);
 
+	//check for actual data
+	if (!data.contains("main")) { return true; }
+
 	//info button
 	auto infoMenu = CCMenu::create();
-	auto infoButton = InfoAlertButton::create("Pack Info", data[type][id]["description"].as_string(), 1.0f);
+	auto infoButton = InfoAlertButton::create("Pack Info", data[m_type][m_id]["description"].as_string().c_str(), 1.0f);
 	infoMenu->setPosition({ 25, 25 });
 	infoMenu->setZOrder(2);
 	infoMenu->addChild(infoButton);

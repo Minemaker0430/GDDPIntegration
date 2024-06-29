@@ -36,6 +36,9 @@ public:
 	void reloadList(int type);
 	void soonCallback(CCObject*); //Coming Soon
 	void achievementsCallback(CCObject*);
+	void searchCallback(CCObject*);
+	void rouletteCallback(CCObject*);
+	void recommendedCallback(CCObject*);
 };
 
 struct ListSaveFormat {

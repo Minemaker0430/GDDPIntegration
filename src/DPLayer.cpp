@@ -7,6 +7,7 @@
 
 #include "DPLayer.hpp"
 #include "DPListLayer.hpp"
+#include "RecommendedLayer.hpp"
 #include "StatsPopup.hpp"
 #include "Utils.hpp"
 
@@ -208,6 +209,29 @@ void DPLayer::achievementsCallback(CCObject* sender) {
 	}
 }
 
+void DPLayer::searchCallback(CCObject* sender) {
+	if (m_finishedLoading) {
+		soonCallback(sender);
+	}
+}
+
+void DPLayer::rouletteCallback(CCObject* sender) {
+	if (m_finishedLoading) {
+		soonCallback(sender);
+	}
+}
+
+void DPLayer::recommendedCallback(CCObject* sender) {
+	if (m_finishedLoading) {
+		auto scene = CCScene::create(); // creates the scene
+		auto dpLayer = RecommendedLayer::create(); //creates the layer
+
+		scene->addChild(dpLayer);
+
+		CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, scene)); // push transition
+	}
+}
+
 bool DPLayer::init() {
 	if (!CCLayer::init()) return false;
 
@@ -319,12 +343,12 @@ bool DPLayer::init() {
 
 	//utility tabs
 	auto skillsetsSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
-	auto rouletteSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
+	auto rouletteSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
 	auto recommendedSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
 
-	auto skillsetsBtn = CCMenuItemSpriteExtra::create(skillsetsSpr, this, menu_selector(DPLayer::soonCallback));
-	auto rouletteBtn = CCMenuItemSpriteExtra::create(rouletteSpr, this, menu_selector(DPLayer::soonCallback));
-	auto recommendedBtn = CCMenuItemSpriteExtra::create(recommendedSpr, this, menu_selector(DPLayer::soonCallback));
+	auto skillsetsBtn = CCMenuItemSpriteExtra::create(skillsetsSpr, this, menu_selector(DPLayer::searchCallback));
+	auto rouletteBtn = CCMenuItemSpriteExtra::create(rouletteSpr, this, menu_selector(DPLayer::rouletteCallback));
+	auto recommendedBtn = CCMenuItemSpriteExtra::create(recommendedSpr, this, menu_selector(DPLayer::recommendedCallback));
 
 	skillsetsBtn->setPositionY(50.f);
 	rouletteBtn->setPositionY(0.f);

@@ -15,7 +15,7 @@ public:
 	void loadTab(int);
 	void onTab(CCObject*);
 	int getScore();
-	float getPercentToRank(int, bool);
+	static float getPercentToRank(int, bool);
 
 	void titleInfoCallback(CCObject*); //on title info
 	void rankInfoCallback(CCObject*); //on rank info
