@@ -7,7 +7,7 @@
 
 #include "DPLayer.hpp"
 #include "DPListLayer.hpp"
-#include "RecommendedLayer.hpp"
+//#include "RecommendedLayer.hpp"
 #include "StatsPopup.hpp"
 #include "Utils.hpp"
 
@@ -209,7 +209,7 @@ void DPLayer::achievementsCallback(CCObject* sender) {
 	}
 }
 
-void DPLayer::searchCallback(CCObject* sender) {
+/*void DPLayer::searchCallback(CCObject* sender) {
 	if (m_finishedLoading) {
 		soonCallback(sender);
 	}
@@ -230,7 +230,7 @@ void DPLayer::recommendedCallback(CCObject* sender) {
 
 		CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, scene)); // push transition
 	}
-}
+}*/
 
 bool DPLayer::init() {
 	if (!CCLayer::init()) return false;
