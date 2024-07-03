@@ -2,7 +2,7 @@
 #include <Geode/Geode.hpp>
 
 #include <Geode/modify/CreatorLayer.hpp>
-#include "DPLayer.hpp"
+#include "../DPLayer.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -17,7 +17,7 @@ class $modify(CreatorLayer) {
 	bool init() {
 		if (!CreatorLayer::init()) return false;
 		
-		if (Mod::get()->getSavedValue<int>("database-version", 9) < 9) { 
+		if (Mod::get()->getSavedValue<int>("database-version", 10) < 10) { 
 			auto alert = FLAlertLayer::create(
 			"IMPORTANT",
 			"Your GDDP Data is outdated. Go into the menu to refresh it.\n\nCustom Difficulty Faces have been disabled for now.",

@@ -2,6 +2,8 @@
 #include <Geode/Geode.hpp>
 
 //other headers
+#include <Geode/utils/JsonValidation.hpp>
+
 #include "DPLayer.hpp"
 #include "StatsPopup.hpp"
 
@@ -84,7 +86,14 @@ void StatsPopup::loadTab(int id) {
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
-	if (!data.contains("main")) {
+	//check for errors
+	auto jsonCheck = JsonChecker(data);
+
+	if (jsonCheck.isError()) {
+		auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
+		alert->setParent(this);
+		alert->show();
+
 		return;
 	}
 
@@ -1072,6 +1081,15 @@ int StatsPopup::getScore() {
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
+	//check for errors
+	auto jsonCheck = JsonChecker(data);
+
+	if (jsonCheck.isError()) {
+		log::info("Something went wrong validating the list data. ({})", jsonCheck.getError());
+
+		return 0; //NO WAY GEOMETRY DASH REFERENCE OOOOOOOOOOOOOOOO
+	}
+
 	auto score = 0;
 
 	for (int i = 0; i < data["main"].as_array().size(); i++) {
@@ -1088,6 +1106,16 @@ int StatsPopup::getScore() {
 float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+
+	//check for errors
+	auto jsonCheck = JsonChecker(data);
+
+	if (jsonCheck.isError()) {
+		log::info("Something went wrong validating the list data. ({})", jsonCheck.getError());
+
+		return 0.f;
+	}
+
 	auto progress = 0;
 	auto totalLvls = 0;
 

@@ -1,3 +1,10 @@
+# v1.0.0-beta.31
+
+* Added JSON Validation checks to prevent crashes.
+* Depreciated "listID", "practiceID", and "totalLevels"
+* You will maintain your progress to a rank even if a level is moved to Legacy
+	* Note that this does not apply for Plus Ranks.
+
 # v1.0.0-beta.30
 
 * Attempted to fix crashes (again)

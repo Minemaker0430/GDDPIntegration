@@ -1,9 +1,10 @@
 //geode header
 #include <Geode/Geode.hpp>
 
+#include <Geode/utils/JsonValidation.hpp>
 #include <Geode/modify/LevelCell.hpp>
-#include "DPLayer.hpp"
-#include "ListManager.hpp"
+#include "../DPLayer.hpp"
+#include "../ListManager.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -35,7 +36,14 @@ class $modify(DemonProgression, LevelCell) {
 			inGDDP = true;
 		}
 		
-		if (Mod::get()->getSavedValue<int>("database-version", 0) < 9) { return; }
+		//check for errors
+		auto jsonCheck = JsonChecker(data);
+
+		if (jsonCheck.isError()) {
+			log::info("Something went wrong validating the list data. ({})", jsonCheck.getError());
+
+			return;
+		}
 
 		//log::info("{}", inGDDP);
 
@@ -58,12 +66,20 @@ class $modify(DemonProgression, LevelCell) {
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
 			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
 			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
-			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
 
 			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(data[type][id]["saveID"].as_string()).hasRank;
 
 			auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 			auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::parse("{\"unknown\": {\"display-name\": \"Unknown\",\"description\": \"This skill does not have a description.\",\"sprite\": \"DP_Skill_Unknown\"}}"));
+
+			//check for errors
+			auto jsonCheck2 = JsonChecker(skillsetData);
+
+			if (jsonCheck2.isError()) {
+				log::info("Something went wrong validating the skillset data. ({})", jsonCheck2.getError());
+
+				return;
+			}
 
 			int gddpDiff = 0;
 			matjson::Array skillsets = {};

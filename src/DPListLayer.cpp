@@ -3,6 +3,7 @@
 
 //other headers
 #include <Geode/utils/web.hpp>
+#include <Geode/utils/JsonValidation.hpp>
 #include <Geode/loader/Event.hpp>
 
 #include "DPLayer.hpp"
@@ -64,8 +65,16 @@ bool DPListLayer::init(const char* type, int id, bool isPractice) {
 	backMenu->setID("back-menu");
 	this->addChild(backMenu);
 
-	//check for actual data
-	if (!data.contains("main")) { return true; }
+	//check for errors
+	auto jsonCheck = JsonChecker(data);
+
+	if (jsonCheck.isError()) {
+		auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
+		alert->setParent(this);
+		alert->show();
+
+		return true;
+	}
 
 	//info button
 	auto infoMenu = CCMenu::create();
@@ -287,6 +296,10 @@ void DPListLayer::updateSave() {
 		}
 	}
 
+	if (m_type == "main" && !listSave.hasRank && progress < listSave.progress) { //If you don't have the rank, any progress you have will be maintained even if a level is moved to legacy
+		progress == listSave.progress;
+	}
+
 	//update status
 	auto reqLevels = 0;
 	if (m_type == "main") { reqLevels = data[m_type][m_id]["reqLevels"].as_int(); }
@@ -315,15 +328,15 @@ void DPListLayer::updateSave() {
 	if (m_type == "monthly" && progress >= 5) {
 		auto completedMonthlies = Mod::get()->getSavedValue<matjson::Array>("monthly-completions");
 
-		auto listID = data[m_type][m_id]["listID"].as_int(); //Only used for obtaining old data
+		//auto listID = data[m_type][m_id]["listID"].as_int(); //Only used for obtaining old data
 
 		//replace old monthly data if it exists
-		if (std::find(completedMonthlies.begin(), completedMonthlies.end(), listID) != completedMonthlies.end()) {
+		/*if (std::find(completedMonthlies.begin(), completedMonthlies.end(), listID) != completedMonthlies.end()) {
 			auto pos = std::find(completedMonthlies.begin(), completedMonthlies.end(), listID);
 			completedMonthlies.erase(pos);
 			completedMonthlies.insert(pos, saveID);
 			Mod::get()->setSavedValue<matjson::Array>("monthly-completions", completedMonthlies);
-		}
+		}*/
 
 		if (std::find(completedMonthlies.begin(), completedMonthlies.end(), saveID) == completedMonthlies.end()) {
 			completedMonthlies.insert(completedMonthlies.begin(), saveID);

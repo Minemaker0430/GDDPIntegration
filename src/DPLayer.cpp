@@ -4,6 +4,7 @@
 //other headers
 #include <Geode/utils/web.hpp>
 #include <Geode/loader/Event.hpp>
+#include <Geode/utils/JsonValidation.hpp>
 
 #include "DPLayer.hpp"
 #include "DPListLayer.hpp"
@@ -122,7 +123,11 @@ void DPLayer::reloadData(bool isInit) {
 				}
 				else {
 					m_loadcircle->fadeAndRemove();
-					FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({})", res->code()), "OK")->show();
+					auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({}, {})", res->code(), res->json().has_error()), "OK");
+					alert->m_scene = this;
+					alert->show();
+
+					m_finishedLoading = true;
 				}
 			}
 			else if (e->isCancelled()) {
@@ -147,7 +152,9 @@ void DPLayer::reloadData(bool isInit) {
 					}
 				}
 				else {
-					FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the Skillset Data. ({})", res->code()), "OK")->show();
+					auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the Skillset Data. ({}, {})", res->code(), res->json().has_error()), "OK");
+					alert->m_scene = this;
+					alert->show();
 				}
 			}
 			else if (e->isCancelled()) {
@@ -429,6 +436,17 @@ bool DPLayer::init() {
 
 void DPLayer::reloadList(int type) {
 
+	//check for errors
+	auto jsonCheck = JsonChecker(m_data);
+
+	if (jsonCheck.isError()) {
+		auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
+		alert->setParent(this);
+		alert->show();
+
+		return;
+	}
+
 	//all save stuff
 	auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
 
@@ -465,7 +483,7 @@ void DPLayer::reloadList(int type) {
 		std::string name = "null";
 		std::string sprite = "DP_Beginner";
 		std::string plusSprite = "DP_BeginnerPlus"; //Main Only
-		int listID = 0;
+		//int listID = 0;
 		std::string saveID = "beginner";
 		matjson::Array levelIDs = {};
 		matjson::Array practiceIDs = {};
@@ -478,7 +496,7 @@ void DPLayer::reloadList(int type) {
 		name = m_data[dataIdx][i]["name"].as_string();
 		sprite = m_data[dataIdx][i]["sprite"].as_string();
 		if (type == static_cast<int>(DPListType::Main)) { plusSprite = m_data[dataIdx][i]["plusSprite"].as_string(); }
-		listID = m_data[dataIdx][i]["listID"].as_int(); //only used to obtain old saves
+		//listID = m_data[dataIdx][i]["listID"].as_int(); //only used to obtain old saves
 		if (type != static_cast<int>(DPListType::Monthly)) { saveID = m_data[dataIdx][i]["saveID"].as_string(); }
 		levelIDs = m_data[dataIdx][i]["levelIDs"].as_array();
 		if (type == static_cast<int>(DPListType::Main)) { practiceIDs = m_data[dataIdx][i]["practiceIDs"].as_array(); }
@@ -491,7 +509,7 @@ void DPLayer::reloadList(int type) {
 		if (type == static_cast<int>(DPListType::Monthly)) { saveID = fmt::format("{}-{}", month, year); }
 
 		//get list save
-		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID, Mod::get()->getSavedValue<ListSaveFormat>(std::to_string(listID)));
+		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 		auto fullTitle = name;
 		if (type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) {

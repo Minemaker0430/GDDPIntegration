@@ -10,9 +10,9 @@ project(GDDPIntegration VERSION 1.0.0)
 add_library(${PROJECT_NAME} SHARED
     src/main.cpp
     # Add your cpp files here
-    src/CreatorLayer.cpp
-    src/LevelInfoLayer.cpp
-    src/LevelCell.cpp
+    src/hooks/CreatorLayer.cpp
+    src/hooks/LevelInfoLayer.cpp
+    src/hooks/LevelCell.cpp
     src/ListManager.cpp
     src/StatsPopup.cpp
     src/Utils.cpp

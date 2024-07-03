@@ -1,9 +1,10 @@
 //geode header
 #include <Geode/Geode.hpp>
 
+#include <Geode/utils/JsonValidation.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
-#include "DPLayer.hpp"
-#include "ListManager.hpp"
+#include "../DPLayer.hpp"
+#include "../ListManager.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -30,9 +31,18 @@ class $modify(DemonProgression, LevelInfoLayer) {
 	bool init(GJGameLevel* p0, bool p1) {
 		if (!LevelInfoLayer::init(p0, p1)) return false;
 
-		if (Mod::get()->getSavedValue<int>("database-version", 0) < 9) { return true; }
-
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+
+		//check for errors
+		auto jsonCheck = JsonChecker(data);
+
+		if (jsonCheck.isError()) {
+			auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
+			alert->setParent(this);
+			alert->show();
+
+			return true;
+		}
 
 		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
 
@@ -66,13 +76,23 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
 			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
 			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
-			auto totalLevels = Mod::get()->getSavedValue<int>("current-pack-totalLvls", 0);
 
 			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(data[type][id]["saveID"].as_string()).hasRank;
 
 			auto diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
 			
 			auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::parse("{\"unknown\": {\"display-name\": \"Unknown\",\"description\": \"This skill does not have a description.\",\"sprite\": \"DP_Skill_Unknown\"}}"));
+
+			//check for errors
+			auto jsonCheck2 = JsonChecker(skillsetData);
+
+			if (jsonCheck2.isError()) {
+				auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the skillset data. ({})", jsonCheck2.getError()), "OK");
+				alert->setParent(this);
+				alert->show();
+
+				return true;
+			}
 
 			int gddpDiff = 0;
 			matjson::Array skillsets = {};
