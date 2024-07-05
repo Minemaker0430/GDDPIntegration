@@ -982,14 +982,20 @@ void StatsPopup::loadTab(int id) {
 
 		scrollLayer->m_contentLayer->addChild(contentLayer);
 	}
+
+	return;
 }
 
 void StatsPopup::onScoreInfo(CCObject* sender) {
 	FLAlertLayer::create("Score Info", "Your GDDP Score is based on how many <cy>Main Pack</c> levels you've beaten.", "OK")->show();
+
+	return;
 }
 
 void StatsPopup::onMonthlyInfo(CCObject* sender) {
 	FLAlertLayer::create("Monthly Info", "Complete at least <cy>5 Levels</c> of this month's Monthly Pack.", "OK")->show();
+
+	return;
 }
 
 void StatsPopup::titleInfoCallback(CCObject* sender) {
@@ -1011,6 +1017,8 @@ void StatsPopup::titleInfoCallback(CCObject* sender) {
 			FLAlertLayer::create("Oops!!", "Something went wrong, you should probably tell the dev about this.", "OK")->show();
 		}
 	}
+
+	return;
 }
 
 void StatsPopup::rankInfoCallback(CCObject* sender) {
@@ -1025,7 +1033,7 @@ void StatsPopup::rankInfoCallback(CCObject* sender) {
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 	if (type == "main") {
-		FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Rank\n{}/{} to Plus Rank", data["main"][id]["name"].as_string(), listSave.progress, data["main"][id]["reqLevels"].as_int(), listSave.progress, data["main"][id]["levelIDs"].as_array().size()), "OK")->show();
+		FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Rank\n{}/{} to Plus Rank", data["main"][id]["name"].as_string(), clamp(listSave.progress, 0, data["main"][id]["reqLevels"].as_int()), data["main"][id]["reqLevels"].as_int(), listSave.progress, data["main"][id]["levelIDs"].as_array().size()), "OK")->show();
 	}
 	else if (type == "legacy") {
 		FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Completion", data["legacy"][id]["name"].as_string(), listSave.progress, data["legacy"][id]["levelIDs"].as_array().size()), "OK")->show();
@@ -1036,6 +1044,8 @@ void StatsPopup::rankInfoCallback(CCObject* sender) {
 	else {
 		FLAlertLayer::create("Oops!!", "Something went wrong, you should probably tell the dev about this.", "OK")->show();
 	}
+
+	return;
 }
 
 void StatsPopup::onTab(CCObject* sender) {
@@ -1075,6 +1085,8 @@ void StatsPopup::onTab(CCObject* sender) {
 
 		loadTab(static_cast<int>(StatsTab::Titles));
 	}
+
+	return;
 }
 
 int StatsPopup::getScore() {

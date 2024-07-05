@@ -1,3 +1,9 @@
+# v1.0.0-beta.32
+
+* Added more crash checks
+* (Hopefully) fixed mobile crashes
+* Rank progress in the Stats Menu are now clamped
+
 # v1.0.0-beta.31
 
 * Added JSON Validation checks to prevent crashes.

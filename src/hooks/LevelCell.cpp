@@ -23,6 +23,8 @@ class $modify(DemonProgression, LevelCell) {
 			skillsetData[skillID]["description"].as_string().c_str(),
 			"OK"
 		)->show();
+
+		return;
 	}
 
 	void loadCustomLevelCell() {
@@ -65,9 +67,13 @@ class $modify(DemonProgression, LevelCell) {
 
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
 			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
-			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
 
-			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(data[type][id]["saveID"].as_string()).hasRank;
+			std::string saveID = "null";
+			if (type == "main") {
+				if (!data["main"][id]["saveID"].is_null()) { saveID = data["main"][id]["saveID"].as_string(); }
+			}
+
+			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(saveID).hasRank;
 
 			auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 			auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::parse("{\"unknown\": {\"display-name\": \"Unknown\",\"description\": \"This skill does not have a description.\",\"sprite\": \"DP_Skill_Unknown\"}}"));
@@ -83,14 +89,15 @@ class $modify(DemonProgression, LevelCell) {
 
 			int gddpDiff = 0;
 			matjson::Array skillsets = {};
+			auto levelID = std::to_string(this->m_level->m_levelID.value());
 
-			if (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
-				gddpDiff = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["difficulty"].as_int();
-				skillsets = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["skillsets"].as_array();
+			if (data["level-data"].contains(levelID)) {
+				if (!data["level-data"][levelID]["difficulty"].is_null()) { gddpDiff = data["level-data"][levelID]["difficulty"].as_int(); }
+				if (!data["level-data"][levelID]["skillsets"].is_null()) { skillsets = data["level-data"][levelID]["skillsets"].as_array(); }
 
 				if (typeinfo_cast<CCSprite*>(this->m_mainLayer->getChildByID("completed-icon"))) {
 					auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
-					
+
 					if (std::find(completedLvls.begin(), completedLvls.end(), this->m_level->m_levelID.value()) == completedLvls.end()) {
 						completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
 						Mod::get()->setSavedValue<matjson::Array>("completed-levels", completedLvls);
@@ -293,5 +300,7 @@ class $modify(DemonProgression, LevelCell) {
 
 			}
 		}
+
+		return;
 	}
 };

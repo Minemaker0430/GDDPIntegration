@@ -26,6 +26,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			skillsetData[skillID]["description"].as_string().c_str(),
 			"OK"
 		)->show();
+
+		return;
 	}
 
 	bool init(GJGameLevel* p0, bool p1) {
@@ -75,9 +77,13 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
 			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
-			auto reqLevels = Mod::get()->getSavedValue<int>("current-pack-requirement", 0);
 
-			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(data[type][id]["saveID"].as_string()).hasRank;
+			std::string saveID = "null";
+			if (type == "main") {
+				if (!data["main"][id]["saveID"].is_null()) { saveID = data["main"][id]["saveID"].as_string(); }
+			}
+
+			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(saveID).hasRank;
 
 			auto diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
 			
@@ -96,10 +102,11 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 			int gddpDiff = 0;
 			matjson::Array skillsets = {};
+			auto levelID = std::to_string(this->m_level->m_levelID.value());
 
-			if (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
-				gddpDiff = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["difficulty"].as_int();
-				skillsets = data["level-data"][std::to_string(this->m_level->m_levelID.value())]["skillsets"].as_array();
+			if (data["level-data"].contains(levelID)) {
+				if (!data["level-data"][levelID]["difficulty"].is_null()) { gddpDiff = data["level-data"][levelID]["difficulty"].as_int(); }
+				if (!data["level-data"][levelID]["skillsets"].is_null()) { skillsets = data["level-data"][levelID]["skillsets"].as_array(); }
 
 				if (this->m_level->m_normalPercent.value() == 100) {
 					auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
@@ -290,9 +297,18 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			return;
 		}
 
-		if (Mod::get()->getSavedValue<int>("database-version", 0) < 9) { return; }
-
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+
+		//check for errors
+		auto jsonCheck = JsonChecker(data);
+
+		if (jsonCheck.isError()) {
+			auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
+			alert->setParent(this);
+			alert->show();
+
+			return;
+		}
 
 		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
 
@@ -327,12 +343,25 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				}
 			}
 		}
+
+		return;
 	}
 
 	void onBack(CCObject* sender) {
 		LevelInfoLayer::onBack(sender);
 
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+
+		//check for errors
+		auto jsonCheck = JsonChecker(data);
+
+		if (jsonCheck.isError()) {
+			auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
+			alert->setParent(this);
+			alert->show();
+
+			return;
+		}
 
 		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
 
@@ -350,5 +379,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				}
 			}
 		}
+
+		return;
 	}
 };

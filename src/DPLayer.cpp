@@ -35,18 +35,24 @@ void DPLayer::callback(CCObject*) {
 	scene->addChild(dpLayer);
 
 	CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, scene)); // push transition
+
+	return;
 }
 
 void DPLayer::keyBackClicked() {
 
 	Mod::get()->setSavedValue<bool>("in-gddp", false);
 	CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
+
+	return;
 }
 
 void DPLayer::backButton(CCObject*) {
 
 	Mod::get()->setSavedValue<bool>("in-gddp", false);
 	keyBackClicked();
+
+	return;
 }
 
 DPLayer* DPLayer::create() {
@@ -61,10 +67,12 @@ DPLayer* DPLayer::create() {
 
 void DPLayer::soonCallback(CCObject*) {
 	FLAlertLayer::create("Coming Soon!", "This feature hasn't been implemented yet but will be in the future!", "OK")->show();
+	return;
 }
 
 void DPLayer::reloadCallback(CCObject*) {
 	reloadData(false);
+	return;
 }
 
 void DPLayer::reloadData(bool isInit) {
@@ -214,18 +222,24 @@ void DPLayer::achievementsCallback(CCObject* sender) {
 	if (m_finishedLoading) {
 		StatsPopup::create()->show();
 	}
+
+	return;
 }
 
 /*void DPLayer::searchCallback(CCObject* sender) {
 	if (m_finishedLoading) {
 		soonCallback(sender);
 	}
+
+	return;
 }
 
 void DPLayer::rouletteCallback(CCObject* sender) {
 	if (m_finishedLoading) {
 		soonCallback(sender);
 	}
+
+	return;
 }
 
 void DPLayer::recommendedCallback(CCObject* sender) {
@@ -237,6 +251,8 @@ void DPLayer::recommendedCallback(CCObject* sender) {
 
 		CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, scene)); // push transition
 	}
+
+	return;
 }*/
 
 bool DPLayer::init() {
@@ -481,30 +497,30 @@ void DPLayer::reloadList(int type) {
 	for (int i = 0; i < packs.size(); i++) {
 
 		std::string name = "null";
-		std::string sprite = "DP_Beginner";
-		std::string plusSprite = "DP_BeginnerPlus"; //Main Only
+		std::string sprite = "DP_Invisible";
+		std::string plusSprite = "DP_Invisible"; //Main Only
 		//int listID = 0;
-		std::string saveID = "beginner";
+		std::string saveID = "null";
 		matjson::Array levelIDs = {};
 		matjson::Array practiceIDs = {};
 		int reqLevels = 0; //Main Only
 		int month = 1; //Monthly Only
-		int year = 2024; //Monthly Only
+		int year = 0; //Monthly Only
 		bool hasPractice = false; //Main Only
 		int mainPack = 0; //Legacy Only
 
-		name = m_data[dataIdx][i]["name"].as_string();
-		sprite = m_data[dataIdx][i]["sprite"].as_string();
-		if (type == static_cast<int>(DPListType::Main)) { plusSprite = m_data[dataIdx][i]["plusSprite"].as_string(); }
+		if (!m_data[dataIdx][i]["name"].is_null()) { name = m_data[dataIdx][i]["name"].as_string(); }
+		if (!m_data[dataIdx][i]["sprite"].is_null()) { sprite = m_data[dataIdx][i]["sprite"].as_string(); }
+		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["plusSprite"].is_null()) { plusSprite = m_data[dataIdx][i]["plusSprite"].as_string(); }
 		//listID = m_data[dataIdx][i]["listID"].as_int(); //only used to obtain old saves
-		if (type != static_cast<int>(DPListType::Monthly)) { saveID = m_data[dataIdx][i]["saveID"].as_string(); }
-		levelIDs = m_data[dataIdx][i]["levelIDs"].as_array();
-		if (type == static_cast<int>(DPListType::Main)) { practiceIDs = m_data[dataIdx][i]["practiceIDs"].as_array(); }
-		if (type == static_cast<int>(DPListType::Main)) { reqLevels = m_data[dataIdx][i]["reqLevels"].as_int(); }
-		if (type == static_cast<int>(DPListType::Monthly)) { month = m_data[dataIdx][i]["month"].as_int(); }
-		if (type == static_cast<int>(DPListType::Monthly)) { year = m_data[dataIdx][i]["year"].as_int(); }
-		if (type == static_cast<int>(DPListType::Main)) { hasPractice = m_data[dataIdx][i]["practice"].as_bool(); }
-		if (type == static_cast<int>(DPListType::Legacy)) { mainPack = m_data[dataIdx][i]["mainPack"].as_int(); }
+		if (type != static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["saveID"].is_null()) { saveID = m_data[dataIdx][i]["saveID"].as_string(); }
+		if (!m_data[dataIdx][i]["levelIDs"].is_null()) { levelIDs = m_data[dataIdx][i]["levelIDs"].as_array(); }
+		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["practiceIDs"].is_null()) { practiceIDs = m_data[dataIdx][i]["practiceIDs"].as_array(); }
+		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["reqLevels"].is_null()) { reqLevels = m_data[dataIdx][i]["reqLevels"].as_int(); }
+		if (type == static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["month"].is_null()) { month = m_data[dataIdx][i]["month"].as_int(); }
+		if (type == static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["year"].is_null()) { year = m_data[dataIdx][i]["year"].as_int(); }
+		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["practice"].is_null()) { hasPractice = m_data[dataIdx][i]["practice"].as_bool(); }
+		if (type == static_cast<int>(DPListType::Legacy) && !m_data[dataIdx][i]["mainPack"].is_null()) { mainPack = m_data[dataIdx][i]["mainPack"].as_int(); }
 
 		if (type == static_cast<int>(DPListType::Monthly)) { saveID = fmt::format("{}-{}", month, year); }
 
@@ -885,6 +901,8 @@ void DPLayer::reloadList(int type) {
 	this->addChild(packListMenu);
 	m_list = packListMenu;
 	m_currentTab = type;
+
+	return;
 }
 
 void DPLayer::onTab(CCObject* pSender) {
@@ -941,6 +959,8 @@ void DPLayer::onTab(CCObject* pSender) {
 
 		reloadList(static_cast<int>(DPListType::Monthly));
 	}
+
+	return;
 }
 
 DPLayer::~DPLayer() {

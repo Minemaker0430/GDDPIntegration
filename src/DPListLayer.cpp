@@ -17,10 +17,14 @@ void DPListLayer::keyBackClicked() {
 	updateSave();
 
 	CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
+
+	return;
 };
 
 void DPListLayer::backButton(CCObject* sender) {
 	keyBackClicked();
+
+	return;
 };
 
 bool DPListLayer::init(const char* type, int id, bool isPractice) {
@@ -181,18 +185,22 @@ void DPListLayer::updateProgressBar() {
 	auto front = typeinfo_cast<CCSprite*>(m_progressBar->getChildByID("clipping-node")->getChildByID("progress-bar-front"));
 	auto progressText = typeinfo_cast<CCLabelBMFont*>(m_progressBar->getChildByID("progress-text"));
 
-	std::string saveID = "beginner";
-	auto month = 0;
-	auto year = 0;
+	std::string saveID = "null";
+	int month = 0;
+	int year = 0;
+	matjson::Array levelIDs = {};
+	int reqLevels = 0;
 
-	if (m_type == "monthly") { month = data[m_type][m_id]["month"].as_int(); }
-	if (m_type == "monthly") { year = data[m_type][m_id]["year"].as_int(); }
+	if (m_type == "monthly" && !data[m_type][m_id]["month"].is_null()) { month = data[m_type][m_id]["month"].as_int(); }
+	if (m_type == "monthly" && !data[m_type][m_id]["year"].is_null()) { year = data[m_type][m_id]["year"].as_int(); }
 	if (m_type == "monthly") {
 		saveID = fmt::format("{}-{}", month, year);
 	}
 	else {
-		saveID = data[m_type][m_id]["saveID"].as_string();
+		if (!data[m_type][m_id]["saveID"].is_null()) { saveID = data[m_type][m_id]["saveID"].as_string(); }
 	}
+	if (!data[m_type][m_id]["levelIDs"].is_null()) { levelIDs = data[m_type][m_id]["levelIDs"].as_array(); }
+	if (m_type == "main" && !data[m_type][m_id]["reqLevels"].is_null()) { reqLevels = data[m_type][m_id]["reqLevels"].as_int(); }
 
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
@@ -219,10 +227,10 @@ void DPListLayer::updateProgressBar() {
 		}
 	}
 	else if (listSave.hasRank || m_type != "main") {
-		progressPercent = static_cast<float>(listSave.progress) / static_cast<float>(data[m_type][m_id]["levelIDs"].as_array().size());
+		progressPercent = static_cast<float>(listSave.progress) / static_cast<float>(levelIDs.size());
 	}
 	else {
-		progressPercent = static_cast<float>(listSave.progress) / static_cast<float>(data[m_type][m_id]["reqLevels"].as_int());
+		progressPercent = static_cast<float>(listSave.progress) / static_cast<float>(reqLevels);
 	}
 
 	//update bar
@@ -237,7 +245,7 @@ void DPListLayer::updateProgressBar() {
 	if (progressText->getParent() == m_progressBar) { progressText->removeFromParentAndCleanup(true); }
 
 	if (listSave.completed) { 
-		progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, data[m_type][m_id]["levelIDs"].as_array().size()).c_str(), "goldFont.fnt");
+		progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, levelIDs.size()).c_str(), "goldFont.fnt");
 		progressText->setScale(0.85f);
 	}
 	else {
@@ -250,10 +258,10 @@ void DPListLayer::updateProgressBar() {
 			}
 		}
 		else if (listSave.hasRank || m_type != "main") {
-			progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, data[m_type][m_id]["levelIDs"].as_array().size()).c_str(), "bigFont.fnt");
+			progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, levelIDs.size()).c_str(), "bigFont.fnt");
 		}
 		else {
-			progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, data[m_type][m_id]["reqLevels"].as_int()).c_str(), "bigFont.fnt");
+			progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, reqLevels).c_str(), "bigFont.fnt");
 		}
 		
 		progressText->setScale(0.65f);
@@ -272,37 +280,39 @@ void DPListLayer::updateSave() {
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	
-	std::string saveID = "beginner";
-	auto month = 0;
-	auto year = 0;
+	std::string saveID = "null";
+	int month = 0;
+	int year = 0;
+	matjson::Array levelIDs = {};
+	int reqLevels = 0;
 
-	if (m_type == "monthly") { month = data[m_type][m_id]["month"].as_int(); }
-	if (m_type == "monthly") { year = data[m_type][m_id]["year"].as_int(); }
+	if (m_type == "monthly" && !data[m_type][m_id]["month"].is_null()) { month = data[m_type][m_id]["month"].as_int(); }
+	if (m_type == "monthly" && !data[m_type][m_id]["year"].is_null()) { year = data[m_type][m_id]["year"].as_int(); }
 	if (m_type == "monthly") {
 		saveID = fmt::format("{}-{}", month, year);
 	}
 	else {
-		saveID = data[m_type][m_id]["saveID"].as_string();
+		if (!data[m_type][m_id]["saveID"].is_null()) { saveID = data[m_type][m_id]["saveID"].as_string(); }
 	}
+	if (!data[m_type][m_id]["levelIDs"].is_null()) { levelIDs = data[m_type][m_id]["levelIDs"].as_array(); }
+	if (m_type == "main" && !data[m_type][m_id]["reqLevels"].is_null()) { reqLevels = data[m_type][m_id]["reqLevels"].as_int(); }
 
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 	//get completed levels
 	auto progress = 0;
 	auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
-	for (auto const& level : data[m_type][m_id]["levelIDs"].as_array()) {
+	for (auto const& level : levelIDs) {
 		if (std::find(completedLvls.begin(), completedLvls.end(), level) != completedLvls.end()) {
 			progress += 1;
 		}
 	}
 
 	if (m_type == "main" && !listSave.hasRank && progress < listSave.progress) { //If you don't have the rank, any progress you have will be maintained even if a level is moved to legacy
-		progress == listSave.progress;
+		progress = listSave.progress;
 	}
 
 	//update status
-	auto reqLevels = 0;
-	if (m_type == "main") { reqLevels = data[m_type][m_id]["reqLevels"].as_int(); }
 
 	auto hasRank = listSave.hasRank;
 
@@ -312,7 +322,7 @@ void DPListLayer::updateSave() {
 
 	auto completed = listSave.completed;
 
-	if ((progress == data[m_type][m_id]["levelIDs"].as_array().size()) && m_type != "monthly") {
+	if (progress == levelIDs.size() && m_type != "monthly") {
 		completed = true;
 		if (m_type == "main") {
 			hasRank = true;
@@ -387,7 +397,8 @@ void DPListLayer::loadLevels(int page) {
 	m_list->m_listView->setVisible(false);
 	
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	auto& levelIDs = data[m_type][m_id]["levelIDs"].as_array();
+	matjson::Array levelIDs = {0};
+	if (!data[m_type][m_id]["levelIDs"].is_null()) { levelIDs = data[m_type][m_id]["levelIDs"].as_array(); }
 
 	if (m_isPractice) {
 

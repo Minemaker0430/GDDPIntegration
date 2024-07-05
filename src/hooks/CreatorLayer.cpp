@@ -20,7 +20,7 @@ class $modify(CreatorLayer) {
 		if (Mod::get()->getSavedValue<int>("database-version", 10) < 10) { 
 			auto alert = FLAlertLayer::create(
 			"IMPORTANT",
-			"Your GDDP Data is outdated. Go into the menu to refresh it.\n\nCustom Difficulty Faces have been disabled for now.",
+			"Your GDDP Data is outdated. Go into the Progression Menu to refresh it.",
 			"OK"
 			); 
 			alert->m_scene = this;
@@ -145,6 +145,7 @@ class $modify(CreatorLayer) {
 				}
 			}
 		}
+
 		return true;
 	}
 };

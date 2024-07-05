@@ -26,6 +26,8 @@ std::string getUserAgent() {
 
 void ListManager::init() {
     GDDLListener::create();
+
+    return;
 }
 
 void ListManager::parseResponse(matjson::Value val) {
@@ -46,6 +48,8 @@ void ListManager::parseResponse(matjson::Value val) {
 
         ListManager::ratings.push_back(rating);
     }
+
+    return;
 }
 
 int levenshteinDistance(std::string a, std::string b) {
@@ -138,6 +142,8 @@ std::string ListManager::getSpriteName(GJGameLevel* level) {
     else {
         return "";
     }
+
+    return "";
 }
 
 GDDLListener* GDDLListener::create() {
