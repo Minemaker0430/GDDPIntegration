@@ -1,3 +1,7 @@
+# v1.0.0-beta.33
+
+* Attempted to fix a crash (I'm not home so I won't be able to verify it works :v)
+
 # v1.0.0-beta.32
 
 * Added more crash checks
