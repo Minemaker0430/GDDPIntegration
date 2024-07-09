@@ -21,6 +21,8 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 * (Unofficial) Leaderboards
 * Sort Levels by Skillset
 * Recommendations
+* Roulette
+* XP
 
 # Credits
 

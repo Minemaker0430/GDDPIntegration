@@ -497,8 +497,8 @@ void DPLayer::reloadList(int type) {
 	for (int i = 0; i < packs.size(); i++) {
 
 		std::string name = "null";
-		std::string sprite = "DP_Invisible";
-		std::string plusSprite = "DP_Invisible"; //Main Only
+		std::string sprite = "DP_Beginner";
+		std::string plusSprite = "DP_Beginner"; //Main Only
 		//int listID = 0;
 		std::string saveID = "null";
 		matjson::Array levelIDs = {};
