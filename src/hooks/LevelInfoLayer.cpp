@@ -13,6 +13,7 @@ using namespace geode::prelude;
 class $modify(DemonProgression, LevelInfoLayer) {
 	static void onModify(auto & self) {
 		static_cast<void>(self.setHookPriority("LevelInfoLayer::init", -42));
+		static_cast<void>(self.setHookPriority("LevelInfoLayer::updateLabelValues", -42));
 	}
 
 	void skillInfoPopup(CCObject* target) {
@@ -66,6 +67,11 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				if (!data["level-data"].contains(std::to_string(p0->m_levelID.value()))) {
 					return true;
 				}
+			}
+
+			//if gauntlet level, return
+			if (p0->m_gauntletLevel || p0->m_gauntletLevel2) {
+				return true;
 			}
 
 			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
@@ -367,6 +373,11 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 		if (Mod::get()->getSettingValue<bool>("show-outside-menus")) {
 			inGDDP = true;
+		}
+
+		//if gauntlet level, return
+		if (this->m_level->m_gauntletLevel || this->m_level->m_gauntletLevel2) {
+			return;
 		}
 
 		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {

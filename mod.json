@@ -4,7 +4,7 @@
 			"win": "2.206",
 			"android": "2.206"
 		},
-		"version": "v1.0.0-beta.33",
+		"version": "v1.0.0-beta.34",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
@@ -133,7 +133,7 @@
 			"default": true
 		},
 		"all-demons-rated": {
-			"name": "Rate All Demons",
+			"name": "[BROKEN] Rate All Demons",
 			"description": "Shows custom difficulty faces on all rated demons. <cr>Requires \"Show Faces Outside Menus\".</c> \n\n(Option created by wint0r)",
 			"type": "bool",
 			"default": false

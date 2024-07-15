@@ -1,6 +1,12 @@
+# v1.0.0-beta.34
+
+* Fixed Various Visual Bugs
+	* Rate All Demons is broken due to API Changes, will fix later.
+* GDDP Checks no longer apply to Weekly or Gauntlet Levels
+
 # v1.0.0-beta.33
 
-* Attempted to fix a crash (I'm not home so I won't be able to verify it works :v)
+* Fixed a crash
 
 # v1.0.0-beta.32
 

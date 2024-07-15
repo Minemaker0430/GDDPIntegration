@@ -12,6 +12,10 @@ using namespace geode::prelude;
 //modify level cells
 class $modify(DemonProgression, LevelCell) {
 
+	static void onModify(auto & self) {
+		static_cast<void>(self.setHookPriority("LevelCell::loadCustomLevelCell", -42));
+	}
+
 	void skillInfoPopup(CCObject* target) {
 		auto btn = static_cast<CCMenuItemSpriteExtra*>(target);
 		auto skillID = btn->getID();
@@ -187,7 +191,7 @@ class $modify(DemonProgression, LevelCell) {
 					//find and identify the grandpa demon icons
 					for (int i = 0; i < layer->getChildrenCount(); i++) {
 						if (getChildOfType<CCSprite>(layer, i)) {
-							if (!(getChildOfType<CCSprite>(layer, i)->getID() != "") && (getChildOfType<CCSprite>(layer, i)->getTag() != 69420)) {
+							if (!(getChildOfType<CCSprite>(layer, i)->getID() != "") && getChildOfType<CCSprite>(layer, i)->getTag() != 69420) {
 								getChildOfType<CCSprite>(layer, i)->setID("grd-difficulty-face");
 							}
 						}
@@ -200,7 +204,7 @@ class $modify(DemonProgression, LevelCell) {
 					}
 
 					if (layer->getChildByID("grd-difficulty-face")) {
-						layer->getChildByID("grd-difficulty-face")->setVisible(false);
+						layer->getChildByID("grd-difficulty-face")->removeMeAndCleanup();
 					}
 
 					std::string sprite = "DP_Beginner";
