@@ -29,6 +29,7 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 * **Minemaker0430** - Made the mod
 * oatmealine - API Framework for "Rate All Demons"
 * wint0r - Created the "Rate All Demons" Option & its Sprite Framework
+* hiimjustin000 - Made the code that I borrowed for a Custom List framework
 * ElohmroW - GDDP Co-Owner & Website Programmer
 * Trusta - For making GDDP in the first place
 * GDDP Website - Source of the custom Demon Icons

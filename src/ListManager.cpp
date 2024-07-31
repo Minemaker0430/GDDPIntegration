@@ -9,7 +9,7 @@
 
 using namespace geode::prelude;
 
-const std::string GDDL_API_URL = "https://gdladder.com/api/theList";
+const std::string GDDL_API_URL = "https://docs.google.com/spreadsheets/d/1qKlWKpDkOpU1ZF6V6xGfutDY2NvcA8MNPnsv6GBkKPQ/gviz/tq?tqx=out:csv&sheet=GDDL"; //"https://gdladder.com/api/theList";
 
 bool ListManager::fetchedGDDLRatings;
 std::vector<ListRating> ListManager::ratings;
@@ -30,13 +30,38 @@ void ListManager::init() {
     return;
 }
 
-void ListManager::parseResponse(matjson::Value val) {
-    if (!val.is_array()) {
-        // todo: show error to user
-        return;
+void ListManager::parseResponse(std::string val) {
+
+    //Thank you hiimjustin :pray:
+
+    // MAKE SURE WE ARE NOT SPLITTING THE COMMAS IN THE QUOTATION MARKS
+    auto lines = string::split(val, "\n");
+    auto keys = string::split(lines[0].substr(1, lines[0].size() - 2), "\",\"");
+    static auto demons = matjson::Array();
+    for (size_t i = 1; i < lines.size(); i++) {
+        auto values = string::split(lines[i].substr(1, lines[i].size() - 2), "\",\"");
+        ListRating demon;
+        for (size_t j = 0; j < keys.size(); j++) {
+            auto key = keys[j];
+            auto value = values[j];
+            if (key == "ID")
+            {
+                demon.id = std::stoi(value);
+            }
+            else if (key == "Name") {
+                demon.name = value;
+            }
+            else if (key == "Tier")
+            {
+                demon.tier = value != "" ? round(std::stod(value) * 100) / 100 : 0;
+            }
+        }
+        ListManager::ratings.push_back(demon);
     }
 
-    auto levels = val.as_array();
+    return;
+
+    /*auto levels = val.as_array();
     for (auto level : levels) {
         ListRating rating;
 
@@ -47,9 +72,7 @@ void ListManager::parseResponse(matjson::Value val) {
         rating.tier = level["Rating"].is_number() ? level["Rating"].as_int() : 0;
 
         ListManager::ratings.push_back(rating);
-    }
-
-    return;
+    }*/
 }
 
 int levenshteinDistance(std::string a, std::string b) {
@@ -161,8 +184,8 @@ bool GDDLListener::init() {
     if (!ListManager::fetchedGDDLRatings) {
         this->bind([this](web::WebTask::Event* e) {
             if (auto res = e->getValue()) {
-                if (res->ok() && res->json().isOk()) {
-                    auto response = res->json().unwrap();
+                if (res->ok() && res->string().isOk()) {
+                    auto response = res->string().value();
 
                     log::info("Successfully obtained GDDL Data.");
 

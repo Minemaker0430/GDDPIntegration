@@ -54,7 +54,7 @@ struct ListManager {
     static bool fetchedGDDLRatings;
 
     static void init();
-    static void parseResponse(matjson::Value val);
+    static void parseResponse(std::string val);
     //static void throwError(std::string message);
     static std::optional<ListRating> getRating(int levelID);
     static std::string getSpriteName(GJGameLevel* level);

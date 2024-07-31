@@ -1,3 +1,8 @@
+# v1.0.0-beta.35
+* Fixed Rate All Demons
+	* Spreadsheet Parsing Code borrowed from hiimjustin
+* Still investigating mobile crashes
+
 # v1.0.0-beta.34
 
 * Fixed Various Visual Bugs
