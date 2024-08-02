@@ -1,4 +1,10 @@
+# v1.0.0-beta.36
+
+* Fixed Titles not showing correctly
+* Having a rank without having the requirements overwrites percent progress for Titles
+
 # v1.0.0-beta.35
+
 * Fixed Rate All Demons
 	* Spreadsheet Parsing Code borrowed from hiimjustin
 * Still investigating mobile crashes

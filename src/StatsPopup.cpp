@@ -434,7 +434,8 @@ void StatsPopup::loadTab(int id) {
 			}
 		}
 
-		auto progressPercent = getPercentToRank(data["main"].as_array().size(), true);
+		//Absolute Perfection Progress
+		auto progressPercent = getPercentToRank(data["main"].as_array().size() - 1, true);
 
 		auto bonusProgress = 0;
 		auto bonusTotalLevels = 0;
@@ -456,7 +457,7 @@ void StatsPopup::loadTab(int id) {
 
 		auto plusTitleStr = "None";
 		ccColor3B plusTitleColor = { 130, 130, 130 };
-		if (highestPlusTitle != -1) {
+		if (highestPlusTitle > -1) {
 			plusTitleStr = PlusTitles[highestPlusTitle].c_str();
 			plusTitleColor = PlusTitleColors[highestPlusTitle];
 		}
@@ -910,7 +911,7 @@ void StatsPopup::loadTab(int id) {
 		packProgressFront->setZOrder(1);
 		packProgressFront->setColor({ 255, 190, 255 });
 
-		auto progressPercent = getPercentToRank(data["main"].as_array().size(), true);
+		auto progressPercent = getPercentToRank(data["main"].as_array().size() - 1, true);
 
 		//Get All Bonus Progress
 		auto bonusProgress = 0;
@@ -1142,12 +1143,17 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 			totalLvls += totalLevels;
 		}
 		else {
-			progress += clamp(listSave.progress, 0, reqLevels);
+			if (listSave.hasRank) {
+				progress += reqLevels;
+			}
+			else {
+				progress += clamp(listSave.progress, 0, reqLevels);
+			}
 			totalLvls += reqLevels;
 		}
 	}
 	else {
-		for (int i = 0; i < rankID; i++) {
+		for (int i = 0; i <= rankID; i++) {
 			auto saveID = data["main"][i]["saveID"].as_string();
 			auto reqLevels = data["main"][i]["reqLevels"].as_int();
 			auto totalLevels = data["main"][i]["levelIDs"].as_array().size();
@@ -1158,7 +1164,12 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 				totalLvls += totalLevels;
 			}
 			else {
-				progress += clamp(listSave.progress, 0, reqLevels);
+				if (listSave.hasRank) {
+					progress += reqLevels;
+				}
+				else {
+					progress += clamp(listSave.progress, 0, reqLevels);
+				}
 				totalLvls += reqLevels;
 			}
 		}
