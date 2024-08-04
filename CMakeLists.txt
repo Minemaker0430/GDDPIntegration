@@ -14,11 +14,12 @@ add_library(${PROJECT_NAME} SHARED
     src/hooks/LevelInfoLayer.cpp
     src/hooks/LevelCell.cpp
     src/ListManager.cpp
-    src/StatsPopup.cpp
+    src/popups/StatsPopup.cpp
     src/Utils.cpp
-    src/DPListLayer.cpp
-    src/DPLayer.cpp
-)
+    src/menus/DPListLayer.cpp
+    src/menus/DPLayer.cpp
+    src/popups/SupportPopup.cpp
+    src/popups/NewsPopup.cpp)
 
 if (NOT DEFINED ENV{GEODE_SDK})
     message(FATAL_ERROR "Unable to find Geode SDK! Please define GEODE_SDK environment variable to point to Geode")

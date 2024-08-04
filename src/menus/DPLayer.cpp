@@ -9,8 +9,10 @@
 #include "DPLayer.hpp"
 #include "DPListLayer.hpp"
 //#include "RecommendedLayer.hpp"
-#include "StatsPopup.hpp"
-#include "Utils.hpp"
+#include "../popups/StatsPopup.hpp"
+#include "../popups/SupportPopup.hpp"
+#include "../popups/NewsPopup.hpp"
+#include "../Utils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -81,7 +83,7 @@ void DPLayer::reloadData(bool isInit) {
 
 		m_finishedLoading = false;
 
-		if (!isInit) {
+		if (!isInit && !m_error) {
 			m_list->removeAllChildrenWithCleanup(true);
 			m_list->removeMeAndCleanup();
 		}
@@ -127,15 +129,21 @@ void DPLayer::reloadData(bool isInit) {
 					m_loadcircle->fadeAndRemove();
 
 					m_finishedLoading = true;
+					m_error = false;
 					log::info("List data loaded!");
 				}
 				else {
 					m_loadcircle->fadeAndRemove();
+
+					Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
+					m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+
 					auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({}, {})", res->code(), res->json().has_error()), "OK");
 					alert->m_scene = this;
 					alert->show();
 
 					m_finishedLoading = true;
+					m_error = true;
 				}
 			}
 			else if (e->isCancelled()) {
@@ -219,9 +227,21 @@ void DPLayer::openList(CCObject* sender) {
 }
 
 void DPLayer::achievementsCallback(CCObject* sender) {
-	if (m_finishedLoading) {
+	if (m_finishedLoading && !m_error) {
 		StatsPopup::create()->show();
 	}
+
+	return;
+}
+
+void DPLayer::supportCallback(CCObject* sender) {
+	SupportPopup::create()->show();
+
+	return;
+}
+
+void DPLayer::newsCallback(CCObject* sender) {
+	NewsPopup::create()->show();
 
 	return;
 }
@@ -335,12 +355,31 @@ bool DPLayer::init() {
 	reloadMenu->setPosition({ 0, 0 });
 	auto reloadBtnSprite = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
 	auto reloadBtn = CCMenuItemSpriteExtra::create(reloadBtnSprite, this, menu_selector(DPLayer::reloadCallback));
-	reloadBtn->setPosition({ 30, 30 });
+	reloadBtn->setPosition({ 30.f, 30.f });
 	reloadMenu->addChild(reloadBtn);
 	reloadMenu->setID("reload-menu");
 	this->addChild(reloadMenu);
 	m_reload = reloadMenu;
-	//m_reload->setVisible(false);
+
+	//support menu
+	auto supportMenu = CCMenu::create();
+	supportMenu->setPosition({ 0, 0 });
+	auto supportBtnSprite = CircleButtonSprite::createWithSpriteFrameName(("DP_Support.png"_spr), 1.0f, CircleBaseColor::Pink, CircleBaseSize::Small);
+	auto supportBtn = CCMenuItemSpriteExtra::create(supportBtnSprite, this, menu_selector(DPLayer::supportCallback));
+	supportBtn->setPosition({ 75.f, 30.f });
+	supportMenu->addChild(supportBtn);
+	supportMenu->setID("support-menu");
+	if (Mod::get()->getSettingValue<bool>("show-support")) { this->addChild(supportMenu); }
+
+	//news menu
+	auto newsMenu = CCMenu::create();
+	newsMenu->setPosition({ 0, 0 });
+	auto newsBtnSprite = CCSprite::createWithSpriteFrameName("GJ_chatBtn_001.png");
+	auto newsBtn = CCMenuItemSpriteExtra::create(newsBtnSprite, this, menu_selector(DPLayer::newsCallback));
+	newsBtn->setPosition({ 30.f, 80.f });
+	newsMenu->addChild(newsBtn);
+	newsMenu->setID("news-menu");
+	if (Mod::get()->getSettingValue<bool>("show-support")) { this->addChild(newsMenu); }
 
 	m_currentTab = static_cast<int>(DPListType::Main);
 
@@ -386,8 +425,8 @@ bool DPLayer::init() {
 	utilityMenu->addChild(skillsetsBtn);
 	utilityMenu->addChild(rouletteBtn);
 	utilityMenu->addChild(recommendedBtn);
-	utilityMenu->setID("utility-menu");*/
-	//this->addChild(utilityMenu);
+	utilityMenu->setID("utility-menu");
+	//this->addChild(utilityMenu);*/
 
 	//list tabs
 	auto listTabs = CCMenu::create();

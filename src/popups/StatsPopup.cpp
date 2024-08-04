@@ -4,7 +4,7 @@
 //other headers
 #include <Geode/utils/JsonValidation.hpp>
 
-#include "DPLayer.hpp"
+#include "../menus/DPLayer.hpp"
 #include "StatsPopup.hpp"
 
 //geode namespace

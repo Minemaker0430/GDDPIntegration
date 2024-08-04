@@ -1,3 +1,10 @@
+# v1.0.0-beta.37
+
+* Added a support button
+	* Also added a setting to disable it
+* Added news
+* Fixed a weird crash
+
 # v1.0.0-beta.36
 
 * Fixed Titles not showing correctly

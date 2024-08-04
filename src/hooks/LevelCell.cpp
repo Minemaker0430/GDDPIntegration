@@ -3,7 +3,7 @@
 
 #include <Geode/utils/JsonValidation.hpp>
 #include <Geode/modify/LevelCell.hpp>
-#include "../DPLayer.hpp"
+#include "../menus/DPLayer.hpp"
 #include "../ListManager.hpp"
 
 //geode namespace

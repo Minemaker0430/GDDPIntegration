@@ -2,7 +2,7 @@
 #include <Geode/Geode.hpp>
 
 #include <Geode/modify/CreatorLayer.hpp>
-#include "../DPLayer.hpp"
+#include "../menus/DPLayer.hpp"
 
 //geode namespace
 using namespace geode::prelude;
