@@ -42,6 +42,7 @@ public:
 	void searchCallback(CCObject*);
 	void rouletteCallback(CCObject*);
 	void recommendedCallback(CCObject*);
+	void xpCallback(CCObject*);
 };
 
 struct ListSaveFormat {

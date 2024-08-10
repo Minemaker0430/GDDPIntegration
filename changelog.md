@@ -1,3 +1,10 @@
+# v1.0.0-beta.38
+
+* Added a Skill XP System based on the one in the GDDP Website
+	* You can view all your XP progress on the main GDDP Menu
+	* GDDP Levels now have an XP button on the Level Info page
+	* While the Max Levels don't match the website, the Level Scaling does.
+
 # v1.0.0-beta.37
 
 * Added a support button

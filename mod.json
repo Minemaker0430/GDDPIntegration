@@ -4,7 +4,7 @@
 			"win": "2.206",
 			"android": "2.206"
 		},
-		"version": "v1.0.0-beta.37",
+		"version": "v1.0.0-beta.38",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
@@ -88,9 +88,15 @@
 			"type": "bool",
 			"default": true
 		},
+		"show-xp": {
+			"name": "Show XP",
+			"description": "Controls the XP Buttons in the GDDP Menu and the Level Info Menu.",
+			"type": "bool",
+			"default": true
+		},
 		"show-support": {
 			"name": "Show Support Button",
-			"description": "Hides the support button in the GDDP Menu. No hard feelings if you disable this.",
+			"description": "Controls the support button in the GDDP Menu. No hard feelings if you disable this.",
 			"type": "bool",
 			"default": true
 		},

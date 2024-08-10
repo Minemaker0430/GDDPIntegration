@@ -12,7 +12,9 @@
 #include "../popups/StatsPopup.hpp"
 #include "../popups/SupportPopup.hpp"
 #include "../popups/NewsPopup.hpp"
+#include "../popups/XPPopup.hpp"
 #include "../Utils.hpp"
+#include "../XPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -275,6 +277,17 @@ void DPLayer::recommendedCallback(CCObject* sender) {
 	return;
 }*/
 
+void DPLayer::xpCallback(CCObject* sender) {
+	if (m_finishedLoading) {
+		//get xp values
+		XPUtils::getLevels();
+
+		XPPopup::create()->show();
+	}
+
+	return;
+}
+
 bool DPLayer::init() {
 	if (!CCLayer::init()) return false;
 
@@ -427,6 +440,19 @@ bool DPLayer::init() {
 	utilityMenu->addChild(recommendedBtn);
 	utilityMenu->setID("utility-menu");
 	//this->addChild(utilityMenu);*/
+
+	//xp button
+	auto xpText = CCLabelBMFont::create("XP", "bigFont.fnt");
+	auto xpSpr = CircleButtonSprite::create(xpText);
+	typeinfo_cast<CCLabelBMFont*>(xpSpr->getChildren()->objectAtIndex(0))->setPosition({ 24.375f, 25.5f });
+	auto xpBtn = CCMenuItemSpriteExtra::create(xpSpr, this, menu_selector(DPLayer::xpCallback));
+	xpBtn->setID("xp-btn");
+
+	auto xpMenu = CCMenu::create();
+	xpMenu->setPosition({ listRight->getPositionX() + 35.f, listRight->getPositionY() });
+	xpMenu->addChild(xpBtn);
+	xpMenu->setID("xp-menu");
+	if (Mod::get()->getSettingValue<bool>("show-xp")) { this->addChild(xpMenu); }
 
 	//list tabs
 	auto listTabs = CCMenu::create();

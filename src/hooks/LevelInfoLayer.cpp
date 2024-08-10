@@ -5,6 +5,7 @@
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include "../menus/DPLayer.hpp"
 #include "../ListManager.hpp"
+#include "../popups/XPPopup.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -14,6 +15,16 @@ class $modify(DemonProgression, LevelInfoLayer) {
 	static void onModify(auto & self) {
 		static_cast<void>(self.setHookPriority("LevelInfoLayer::init", -42));
 		static_cast<void>(self.setHookPriority("LevelInfoLayer::updateLabelValues", -42));
+	}
+
+	//Custom Functions
+
+	void openXPPopup(CCObject* target) {
+		auto popup = DemonXPPopup::create(this->m_level->m_levelID.value());
+		//log::info("{}", popup->m_levelID);
+		popup->show();
+
+		return;
 	}
 
 	void skillInfoPopup(CCObject* target) {
@@ -30,6 +41,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 		return;
 	}
+
+	//Normal Functions
 
 	bool init(GJGameLevel* p0, bool p1) {
 		if (!LevelInfoLayer::init(p0, p1)) return false;
@@ -172,6 +185,23 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 				this->addChild(skillMenu);
 
+			}
+
+			//xp button
+			if (data["level-data"][levelID]["xp"]["chokepoints"].is_number()) { //just use chokepoints, all demons with xp will have this value so it's fine
+				auto xpText = CCLabelBMFont::create("XP", "bigFont.fnt");
+				auto xpSpr = CircleButtonSprite::create(xpText, CircleBaseColor::Green, CircleBaseSize::Small);
+				typeinfo_cast<CCLabelBMFont*>(xpSpr->getChildren()->objectAtIndex(0))->setPosition({ 20.375f, 21.5f });
+				auto xpBtn = CCMenuItemSpriteExtra::create(xpSpr, this, menu_selector(DemonProgression::openXPPopup));
+				xpBtn->setID("xp-btn");
+
+				auto xpMenu = CCMenu::create();
+				xpMenu->setAnchorPoint({ 0.f, 0.f });
+				xpMenu->setScale(0.65f);
+				xpMenu->setPosition({ diffSpr->getPositionX() - 34.f, diffSpr->getPositionY() + 7.f });
+				xpMenu->addChild(xpBtn);
+				xpMenu->setID("gddp-xp-menu");
+				if (Mod::get()->getSettingValue<bool>("show-xp")) { this->addChild(xpMenu); }
 			}
 
 			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
