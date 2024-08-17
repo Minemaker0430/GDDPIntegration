@@ -20,9 +20,7 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 * Better Monthly Icons
 * (Unofficial) Leaderboards
 * Sort Levels by Skillset
-* Recommendations
 * Roulette
-* XP
 
 # Credits
 

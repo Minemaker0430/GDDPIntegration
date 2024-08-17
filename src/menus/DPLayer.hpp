@@ -20,6 +20,7 @@ protected:
 	CCLabelBMFont* m_databaseVer;
 	bool m_finishedLoading = false;
 	bool m_error = false;
+	CCLabelBMFont* m_errorText;
 
 	//listeners
 	EventListener<web::WebTask> m_listListener;

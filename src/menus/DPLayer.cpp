@@ -8,13 +8,14 @@
 
 #include "DPLayer.hpp"
 #include "DPListLayer.hpp"
-//#include "RecommendedLayer.hpp"
+#include "RecommendedLayer.hpp"
 #include "../popups/StatsPopup.hpp"
 #include "../popups/SupportPopup.hpp"
 #include "../popups/NewsPopup.hpp"
 #include "../popups/XPPopup.hpp"
 #include "../Utils.hpp"
 #include "../XPUtils.hpp"
+#include "../RecommendedUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -97,13 +98,10 @@ void DPLayer::reloadData(bool isInit) {
 		//m_reload->setVisible(false);
 		m_tabs->setVisible(false);
 		//m_backMenu->setVisible(false);
+		m_errorText->setVisible(false);
 
 		//this->setKeyboardEnabled(false);
 		//this->setKeypadEnabled(false);
-
-		if (!Mod::get()->getSettingValue<bool>("enable-cache")) {
-			Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
-		}
 
 		std::string dataURL;
 
@@ -140,9 +138,12 @@ void DPLayer::reloadData(bool isInit) {
 					Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
 					m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
-					auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({}, {})", res->code(), res->json().has_error()), "OK");
+					/*auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the List Data. ({}, {})", res->code(), res->json().has_error()), "OK");
 					alert->m_scene = this;
-					alert->show();
+					alert->show();*/
+
+					m_errorText->setCString(fmt::format("Something went wrong...\n(Code: {}, JSON Error: {})", res->code(), res->json().has_error()).c_str());
+					m_errorText->setVisible(true);
 
 					m_finishedLoading = true;
 					m_error = true;
@@ -170,9 +171,7 @@ void DPLayer::reloadData(bool isInit) {
 					}
 				}
 				else {
-					auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the Skillset Data. ({}, {})", res->code(), res->json().has_error()), "OK");
-					alert->m_scene = this;
-					alert->show();
+					log::info("Something went wrong getting the Skillset Data. ({}, {})", res->code(), res->json().has_error());
 				}
 			}
 			else if (e->isCancelled()) {
@@ -262,10 +261,12 @@ void DPLayer::rouletteCallback(CCObject* sender) {
 	}
 
 	return;
-}
+}*/
 
 void DPLayer::recommendedCallback(CCObject* sender) {
-	if (m_finishedLoading) {
+	if (m_finishedLoading && !m_error) {
+		RecommendedUtils::generateRecommendations();
+
 		auto scene = CCScene::create(); // creates the scene
 		auto dpLayer = RecommendedLayer::create(); //creates the layer
 
@@ -275,10 +276,10 @@ void DPLayer::recommendedCallback(CCObject* sender) {
 	}
 
 	return;
-}*/
+}
 
 void DPLayer::xpCallback(CCObject* sender) {
-	if (m_finishedLoading) {
+	if (m_finishedLoading && !m_error) {
 		//get xp values
 		XPUtils::getLevels();
 
@@ -318,6 +319,16 @@ bool DPLayer::init() {
 	this->addChild(rCornerSprite);
 
 	this->addChild(menu);
+
+	//error text
+	m_errorText = CCLabelBMFont::create("Something went wrong...\n(Code: 200, JSON Error: false)", "bigFont.fnt");
+	m_errorText->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
+	m_errorText->setPosition({ size.width / 2, size.height / 2 });
+	m_errorText->setScale(0.6f);
+	m_errorText->setZOrder(100);
+	m_errorText->setVisible(false);
+	m_errorText->setID("error-text");
+	this->addChild(m_errorText);
 
 	//back button
 	auto backSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -417,29 +428,29 @@ bool DPLayer::init() {
 	this->addChild(extrasMenu);
 
 	//utility tabs
-	/*auto skillsetsSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
-	auto rouletteSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
-	auto recommendedSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
+	//auto skillsetsSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Search.png"_spr);
+	//auto rouletteSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
+	auto recommendedSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Recommended.png"_spr);
 
-	auto skillsetsBtn = CCMenuItemSpriteExtra::create(skillsetsSpr, this, menu_selector(DPLayer::searchCallback));
-	auto rouletteBtn = CCMenuItemSpriteExtra::create(rouletteSpr, this, menu_selector(DPLayer::rouletteCallback));
+	//auto skillsetsBtn = CCMenuItemSpriteExtra::create(skillsetsSpr, this, menu_selector(DPLayer::searchCallback));
+	//auto rouletteBtn = CCMenuItemSpriteExtra::create(rouletteSpr, this, menu_selector(DPLayer::rouletteCallback));
 	auto recommendedBtn = CCMenuItemSpriteExtra::create(recommendedSpr, this, menu_selector(DPLayer::recommendedCallback));
 
-	skillsetsBtn->setPositionY(50.f);
-	rouletteBtn->setPositionY(0.f);
-	recommendedBtn->setPositionY(-50.f);
+	//skillsetsBtn->setPositionY(50.f);
+	//rouletteBtn->setPositionY(0.f);
+	recommendedBtn->setPositionY(0.f); //recommendedBtn->setPositionY(-50.f);
 
-	skillsetsBtn->setID("skillsets-btn");
-	rouletteBtn->setID("roulette-btn");
+	//skillsetsBtn->setID("skillsets-btn");
+	//rouletteBtn->setID("roulette-btn");
 	recommendedBtn->setID("recommended-btn");
 
 	auto utilityMenu = CCMenu::create();
 	utilityMenu->setPosition({ 63.f, 167.f });
-	utilityMenu->addChild(skillsetsBtn);
-	utilityMenu->addChild(rouletteBtn);
+	//utilityMenu->addChild(skillsetsBtn);
+	//utilityMenu->addChild(rouletteBtn);
 	utilityMenu->addChild(recommendedBtn);
 	utilityMenu->setID("utility-menu");
-	//this->addChild(utilityMenu);*/
+	this->addChild(utilityMenu);
 
 	//xp button
 	auto xpText = CCLabelBMFont::create("XP", "bigFont.fnt");
@@ -449,7 +460,7 @@ bool DPLayer::init() {
 	xpBtn->setID("xp-btn");
 
 	auto xpMenu = CCMenu::create();
-	xpMenu->setPosition({ listRight->getPositionX() + 35.f, listRight->getPositionY() });
+	xpMenu->setPosition({ listRight->getPositionX() + 35.f, 167.f });
 	xpMenu->addChild(xpBtn);
 	xpMenu->setID("xp-menu");
 	if (Mod::get()->getSettingValue<bool>("show-xp")) { this->addChild(xpMenu); }
@@ -556,6 +567,8 @@ void DPLayer::reloadList(int type) {
 	m_databaseVer->setCString(versionTxt.c_str());
 
 	if (m_data[dataIdx].as_array().size() <= 0) { return; }
+
+	RecommendedUtils::validateLevels();
 
 	//setup cells
 	auto packListCells = CCArray::create();

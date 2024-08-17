@@ -1,3 +1,14 @@
+# v1.0.0-beta.39
+
+* Added the Recommendations Menu
+	* Works roughly similar to how the website does it
+	* Expect bugs, this is still in beta
+	* Recommended Levels have a special appearance (can be disabled)
+* Fixed some crashes
+* Added an option to lower the Demon XP button
+* Lessened the amount of annoying popups
+* Fixed some Sprite Alignments
+
 # v1.0.0-beta.38
 
 * Added a Skill XP System based on the one in the GDDP Website

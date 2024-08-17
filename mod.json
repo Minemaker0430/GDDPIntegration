@@ -27,7 +27,8 @@
 				"PlusDifficultyText": [ "resources/DP_PlusDifficultyText/*.png" ],
 				"DifficultySmallText": [ "resources/DP_DifficultySmallText/*.png" ],
 				"PlusDifficultySmallText": [ "resources/DP_PlusDifficultySmallText/*.png" ],
-				"SkillBadge": [ "resources/DP_SkillBadge/*.png" ]
+				"SkillBadge": [ "resources/DP_SkillBadge/*.png" ],
+				"Effects": [ "resources/DP_Effects/*.png" ]
 			}
 		},
 
@@ -69,12 +70,6 @@
 			"description": "Adds Practice versions of the Main Packs to help you practice Main Tier levels.",
 			"type": "bool",
 			"default": true
-		},
-		"enable-cache": {
-			"name": "Enable Cache",
-			"description": "Saves previous database data. Updates to previously existing data may take longer.",
-			"type": "bool",
-			"default": false
 		},
 		"show-outside-menus": {
 			"name": "Show Faces Outside Menus",
@@ -168,6 +163,12 @@
 			"type": "bool",
 			"default": true
 		},
+		"disable-recommended-effect": {
+			"name": "Disable Recommended Glow",
+			"description": "Disables the Glow on Recommended Levels.",
+			"type": "bool",
+			"default": false
+		},
 		"compatibility-section": {
 			"name": "Compatibility",
 			"type": "custom"
@@ -187,6 +188,12 @@
 		"dont-move-side-btns": {
 			"name": "Don't Move Side Buttons",
 			"description": "Disables moving the Side Buttons from BetterInfo and GDRoulette.",
+			"type": "bool",
+			"default": false
+		},
+		"lower-xp": {
+			"name": "Lower Demon XP Button",
+			"description": "Lowers the Demon XP Button so it doesn't overlap with other buttons.",
 			"type": "bool",
 			"default": false
 		}

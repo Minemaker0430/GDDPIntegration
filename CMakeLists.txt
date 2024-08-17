@@ -18,10 +18,12 @@ add_library(${PROJECT_NAME} SHARED
     src/Utils.cpp
     src/menus/DPListLayer.cpp
     src/menus/DPLayer.cpp
+    src/menus/RecommendedLayer.cpp
     src/popups/SupportPopup.cpp
     src/popups/NewsPopup.cpp
     src/XPUtils.cpp
     src/popups/XPPopup.cpp
+    src/RecommendedUtils.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

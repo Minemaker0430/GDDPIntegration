@@ -6,6 +6,7 @@
 #include "../menus/DPLayer.hpp"
 #include "../ListManager.hpp"
 #include "../popups/XPPopup.hpp"
+#include "../RecommendedUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -199,6 +200,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				xpMenu->setAnchorPoint({ 0.f, 0.f });
 				xpMenu->setScale(0.65f);
 				xpMenu->setPosition({ diffSpr->getPositionX() - 34.f, diffSpr->getPositionY() + 7.f });
+				if (Mod::get()->getSettingValue<bool>("lower-xp")) { xpMenu->setPosition({ diffSpr->getPositionX() - 34.f, diffSpr->getPositionY() - 24.f }); }
 				xpMenu->addChild(xpBtn);
 				xpMenu->setID("gddp-xp-menu");
 				if (Mod::get()->getSettingValue<bool>("show-xp")) { this->addChild(xpMenu); }
@@ -250,6 +252,16 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				customSpr->setZOrder(5);
 
 				this->addChild(customSpr);
+
+				//check if the level is recommended and the effect is enabled
+				auto recommendations = Mod::get()->getSavedValue<matjson::Array>("recommended-levels");
+				if (!Mod::get()->getSettingValue<bool>("disable-recommended-effect") && std::find(recommendations.begin(), recommendations.end(), this->m_level->m_levelID.value()) != recommendations.end()) {
+					auto recommendedSpr = CCSprite::createWithSpriteFrameName("DP_RecommendGlow.png"_spr);
+					recommendedSpr->setPosition({ 37.f, 37.f });
+					if (gddpDiff >= 11) { recommendedSpr->setPosition({ 37.f, 40.f }); }
+					recommendedSpr->setZOrder(6);
+					customSpr->addChild(recommendedSpr);
+				}
 
 				if (this->getChildByID("grd-difficulty") && !Mod::get()->getSettingValue<bool>("override-grandpa-demon")) {
 					customSpr->setVisible(false);
@@ -420,6 +432,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				}
 			}
 		}
+
+		RecommendedUtils::validateLevels();
 
 		return;
 	}

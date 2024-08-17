@@ -9,6 +9,7 @@
 #include "DPLayer.hpp"
 #include "DPListLayer.hpp"
 #include "../Utils.hpp"
+#include "../RecommendedUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -58,6 +59,16 @@ bool DPListLayer::init(const char* type, int id, bool isPractice) {
 	rCornerSprite->setFlipX(true);
 	rCornerSprite->setID("right-corner-sprite");
 	this->addChild(rCornerSprite);
+
+	//error text
+	m_errorText = CCLabelBMFont::create("Something went wrong...", "bigFont.fnt");
+	m_errorText->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
+	m_errorText->setPosition({ size.width / 2, size.height / 2 });
+	m_errorText->setScale(0.6f);
+	m_errorText->setZOrder(100);
+	m_errorText->setVisible(false);
+	m_errorText->setID("error-text");
+	this->addChild(m_errorText);
 
 	//back button
 	auto backSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -356,11 +367,18 @@ void DPListLayer::updateSave() {
 
 	//save
 	Mod::get()->setSavedValue<ListSaveFormat>(saveID, ListSaveFormat{ .progress = progress, .completed = completed, .hasRank = hasRank });
+
+	//update recommendations
+	if (listSave.progress != progress && progress >= reqLevels - 2 && listSave.progress < reqLevels) {
+		RecommendedUtils::generateRecommendations();
+	}
 	
 	return;
 }
 
 void DPListLayer::reloadLevels(CCObject* sender) {
+	m_errorText->setVisible(false);
+
 	if (m_levelsLoaded) {
 		loadLevels(m_page);
 	}
@@ -445,9 +463,9 @@ void DPListLayer::loadLevels(int page) {
 	auto searchObject = GJSearchObject::create(SearchType::Type19, string::join(results, ","));
 	auto storedLevels = glm->getStoredOnlineLevels(searchObject->getKey());
 
-	log::info("{}", searchObject);
-	log::info("{}", searchObject->getKey());
-	log::info("{}", storedLevels);
+	//log::info("{}", searchObject);
+	//log::info("{}", searchObject->getKey());
+	//log::info("{}", storedLevels);
 	
 	if (storedLevels) {
 		loadLevelsFinished(storedLevels, "");
@@ -569,9 +587,11 @@ void DPListLayer::loadLevelsFailed(const char*) {
 
 	m_loadCircle->fadeAndRemove();
 
-	auto alert = FLAlertLayer::create("ERROR", "Failed to load levels. Please try again later.", "OK");
+	/*auto alert = FLAlertLayer::create("ERROR", "Failed to load levels. Please try again later.", "OK");
 	alert->setParent(this);
-	alert->show();
+	alert->show();*/
+
+	m_errorText->setVisible(true);
 
 	return;
 }

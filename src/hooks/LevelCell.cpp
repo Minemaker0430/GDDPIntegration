@@ -249,6 +249,15 @@ class $modify(DemonProgression, LevelCell) {
 						customSpr->setZOrder(5);
 
 						layer->addChild(customSpr);
+
+						//check if the level is recommended and the effect is enabled
+						auto recommendations = Mod::get()->getSavedValue<matjson::Array>("recommended-levels");
+						if (!Mod::get()->getSettingValue<bool>("disable-recommended-effect") && std::find(recommendations.begin(), recommendations.end(), this->m_level->m_levelID.value()) != recommendations.end()) {
+							auto recommendedSpr = CCSprite::createWithSpriteFrameName("DP_RecommendGlow.png"_spr);
+							recommendedSpr->setPosition({ 37.f, 37.f });
+							recommendedSpr->setZOrder(6);
+							customSpr->addChild(recommendedSpr);
+						}
 					}
 				}
 				//typical list layer
@@ -299,6 +308,15 @@ class $modify(DemonProgression, LevelCell) {
 						customSpr->setZOrder(5);
 
 						layer->addChild(customSpr);
+
+						//check if the level is recommended and the effect is enabled
+						auto recommendations = Mod::get()->getSavedValue<matjson::Array>("recommended-levels");
+						if (!Mod::get()->getSettingValue<bool>("disable-recommended-effect") && std::find(recommendations.begin(), recommendations.end(), this->m_level->m_levelID.value()) != recommendations.end()) {
+							auto recommendedSpr = CCSprite::createWithSpriteFrameName("DP_RecommendGlow.png"_spr);
+							recommendedSpr->setPosition({ 37.f, 37.f });
+							recommendedSpr->setZOrder(6);
+							customSpr->addChild(recommendedSpr);
+						}
 					}
 				}
 
