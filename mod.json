@@ -4,11 +4,7 @@
 			"win": "2.206",
 			"android": "2.206"
 		},
-<<<<<<< Updated upstream
-		"version": "v1.0.0-beta.39",
-=======
 		"version": "v1.0.0-beta.40",
->>>>>>> Stashed changes
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
