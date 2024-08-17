@@ -1,3 +1,11 @@
+# v1.0.0-beta.40
+
+* Fixed a major crash and fixed cache not caching due to an oversight
+
+Known Issues:
+* Visual bug involving Rate All Demons
+	* Literally no clue why it's happening, please help
+
 # v1.0.0-beta.39
 
 * Added the Recommendations Menu

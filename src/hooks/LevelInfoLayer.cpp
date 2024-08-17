@@ -67,24 +67,24 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			inGDDP = true;
 		}
 
-		if (inGDDP && (data["level-data"].contains(std::to_string(p0->m_levelID.value())) || Mod::get()->getSettingValue<bool>("all-demons-rated"))) {
+		if (inGDDP && (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value())) || Mod::get()->getSettingValue<bool>("all-demons-rated"))) {
 
 			//if not on the GDDP or GDDL, return
-			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && p0->m_stars == 10 && ListManager::getSpriteName(p0) == "") {
-				if (!data["level-data"].contains(std::to_string(p0->m_levelID.value()))) {
+			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars == 10 && ListManager::getSpriteName(this->m_level) == "") {
+				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 					return true;
 				}
 			}
 
-			//if not a demon level that's registered on the gddp, return
-			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && p0->m_stars != 10) {
-				if (!data["level-data"].contains(std::to_string(p0->m_levelID.value()))) {
+			//if not a non-demon level that's registered on the gddp, return
+			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars != 10) {
+				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 					return true;
 				}
 			}
 
 			//if gauntlet level, return
-			if (p0->m_gauntletLevel || p0->m_gauntletLevel2) {
+			if (this->m_level->m_gauntletLevel || this->m_level->m_gauntletLevel2) {
 				return true;
 			}
 
@@ -213,8 +213,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			std::string sprite = "DP_Beginner";
 			std::string plusSprite = "DP_BeginnerPlus";
 
-			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(p0->m_levelID.value()))) {
-				sprite = ListManager::getSpriteName(p0);
+			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
+				sprite = ListManager::getSpriteName(this->m_level);
 				plusSprite = fmt::format("{}Plus", sprite);
 			}
 			else {
@@ -237,7 +237,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && sprite != "DP_Invisible") {
 				auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr).data());
 
-				if (p0->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible") {
+				if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible") {
 					typeinfo_cast<CCSprite*>(diffSpr->getChildren()->objectAtIndex(0))->setVisible(false);
 					customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSpr).data());
 				}
@@ -373,7 +373,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				}
 			}
 
-			//if not a demon level that's registered on the gddp, return
+			//if not a non-demon level that's registered on the gddp, return
 			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars != 10) {
 				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 					return;
@@ -431,9 +431,9 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					Mod::get()->setSavedValue<matjson::Array>("completed-levels", completedLvls);
 				}
 			}
-		}
 
-		RecommendedUtils::validateLevels();
+			RecommendedUtils::validateLevels();
+		}
 
 		return;
 	}

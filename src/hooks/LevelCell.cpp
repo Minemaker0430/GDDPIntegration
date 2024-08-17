@@ -62,7 +62,7 @@ class $modify(DemonProgression, LevelCell) {
 				}
 			}
 
-			//if not a demon level that's registered on the gddp, return
+			//if not a non-demon level that's registered on the gddp, return
 			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars != 10) {
 				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 					return;

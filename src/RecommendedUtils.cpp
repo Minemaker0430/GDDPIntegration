@@ -66,6 +66,9 @@ void RecommendedUtils::validateLevels() {
 		return;
 	}
 
+	//check if data exists
+	if (!data["main"].is_array() && !data["legacy"].is_array()) { return; }
+
 	if (levels.empty()) {
 		generateRecommendations();
 	}

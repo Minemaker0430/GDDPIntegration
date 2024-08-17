@@ -122,7 +122,7 @@ void DPLayer::reloadData(bool isInit) {
 				//log::info("{}", res->string().unwrapOr("Uh oh!"));
 				if (res->ok() && res->json().isOk()) {
 					Mod::get()->setSavedValue<matjson::Value>("cached-data", res->json().unwrap());
-					m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data", matjson::parse("{\"main\": [], \"legacy\": [], \"bonus\": [], \"monthly\": [], \"database-version\": 0, \"level-data\": {}}"));
+					m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 					reloadList(m_currentTab);
 
 					m_tabs->setVisible(true);
@@ -406,10 +406,6 @@ bool DPLayer::init() {
 	if (Mod::get()->getSettingValue<bool>("show-support")) { this->addChild(newsMenu); }
 
 	m_currentTab = static_cast<int>(DPListType::Main);
-
-	if (!Mod::get()->getSettingValue<bool>("enable-cache")) {
-		Mod::get()->setSavedValue<matjson::Value>("cached-data", {});
-	}
 
 	//extra buttons
 	auto achievementBtnSprite = CCSprite::createWithSpriteFrameName("GJ_achBtn_001.png");
