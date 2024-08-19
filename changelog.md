@@ -1,3 +1,8 @@
+# v1.0.0-beta.41
+
+* Fixed a crash involving exiting lists before levels load
+* Tried patching up a few crash spots
+
 # v1.0.0-beta.40
 
 * Fixed a major crash and fixed cache not caching due to an oversight

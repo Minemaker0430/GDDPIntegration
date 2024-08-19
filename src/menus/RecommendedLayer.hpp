@@ -23,6 +23,7 @@ protected:
 	std::vector<std::string> m_IDs;
 	bool m_levelsLoaded = true;
 	int m_page = 0;
+	bool m_loadingCancelled = false;
 
 	virtual ~RecommendedLayer();
 public:

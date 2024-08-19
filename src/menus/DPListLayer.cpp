@@ -17,6 +17,8 @@ using namespace geode::prelude;
 void DPListLayer::keyBackClicked() {
 	updateSave();
 
+	m_loadingCancelled = true;
+
 	CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
 
 	return;
@@ -479,7 +481,9 @@ void DPListLayer::loadLevels(int page) {
 }
 
 void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
-	
+
+	if (m_loadingCancelled) { return; }
+
 	auto listSize = m_IDs.size();
 	auto maxPage = (listSize % 10 == 0 ? listSize : listSize + (10 - (listSize % 10))) / 10 - 1;
 	m_left->setVisible(m_page > 0);

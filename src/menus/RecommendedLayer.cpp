@@ -16,6 +16,8 @@
 using namespace geode::prelude;
 
 void RecommendedLayer::keyBackClicked() {
+	m_loadingCancelled = true;
+
 	CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
 };
 
@@ -207,6 +209,8 @@ void RecommendedLayer::loadLevels(int page) {
 }
 
 void RecommendedLayer::loadLevelsFinished(CCArray* levels, const char*) {
+
+	if (m_loadingCancelled) { return; }
 
 	auto listSize = m_IDs.size();
 	auto maxPage = (listSize % 10 == 0 ? listSize : listSize + (10 - (listSize % 10))) / 10 - 1;

@@ -76,7 +76,7 @@ void RecommendedUtils::validateLevels() {
 
 		//check if you completed a recommended level
 		for (int i = 0; i < levels.size(); i++) {
-			if (std::find(completedLvls.begin(), completedLvls.end(), levels[i].as_int()) != completedLvls.end()) {
+			if (levels[i].is_number() && std::find(completedLvls.begin(), completedLvls.end(), levels[i].as_int()) != completedLvls.end()) {
 				generateRecommendations();
 				break;
 			}
@@ -89,6 +89,7 @@ void RecommendedUtils::validateLevels() {
 			auto stop = false;
 
 			for (int j = 0; j < levelIDs.size(); j++) {
+				if (!levelIDs[j].is_number()) { continue; }
 				auto levelID = std::to_string(levelIDs[j].as_int());
 
 				if (std::find(mainList.begin(), mainList.end(), levelIDs[j].as_int()) != mainList.end()) {
@@ -192,7 +193,7 @@ void RecommendedUtils::generateRecommendations() {
 
 					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k].as_int()) == recommendations.end()
 						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k].as_int()) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching and go to the next skill
+						if (data["level-data"][id]["xp"][currentSkill].is_number() && data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching and go to the next skill
 							//log::info("found level with id: {}", levelIDs[k].as_int());
 							recommendations.push_back(levelIDs[k].as_int());
 							stop = true; 
@@ -230,7 +231,7 @@ void RecommendedUtils::generateRecommendations() {
 
 					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k].as_int()) == recommendations.end()
 						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k].as_int()) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching and go to the next skill
+						if (data["level-data"][id]["xp"][currentSkill].is_number() && data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching and go to the next skill
 							//log::info("found level with id: {}", levelIDs[k].as_int());
 							recommendations.push_back(levelIDs[k].as_int());
 							stop = true;
@@ -278,7 +279,7 @@ void RecommendedUtils::generateRecommendations() {
 
 					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k].as_int()) == recommendations.end()
 						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k].as_int()) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching
+						if (data["level-data"][id]["xp"][currentSkill].is_number() && data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching
 							//log::info("found level with id: {}", levelIDs[k].as_int());
 							recommendations.push_back(levelIDs[k].as_int());
 							stop = true;
@@ -304,7 +305,7 @@ void RecommendedUtils::generateRecommendations() {
 
 					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k].as_int()) == recommendations.end()
 						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k].as_int()) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching
+						if (data["level-data"][id]["xp"][currentSkill].is_number() && data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching
 							//log::info("found level with id: {}", levelIDs[k].as_int());
 							recommendations.push_back(levelIDs[k].as_int());
 							stop = true;
@@ -346,7 +347,7 @@ void RecommendedUtils::generateRecommendations() {
 
 				if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k].as_int()) == recommendations.end()
 					&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k].as_int()) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-					if (data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching
+					if (data["level-data"][id]["xp"][currentSkill].is_number() && data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching
 						//log::info("found level with id: {}", levelIDs[k].as_int());
 						recommendations.push_back(levelIDs[k].as_int());
 						stop = true;
