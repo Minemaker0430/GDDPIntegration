@@ -13,6 +13,7 @@
 #include "../popups/SupportPopup.hpp"
 #include "../popups/NewsPopup.hpp"
 #include "../popups/XPPopup.hpp"
+#include "../popups/SearchPopup.hpp"
 #include "../Utils.hpp"
 #include "../XPUtils.hpp"
 #include "../RecommendedUtils.hpp"
@@ -247,21 +248,21 @@ void DPLayer::newsCallback(CCObject* sender) {
 	return;
 }
 
-/*void DPLayer::searchCallback(CCObject* sender) {
-	if (m_finishedLoading) {
-		soonCallback(sender);
+void DPLayer::searchCallback(CCObject* sender) {
+	if (m_finishedLoading && !m_error) {
+		SearchPopup::create()->show();
 	}
 
 	return;
 }
 
 void DPLayer::rouletteCallback(CCObject* sender) {
-	if (m_finishedLoading) {
+	if (m_finishedLoading && !m_error) {
 		soonCallback(sender);
 	}
 
 	return;
-}*/
+}
 
 void DPLayer::recommendedCallback(CCObject* sender) {
 	if (m_finishedLoading && !m_error) {
@@ -403,7 +404,7 @@ bool DPLayer::init() {
 	newsBtn->setPosition({ 30.f, 80.f });
 	newsMenu->addChild(newsBtn);
 	newsMenu->setID("news-menu");
-	if (Mod::get()->getSettingValue<bool>("show-support")) { this->addChild(newsMenu); }
+	//this->addChild(newsMenu);
 
 	m_currentTab = static_cast<int>(DPListType::Main);
 
@@ -424,19 +425,19 @@ bool DPLayer::init() {
 	this->addChild(extrasMenu);
 
 	//utility tabs
-	//auto skillsetsSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Search.png"_spr);
+	auto skillsetsSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Search.png"_spr);
 	//auto rouletteSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
 	auto recommendedSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Recommended.png"_spr);
 
-	//auto skillsetsBtn = CCMenuItemSpriteExtra::create(skillsetsSpr, this, menu_selector(DPLayer::searchCallback));
+	auto skillsetsBtn = CCMenuItemSpriteExtra::create(skillsetsSpr, this, menu_selector(DPLayer::searchCallback));
 	//auto rouletteBtn = CCMenuItemSpriteExtra::create(rouletteSpr, this, menu_selector(DPLayer::rouletteCallback));
 	auto recommendedBtn = CCMenuItemSpriteExtra::create(recommendedSpr, this, menu_selector(DPLayer::recommendedCallback));
 
-	//skillsetsBtn->setPositionY(50.f);
+	//skillsetsBtn->setPositionY(25.f); //skillsetsBtn->setPositionY(50.f);
 	//rouletteBtn->setPositionY(0.f);
-	recommendedBtn->setPositionY(0.f); //recommendedBtn->setPositionY(-50.f);
+	recommendedBtn->setPositionY(0.f); //recommendedBtn->setPositionY(-25.f); recommendedBtn->setPositionY(-50.f);
 
-	//skillsetsBtn->setID("skillsets-btn");
+	skillsetsBtn->setID("skillsets-btn");
 	//rouletteBtn->setID("roulette-btn");
 	recommendedBtn->setID("recommended-btn");
 

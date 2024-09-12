@@ -6,7 +6,7 @@
 //geode namespace
 using namespace geode::prelude;
 
-const std::vector<std::string> XPUtils::skillIDs = { "chokepoints", "duals", "fastPaced", "cps", "memory", "nerve", "ship", "timings", "wave" };
+const std::vector<std::string> XPUtils::skillIDs = { "chokepoints", "duals", "fastPaced", "cps", "memory", "nerve", "ship", "swing", "timings", "wave" };
 
 const float PI = 3.1415926535897932384626433f;
 
@@ -18,10 +18,10 @@ void XPUtils::getMaxLevels() {
 
 	log::info("Getting Max Levels...");
 
-	matjson::Array skills = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	matjson::Array skills = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	const float scaling = 1.f / 500.f;
 
-	for (int i = 0; i <= 8; i++) {
+	for (int i = 0; i <= 9; i++) {
 		skills[i] = ceil(getTotalWeightedSum(skillIDs[i]) * scaling);
 		//log::info("{} max level: {}", skillIDs[i], skills[i]);
 	}
@@ -34,9 +34,9 @@ void XPUtils::getMaxLevels() {
 void XPUtils::getXP() {
 	log::info("Getting XP...");
 
-	matjson::Array skills = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
+	matjson::Array skills = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
 
-	for (int i = 0; i <= 8; i++) {
+	for (int i = 0; i <= 9; i++) {
 		skills[i] = getCompletedWeightedSum(skillIDs[i]) / getTotalWeightedSum(skillIDs[i]);
 		//log::info("{}: {}", skillIDs[i], skills[i]);
 	}
@@ -54,10 +54,10 @@ void XPUtils::getLevels() {
 	log::info("Getting Levels...");
 
 	auto xp = Mod::get()->getSavedValue<matjson::Array>("xp");
-	matjson::Array skills = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	matjson::Array percent = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
+	matjson::Array skills = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	matjson::Array percent = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
 	
-	for (int i = 0; i <= 8; i++) {
+	for (int i = 0; i <= 9; i++) {
 		//Get XP Requirements
 		std::vector<float> xpRequirements = { 0.f };
 		auto maxLvl = Mod::get()->getSavedValue<matjson::Array>("max-levels");

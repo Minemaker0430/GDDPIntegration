@@ -1,3 +1,8 @@
+# v1.0.0-beta.42
+
+* Added Swing as a new Skill XP
+* Removed News since it's kinda useless
+
 # v1.0.0-beta.41
 
 * Fixed a crash involving exiting lists before levels load

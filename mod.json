@@ -1,10 +1,10 @@
 {
-		"geode": "3.4.0",
+		"geode": "3.5.0",
 		"gd": {
 			"win": "2.206",
 			"android": "2.206"
 		},
-		"version": "v1.0.0-beta.41",
+		"version": "v1.0.0-beta.42",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",

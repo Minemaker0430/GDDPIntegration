@@ -121,7 +121,7 @@ bool XPPopup::setup() {
 	}
 
 	//Least Improved Skill
-	auto leastImproved = 8;
+	auto leastImproved = 9;
 	for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
 		if (xp[i].as_double() < xp[leastImproved].as_double()) {
 			leastImproved = i;
