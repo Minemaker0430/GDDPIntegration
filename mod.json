@@ -1,10 +1,10 @@
 {
-		"geode": "3.5.0",
+		"geode": "3.7.1",
 		"gd": {
 			"win": "2.206",
 			"android": "2.206"
 		},
-		"version": "v1.0.0-beta.42",
+		"version": "v1.0.0-beta.43",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
@@ -43,7 +43,7 @@
 		"dependencies": [
 			{
 				"id": "geode.node-ids",
-				"version": ">=1.13.1",
+				"version": ">=1.14.0",
 				"importance": "required"
 			}
 		],
@@ -51,7 +51,7 @@
 	"settings": {
 		"bypass-section": {
 			"name": "Bypass",
-			"type": "custom"
+			"type": "title"
 		},
 		"unlock-all-tiers": {
 			"name": "Unlock All Tiers",
@@ -75,7 +75,8 @@
 			"name": "Show Faces Outside Menus",
 			"description": "Makes Custom Difficulty Faces no longer require GDDP Menus to activate.",
 			"type": "bool",
-			"default": false
+			"default": false,
+			"enable-if": "custom-difficulty-faces"
 		},
 		"skillset-badges": {
 			"name": "Enable Skillset Badges",
@@ -97,7 +98,7 @@
 		},
 		"menu-section": {
 			"name": "Menu",
-			"type": "custom"
+			"type": "title"
 		},
 		"alt-button-texture": {
 			"name": "Alternate Button Texture",
@@ -125,7 +126,7 @@
 		},
 		"cosmetic-section": {
 			"name": "Cosmetic",
-			"type": "custom"
+			"type": "title"
 		},
 		"restore-bg-color": {
 			"name": "Vanilla Background Color",
@@ -141,9 +142,10 @@
 		},
 		"all-demons-rated": {
 			"name": "Rate All Demons",
-			"description": "Shows custom difficulty faces on all rated demons. Please note that demons without GDDL Ratings will not be given ratings. <cr>Requires \"Show Faces Outside Menus\".</c> \n\n(Option created by wint0r)",
+			"description": "Shows custom difficulty faces on all rated demons. Please note that demons without GDDL Ratings will not be given ratings.\n\n(Option created by wint0r)",
 			"type": "bool",
-			"default": false
+			"default": false,
+			"enable-if": "custom-difficulty-faces && show-outside-menus"
 		},
 		"replace-epic": {
 			"name": "Replace Epic Fire",
@@ -171,7 +173,7 @@
 		},
 		"compatibility-section": {
 			"name": "Compatibility",
-			"type": "custom"
+			"type": "title"
 		},
 		"override-grandpa-demon": {
 			"name": "Override Grandpa Demon",

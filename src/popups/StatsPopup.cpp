@@ -257,7 +257,6 @@ void StatsPopup::loadTab(int id) {
 			else {
 				if (i == 0) {
 					highestRankSprite->setColor({ 0, 0, 0 });
-					break;
 				}
 			}
 		}
@@ -294,7 +293,6 @@ void StatsPopup::loadTab(int id) {
 			else {
 				if (i == 0) {
 					highestPlusSprite->setColor({ 0, 0, 0 });
-					break;
 				}
 			}
 		}

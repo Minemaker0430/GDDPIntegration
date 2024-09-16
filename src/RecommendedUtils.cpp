@@ -69,7 +69,7 @@ void RecommendedUtils::validateLevels() {
 	//check if data exists
 	if (!data["main"].is_array() && !data["legacy"].is_array()) { return; }
 
-	if (levels.empty()) {
+	if (levels.empty() && completedLvls.size() > 0) {
 		generateRecommendations();
 	}
 	else {
@@ -148,10 +148,10 @@ void RecommendedUtils::generateRecommendations() {
 	log::info("highest partial rank: {}", highestPartial);
 
 	//Sort Skills
-	std::vector<int> skills = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //Highest -> Lowest
+	std::vector<int> skills = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //Highest -> Lowest
 	for (int i = 0; i < skills.size(); i++) {
 
-		auto xp = Mod::get()->getSavedValue<matjson::Array>("xp", { 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+		auto xp = Mod::get()->getSavedValue<matjson::Array>("xp", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
 		
 		for (int j = 0; j < skillIDs.size(); j++) {
 			if (i == 0 && xp[j].as_double() > xp[skills[i]].as_double()) {
