@@ -1,8 +1,12 @@
+# v1.0.0-beta.44
+
+* Fixed a crash
+	* Recommendations now always refresh XP to prevent this from happening
+
 # v1.0.0-beta.43
 
 * Fixed Recommendations not recognizing Swing XP
 * Ported settings to the new system
-* Fixed a crash
 * Recommendations now start generating upon beating a level in the GDDP
 * Fixed a visual bug involving Stats
 

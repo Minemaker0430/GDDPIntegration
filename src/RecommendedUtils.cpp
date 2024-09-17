@@ -113,6 +113,8 @@ void RecommendedUtils::generateRecommendations() {
 	auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
 	auto skillIDs = XPUtils::skillIDs;
 
+	XPUtils::getXP();
+
 	//check for errors
 	auto jsonCheck = JsonChecker(data);
 
