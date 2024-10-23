@@ -433,9 +433,9 @@ bool DPLayer::init() {
 	//auto rouletteBtn = CCMenuItemSpriteExtra::create(rouletteSpr, this, menu_selector(DPLayer::rouletteCallback));
 	auto recommendedBtn = CCMenuItemSpriteExtra::create(recommendedSpr, this, menu_selector(DPLayer::recommendedCallback));
 
-	//skillsetsBtn->setPositionY(25.f); //skillsetsBtn->setPositionY(50.f);
+	skillsetsBtn->setPositionY(25.f); //skillsetsBtn->setPositionY(50.f);
 	//rouletteBtn->setPositionY(0.f);
-	recommendedBtn->setPositionY(0.f); //recommendedBtn->setPositionY(-25.f); recommendedBtn->setPositionY(-50.f);
+	recommendedBtn->setPositionY(-25.f); //recommendedBtn->setPositionY(-50.f);
 
 	skillsetsBtn->setID("skillsets-btn");
 	//rouletteBtn->setID("roulette-btn");
@@ -443,7 +443,7 @@ bool DPLayer::init() {
 
 	auto utilityMenu = CCMenu::create();
 	utilityMenu->setPosition({ 63.f, 167.f });
-	//utilityMenu->addChild(skillsetsBtn);
+	utilityMenu->addChild(skillsetsBtn);
 	//utilityMenu->addChild(rouletteBtn);
 	utilityMenu->addChild(recommendedBtn);
 	utilityMenu->setID("utility-menu");
@@ -732,7 +732,7 @@ void DPLayer::reloadList(int type) {
 				}
 				progStr = fmt::format("{}/{} to {} Tier", std::to_string(listSave.progress), std::to_string(reqLevels), nextTier);
 			}
-			else if (listSave.completed) {
+			else if (listSave.completed && progressPercent == 1.0f) {
 				progStr = "100% Complete!";
 				progText->setFntFile("goldFont.fnt");
 				packPlusSpr->setVisible(true);

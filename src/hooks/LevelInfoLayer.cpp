@@ -145,6 +145,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				auto skillMenu = CCMenu::create();
 				auto skillLayout = AxisLayout::create();
 				skillLayout->setAxis(Axis::Column);
+				skillLayout->setAxisReverse(true);
 				skillMenu->setLayout(skillLayout, true, false);
 				skillMenu->setID("skillset-menu"_spr);
 				skillMenu->setPosition({ diffSpr->getPositionX() + 14, diffSpr->getPositionY() - 26 });

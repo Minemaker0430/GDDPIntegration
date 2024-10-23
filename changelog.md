@@ -1,3 +1,16 @@
+# v1.0.0-beta.45
+
+* Added the Search Menu
+	* Includes Filters for difficulties, packs, skillsets, and XP.
+	* Sort Results by Pack, Difficulty, Name, or Age (and reverse results as well)
+* Fixed some bugs
+	* Fixed a bug with Recommendations
+	* Fixed a visual bug with skillset badges
+
+Known Issues:
+* Rate All Demons is still broken, don't know when I'll fix it :v
+* Saved levels sometimes crashes, try going into the GDDP Menu to refresh data and see if that fixes it
+
 # v1.0.0-beta.44
 
 * Fixed a crash

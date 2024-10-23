@@ -207,9 +207,9 @@ void SearchPopup::restoreFilters() {
 	m_difficulties = Mod::get()->getSavedValue<matjson::Array>("search-difficulty", { true });
 	m_packs = Mod::get()->getSavedValue<matjson::Array>("search-packs", { true });
 	m_skills = Mod::get()->getSavedValue<matjson::Array>("search-skills", { true });
-	m_xp = Mod::get()->getSavedValue<matjson::Array>("search-xp", { 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-	m_xpToggle = Mod::get()->getSavedValue<matjson::Array>("search-xp-toggle", { false, false, false, false, false, false, false, false, false });
-	m_xpMode = Mod::get()->getSavedValue<matjson::Array>("search-xp-modes", { 2, 2, 2, 2, 2, 2, 2, 2, 2 });
+	m_xp = Mod::get()->getSavedValue<matjson::Array>("search-xp", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+	m_xpToggle = Mod::get()->getSavedValue<matjson::Array>("search-xp-toggle", { false, false, false, false, false, false, false, false, false, false });
+	m_xpMode = Mod::get()->getSavedValue<matjson::Array>("search-xp-modes", { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 });
 	m_completed = Mod::get()->getSavedValue<bool>("search-completed", true);
 	m_uncompleted = Mod::get()->getSavedValue<bool>("search-uncompleted", true);
 
@@ -815,6 +815,7 @@ void SearchPopup::onSearch(CCObject* sender) {
 		//iterate through levels
 		auto levels = packs[i]["levelIDs"].as_array();
 		for (auto lvlID : levels) {
+
 			auto id = lvlID.as_int();
 			auto lvlData = data["level-data"][std::to_string(id)].as_object();
 
@@ -828,10 +829,8 @@ void SearchPopup::onSearch(CCObject* sender) {
 				
 				auto skillData = value.as_object();
 
-				if (!m_skills[i].as_bool()) { continue; }
-
 				for (auto skillsetID : lvlData["skillsets"].as_array()) {
-					if (key == skillsetID.as_string()) {
+					if (key == skillsetID.as_string() && m_skills[i].as_bool()) {
 						skillsetsOk = true;
 					}
 				}
@@ -841,29 +840,67 @@ void SearchPopup::onSearch(CCObject* sender) {
 			if (!skillsetsOk) { continue; }
 
 			//check if xp satisfies filter
-			auto xpOk = false;
+			// 1. if at least one xp filter is enabled, skip any levels with no xp values
+			// 2. completely skip any disabled filter
+			// 3. check if filters are satisfied, if not, don't accept level
+			auto xpOk = true;
 			for (int skill = 0; skill < XPUtils::skillIDs.size(); skill++) {
-				if (!m_xpToggle[skill].as_bool()) { continue; }
 
-				if ((m_xpMode[skill].as_int() == 0 && lvlData["xp"][XPUtils::skillIDs[skill]].as_int() >= m_xp[skill].as_int()) ||
-					(m_xpMode[skill].as_int() == 1 && lvlData["xp"][XPUtils::skillIDs[skill]].as_int() > m_xp[skill].as_int()) ||
-					(m_xpMode[skill].as_int() == 2 && lvlData["xp"][XPUtils::skillIDs[skill]].as_int() == m_xp[skill].as_int()) ||
-					(m_xpMode[skill].as_int() == 3 && lvlData["xp"][XPUtils::skillIDs[skill]].as_int() < m_xp[skill].as_int()) ||
-					(m_xpMode[skill].as_int() == 4 && lvlData["xp"][XPUtils::skillIDs[skill]].as_int() <= m_xp[skill].as_int())) {
-					xpOk = true;
+				if (!m_xpToggle[skill].is_bool() || !m_xpMode[skill].is_number() || !m_xp[skill].is_number()) {
+					if (m_xpToggle.size() < XPUtils::skillIDs.size()) { m_xpToggle.push_back(false); }
+					if (m_xpMode.size() < XPUtils::skillIDs.size()) { m_xpMode.push_back(2); }
+					if (m_xp.size() < XPUtils::skillIDs.size()) { m_xp.push_back(0); }
+				}
+
+				if (m_xpToggle[skill].as_bool()) {
+					if (!lvlData["xp"][XPUtils::skillIDs[skill]].is_number()) { 
+						xpOk = false; 
+						break;
+					}
+					else if (m_xpMode[skill].as_int() == 0 && !(lvlData["xp"][XPUtils::skillIDs[skill]].as_int() >= m_xp[skill].as_int())) {
+						xpOk = false;
+						break;
+					} 
+					else if (m_xpMode[skill].as_int() == 1 && !(lvlData["xp"][XPUtils::skillIDs[skill]].as_int() > m_xp[skill].as_int())) {
+						xpOk = false;
+						break;
+					}
+					else if (m_xpMode[skill].as_int() == 2 && !(lvlData["xp"][XPUtils::skillIDs[skill]].as_int() == m_xp[skill].as_int())) {
+						xpOk = false;
+						break;
+					}
+					else if (m_xpMode[skill].as_int() == 3 && !(lvlData["xp"][XPUtils::skillIDs[skill]].as_int() < m_xp[skill].as_int())) {
+						xpOk = false;
+						break;
+					}
+					else if (m_xpMode[skill].as_int() == 4 && !(lvlData["xp"][XPUtils::skillIDs[skill]].as_int() <= m_xp[skill].as_int())) {
+						xpOk = false;
+						break;
+					}
 				}
 			}
 			if (!xpOk) { continue; }
 
 			//check if completed/uncompleted and completed/uncompleted filter is on
 			auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
-			if (!(m_completed && std::find(completedLvls.begin(), completedLvls.end(), id) != completedLvls.end()) ||
-				!(m_uncompleted && std::find(completedLvls.begin(), completedLvls.end(), id) == completedLvls.end())) {
-				continue;
+			if (!(m_completed == m_uncompleted)) {
+				if (m_uncompleted && std::find(completedLvls.begin(), completedLvls.end(), id) != completedLvls.end()) {
+					continue;
+				}
+				else if (m_completed && std::find(completedLvls.begin(), completedLvls.end(), id) == completedLvls.end()) {
+					continue;
+				}
 			}
 
+			//check if level is already in the list
+			if (std::find(selectedLevels.begin(), selectedLevels.end(), id) != selectedLevels.end()) { continue; }
+
 			//if all checks are ok, add it to the list
-			selectedLevels.push_back(id);
+			if (selectedLevels.size() < 1) {
+				selectedLevels = {id};
+			} else {
+				selectedLevels.push_back(id);
+			}
 		}
 	}
 

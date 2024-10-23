@@ -38,7 +38,7 @@ void XPUtils::getXP() {
 
 	for (int i = 0; i <= 9; i++) {
 		skills[i] = getCompletedWeightedSum(skillIDs[i]) / getTotalWeightedSum(skillIDs[i]);
-		//log::info("{}: {}", skillIDs[i], skills[i]);
+		log::info("{}: {}", skillIDs[i], skills[i]);
 	}
 
 	Mod::get()->setSavedValue<matjson::Array>("xp", skills);

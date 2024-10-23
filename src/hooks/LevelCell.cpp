@@ -125,6 +125,7 @@ class $modify(DemonProgression, LevelCell) {
 				auto skillMenu = CCMenu::create();
 				auto skillLayout = AxisLayout::create();
 				skillLayout->setAxis(Axis::Column);
+				skillLayout->setAxisReverse(true);
 				skillMenu->setLayout(skillLayout, true, false);
 				skillMenu->setID("skillset-menu"_spr);
 				if (layer->getChildByID("level-place")) {

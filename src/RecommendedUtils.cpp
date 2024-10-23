@@ -155,12 +155,27 @@ void RecommendedUtils::generateRecommendations() {
 
 		auto xp = Mod::get()->getSavedValue<matjson::Array>("xp", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
 		
+		auto slotPlaced = false;
 		for (int j = 0; j < skillIDs.size(); j++) {
 			if (i == 0 && xp[j].as_double() > xp[skills[i]].as_double()) {
 				skills[i] = j;
+				slotPlaced = true;
+				log::info("{}: slot {}", j, i);
 			}
 			else if (xp[j].as_double() > xp[skills[i]].as_double() && xp[j].as_double() < xp[skills[i - 1]].as_double() && i > 0) {
 				skills[i] = j;
+				slotPlaced = true;
+				log::info("{}: slot {}", j, i);
+			}
+		}
+
+		if (!slotPlaced) {
+			for (int j = 0; j < skillIDs.size(); j++) {
+				if (std::find(skills.begin(), skills.end(), j) == skills.end()) {
+					skills[i] = j;
+					slotPlaced = true;
+					log::info("{}: slot {}", j, i);
+				}
 			}
 		}
 	}
