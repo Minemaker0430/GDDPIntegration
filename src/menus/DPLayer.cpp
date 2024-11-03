@@ -526,10 +526,10 @@ bool DPLayer::init() {
 void DPLayer::reloadList(int type) {
 
 	//check for errors
-	auto jsonCheck = JsonChecker(m_data);
+	auto jsonCheck = checkJson(m_data, "");
 
-	if (jsonCheck.isError()) {
-		auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
+	if (!jsonCheck.ok()) {
+		auto alert = FLAlertLayer::create("ERROR", "Something went wrong validating the GDDP list data.", "OK");
 		alert->setParent(this);
 		alert->show();
 
@@ -680,7 +680,7 @@ void DPLayer::reloadList(int type) {
 		if (listSave.completed) {
 			packProgressFront->setColor({ 255, 255, 0 });
 		}
-		else if (type == static_cast<int>(DPListType::Main) && !listSave.hasRank) {
+		else if ((type == static_cast<int>(DPListType::Main) && !listSave.hasRank) || (type == static_cast<int>(DPListType::Monthly) && listSave.progress < 5)) {
 			packProgressFront->setColor({ 255, 84, 50 });
 		}
 		else {
@@ -783,6 +783,12 @@ void DPLayer::reloadList(int type) {
 			ccColor3B monthColor[12] = { {255, 0, 0}, {255, 128, 0}, {255, 255, 0}, {128, 255, 0}, {0, 255, 0}, {0, 255, 128}, {0, 255, 255}, {0, 128, 255}, {0, 0, 255}, {128, 0, 255}, {255, 0, 255}, {255, 0, 128} };
 			std::string monthlyDisp = fmt::format("{} {}", months[month - 1], std::to_string(year));
 
+			auto yearBg = CCLayerColor::create({monthColor[year % 13].r, monthColor[year % 13].g, monthColor[year % 13].b, 75});
+			yearBg->setContentHeight(50.f);
+			yearBg->setZOrder(-2);
+			yearBg->setID("year-bg");
+			if (!Mod::get()->getSettingValue<bool>("disable-year-color")) { cell->addChild(yearBg); }
+
 			auto monthlyText = CCLabelBMFont::create(monthlyDisp.c_str(), "bigFont.fnt");
 			monthlyText->setColor(monthColor[month - 1]);
 			monthlyText->setScale(0.35f);
@@ -832,12 +838,14 @@ void DPLayer::reloadList(int type) {
 			auto goldBG = CCLayerColor::create({ 255, 200, 0, 255 });
 			//if (Loader::get()->isModLoaded("alphalaneous.transparent_lists")) { goldBG->setOpacity(50); }
 			goldBG->setID("gold-bg");
+			goldBG->setContentHeight(50.f);
+			goldBG->setZOrder(-1);
 			cell->addChild(goldBG);
 
-			cellMenu->setZOrder(1);
+			/*cellMenu->setZOrder(1);
 			packText->setZOrder(1);
 			packSpr->setZOrder(1);
-			progText->setZOrder(1);
+			progText->setZOrder(1);*/
 		}
 
 		if (name == "The Temple Series") {

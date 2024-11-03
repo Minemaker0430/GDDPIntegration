@@ -51,12 +51,10 @@ class $modify(DemonProgression, LevelInfoLayer) {
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 		//check for errors
-		auto jsonCheck = JsonChecker(data);
+		auto jsonCheck = checkJson(data, "");
 
-		if (jsonCheck.isError()) {
-			auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
-			alert->setParent(this);
-			alert->show();
+		if (!jsonCheck.ok()) {
+			log::info("Something went wrong validating the GDDP list data.");
 
 			return true;
 		}
@@ -80,6 +78,57 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars != 10) {
 				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 					return true;
+				}
+			}
+
+			//if a gddp level that's only in a monthly pack, return
+			if (Mod::get()->getSettingValue<bool>("hide-monthly-outside") && !Mod::get()->getSavedValue<bool>("in-gddp")) {
+
+				//check monthly, if check returns with nothing, skip the rest
+				auto isMonthly = false;
+				for (int i = 0; i < data["monthly"].as_array().size(); i++) {
+					auto monthlyPack = data["monthly"][i]["levelIDs"].as_array();
+					if (std::find(monthlyPack.begin(), monthlyPack.end(), this->m_level->m_levelID.value()) != monthlyPack.end()) {
+						isMonthly = true;
+						break;
+					}	
+				}
+				
+				if (isMonthly) {
+					auto uniqueMonthly = true; //false = level is in main/legacy/bonus, so don't return if false
+
+					//check main
+					for (int i = 0; i < data["main"].as_array().size(); i++) {
+						auto pack = data["main"][i]["levelIDs"].as_array();
+						if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
+							uniqueMonthly = false;
+							break;
+						}
+					}
+
+					//check legacy
+					if (uniqueMonthly) {
+						for (int i = 0; i < data["legacy"].as_array().size(); i++) {
+							auto pack = data["legacy"][i]["levelIDs"].as_array();
+							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
+								uniqueMonthly = false;
+								break;
+							}
+						}
+					}
+
+					//check bonus
+					if (uniqueMonthly) {
+						for (int i = 0; i < data["bonus"].as_array().size(); i++) {
+							auto pack = data["bonus"][i]["levelIDs"].as_array();
+							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
+								uniqueMonthly = false;
+								break;
+							}
+						}
+					}
+
+					if (uniqueMonthly) { return true; }
 				}
 			}
 
@@ -110,12 +159,10 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::parse("{\"unknown\": {\"display-name\": \"Unknown\",\"description\": \"This skill does not have a description.\",\"sprite\": \"DP_Skill_Unknown\"}}"));
 
 			//check for errors
-			auto jsonCheck2 = JsonChecker(skillsetData);
+			auto jsonCheck2 = checkJson(skillsetData, "");
 
-			if (jsonCheck2.isError()) {
-				auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the skillset data. ({})", jsonCheck2.getError()), "OK");
-				alert->setParent(this);
-				alert->show();
+			if (!jsonCheck2.ok()) {
+				log::info("Something went wrong validating the skillset data.");
 
 				return true;
 			}
@@ -275,10 +322,10 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					int num = 0;
 
 					for (int i = 0; i < this->getChildrenCount(); i++) {
-						if (getChildOfType<CCSprite>(this, i)) {
-							if (!(getChildOfType<CCSprite>(this, i)->getID() != "") && (getChildOfType<CCSprite>(this, i)->getTag() != 69420) && (getChildOfType<CCSprite>(this, i)->getContentHeight() >= 750.0f)) {
+						if (this->getChildByType<CCSprite>(i)) {
+							if (!(this->getChildByType<CCSprite>(i)->getID() != "") && (this->getChildByType<CCSprite>(i)->getTag() != 69420) && (this->getChildByType<CCSprite>(i)->getContentHeight() >= 750.0f)) {
 								num += 1;
-								getChildOfType<CCSprite>(this, i)->setID(fmt::format("grd-bg-{}", num));
+								this->getChildByType<CCSprite>(i)->setID(fmt::format("grd-bg-{}", num));
 							}
 						}
 
@@ -290,10 +337,10 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					num = 0;
 
 					for (int i = 0; i < this->getChildrenCount(); i++) {
-						if (getChildOfType<CCParticleSystemQuad>(this, i)) {
-							if (!(getChildOfType<CCParticleSystemQuad>(this, i)->getID() != "") && (getChildOfType<CCParticleSystemQuad>(this, i)->getPositionY() >= 230)) {
+						if (this->getChildByType<CCParticleSystemQuad>(i)) {
+							if (!(this->getChildByType<CCParticleSystemQuad>(i)->getID() != "") && (this->getChildByType<CCParticleSystemQuad>(i)->getPositionY() >= 230)) {
 								num += 1;
-								getChildOfType<CCParticleSystemQuad>(this, i)->setID(fmt::format("grd-particles-{}", num));
+								this->getChildByType<CCParticleSystemQuad>(i)->setID(fmt::format("grd-particles-{}", num));
 							}
 						}
 
@@ -349,12 +396,10 @@ class $modify(DemonProgression, LevelInfoLayer) {
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 		//check for errors
-		auto jsonCheck = JsonChecker(data);
+		auto jsonCheck = checkJson(data, "");
 
-		if (jsonCheck.isError()) {
-			auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
-			alert->setParent(this);
-			alert->show();
+		if (!jsonCheck.ok()) {
+			log::info("Something went wrong validating the GDDP list data.");
 
 			return;
 		}
@@ -402,12 +447,10 @@ class $modify(DemonProgression, LevelInfoLayer) {
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 		//check for errors
-		auto jsonCheck = JsonChecker(data);
+		auto jsonCheck = checkJson(data, "");
 
-		if (jsonCheck.isError()) {
-			auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
-			alert->setParent(this);
-			alert->show();
+		if (!jsonCheck.ok()) {
+			log::info("Something went wrong validating the GDDP list data.");
 
 			return;
 		}

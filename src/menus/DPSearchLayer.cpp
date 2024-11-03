@@ -249,12 +249,10 @@ bool DPSearchLayer::init(std::vector<int> IDs) {
 	this->addChild(m_list);
 
 	//check for errors
-	auto jsonCheck = JsonChecker(data);
+	auto jsonCheck = checkJson(data, "");
 
-	if (jsonCheck.isError()) {
-		auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
-		alert->setParent(this);
-		alert->show();
+	if (!jsonCheck.ok()) {
+		log::info("Something went wrong validating the GDDP list data.");
 
 		return true;
 	}

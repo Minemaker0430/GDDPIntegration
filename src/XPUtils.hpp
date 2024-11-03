@@ -12,8 +12,6 @@ public:
 	static void getXP();
 	static void getLevels();
 
-	static std::vector<int> generateFibbonachi();
-
 	static float getTotalWeightedSum(std::string);
 	static float getCompletedWeightedSum(std::string);
 };

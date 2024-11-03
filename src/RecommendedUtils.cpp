@@ -58,10 +58,10 @@ void RecommendedUtils::validateLevels() {
 	auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
 
 	//check for errors
-	auto jsonCheck = JsonChecker(data);
+	auto jsonCheck = checkJson(data, "");
 
-	if (jsonCheck.isError()) {
-		log::info("Something went wrong validating the list data. ({})", jsonCheck.getError());
+	if (!jsonCheck.ok()) {
+		log::info("Something went wrong validating the GDDP list data.");
 
 		return;
 	}
@@ -85,7 +85,7 @@ void RecommendedUtils::validateLevels() {
 		//check if a level was moved to legacy
 		for (int i = 0; i < data["legacy"].as_array().size(); i++) {
 			auto levelIDs = data["legacy"][i]["levelIDs"].as_array();
-			auto mainList = data["main"][i]["levelIDs"].as_array();
+			auto mainList = data["main"][data["legacy"][i]["mainPack"].as_int()]["levelIDs"].as_array();
 			auto stop = false;
 
 			for (int j = 0; j < levelIDs.size(); j++) {
@@ -106,6 +106,27 @@ void RecommendedUtils::validateLevels() {
 	return;
 }
 
+std::vector<int> RecommendedUtils::sortSkills(matjson::Array xp) {
+	
+	//assign skills to key
+	std::vector<SkillSort> out;
+
+	for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
+		out.push_back(SkillSort(i, xp[i].as_double()));
+	}
+
+	//sort
+	std::sort(out.begin(), out.end(), std::greater<SkillSort>());
+
+	//convert to int vector and return
+	std::vector<int> result;
+	for (SkillSort value : out) {
+		result.push_back(value.key);
+	}
+
+	return result;
+}
+
 void RecommendedUtils::generateRecommendations() {
 	log::info("Generating Recommendations...");
 
@@ -116,10 +137,10 @@ void RecommendedUtils::generateRecommendations() {
 	XPUtils::getXP();
 
 	//check for errors
-	auto jsonCheck = JsonChecker(data);
+	auto jsonCheck = checkJson(data, "");
 
-	if (jsonCheck.isError()) {
-		log::info("Something went wrong validating the list data. ({})", jsonCheck.getError());
+	if (!jsonCheck.ok()) {
+		log::info("Something went wrong validating the GDDP list data.");
 
 		return;
 	}
@@ -150,35 +171,8 @@ void RecommendedUtils::generateRecommendations() {
 	log::info("highest partial rank: {}", highestPartial);
 
 	//Sort Skills
-	std::vector<int> skills = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //Highest -> Lowest
-	for (int i = 0; i < skills.size(); i++) {
-
-		auto xp = Mod::get()->getSavedValue<matjson::Array>("xp", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-		
-		auto slotPlaced = false;
-		for (int j = 0; j < skillIDs.size(); j++) {
-			if (i == 0 && xp[j].as_double() > xp[skills[i]].as_double()) {
-				skills[i] = j;
-				slotPlaced = true;
-				log::info("{}: slot {}", j, i);
-			}
-			else if (xp[j].as_double() > xp[skills[i]].as_double() && xp[j].as_double() < xp[skills[i - 1]].as_double() && i > 0) {
-				skills[i] = j;
-				slotPlaced = true;
-				log::info("{}: slot {}", j, i);
-			}
-		}
-
-		if (!slotPlaced) {
-			for (int j = 0; j < skillIDs.size(); j++) {
-				if (std::find(skills.begin(), skills.end(), j) == skills.end()) {
-					skills[i] = j;
-					slotPlaced = true;
-					log::info("{}: slot {}", j, i);
-				}
-			}
-		}
-	}
+	auto xp = Mod::get()->getSavedValue<matjson::Array>("xp", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+	std::vector<int> skills = sortSkills(xp); //Highest -> Lowest
 	log::info("sorted skills: (highest) {} (lowest)", skills);
 	
 	auto stop = false;
@@ -277,7 +271,7 @@ void RecommendedUtils::generateRecommendations() {
 
 	for (int i = 0; i <= 1; i++) { //0 = a, 1 = b
 
-		auto currentSkill = skillIDs[skills[8]]; // always weakest
+		auto currentSkill = skillIDs[skills[skillIDs.size() - 1]]; // always weakest
 
 		//log::info("skill: {}", currentSkill);
 
@@ -391,10 +385,10 @@ bool RecommendedUtils::hasPartial(int id) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 	//check for errors
-	auto jsonCheck = JsonChecker(data);
+	auto jsonCheck = checkJson(data, "");
 
-	if (jsonCheck.isError()) {
-		log::info("Something went wrong validating the list data. ({})", jsonCheck.getError());
+	if (!jsonCheck.ok()) {
+		log::info("Something went wrong validating the GDDP list data.");
 
 		return false;
 	}

@@ -87,15 +87,13 @@ void StatsPopup::loadTab(int id) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 	//check for errors
-	auto jsonCheck = JsonChecker(data);
+		auto jsonCheck = checkJson(data, "");
 
-	if (jsonCheck.isError()) {
-		auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
-		alert->setParent(this);
-		alert->show();
+		if (!jsonCheck.ok()) {
+			log::info("Something went wrong validating the GDDP list data.");
 
-		return;
-	}
+			return;
+		}
 
 	if (id == static_cast<int>(StatsTab::Main)) {
 
@@ -1032,13 +1030,31 @@ void StatsPopup::rankInfoCallback(CCObject* sender) {
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 	if (type == "main") {
-		FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Rank\n{}/{} to Plus Rank", data["main"][id]["name"].as_string(), clamp(listSave.progress, 0, data["main"][id]["reqLevels"].as_int()), data["main"][id]["reqLevels"].as_int(), listSave.progress, data["main"][id]["levelIDs"].as_array().size()), "OK")->show();
+		if (listSave.hasRank && !listSave.completed) {
+			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n<cy>{}/{} to Rank</c>\n{}/{} to Plus Rank", data["main"][id]["name"].as_string(), clamp(listSave.progress, 0, data["main"][id]["reqLevels"].as_int()), data["main"][id]["reqLevels"].as_int(), listSave.progress, data["main"][id]["levelIDs"].as_array().size()), "OK")->show();
+		} 
+		else if (listSave.completed) {
+			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n<cy>{}/{} to Rank</c>\n<cy>{}/{} to Plus Rank</c>", data["main"][id]["name"].as_string(), clamp(listSave.progress, 0, data["main"][id]["reqLevels"].as_int()), data["main"][id]["reqLevels"].as_int(), listSave.progress, data["main"][id]["levelIDs"].as_array().size()), "OK")->show();
+		}
+		else {
+			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Rank\n{}/{} to Plus Rank", data["main"][id]["name"].as_string(), clamp(listSave.progress, 0, data["main"][id]["reqLevels"].as_int()), data["main"][id]["reqLevels"].as_int(), listSave.progress, data["main"][id]["levelIDs"].as_array().size()), "OK")->show();
+		}
 	}
 	else if (type == "legacy") {
-		FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Completion", data["legacy"][id]["name"].as_string(), listSave.progress, data["legacy"][id]["levelIDs"].as_array().size()), "OK")->show();
+		if (listSave.completed) {
+			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n<cy>{}/{} to Completion</c>", data["legacy"][id]["name"].as_string(), listSave.progress, data["legacy"][id]["levelIDs"].as_array().size()), "OK")->show();
+		}
+		else {
+			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Completion", data["legacy"][id]["name"].as_string(), listSave.progress, data["legacy"][id]["levelIDs"].as_array().size()), "OK")->show();
+		}
 	}
 	else if (type == "bonus") {
-		FLAlertLayer::create("Rank Info", fmt::format("{}\n\n{}/{} to Completion", data["bonus"][id]["name"].as_string(), listSave.progress, data["bonus"][id]["levelIDs"].as_array().size()), "OK")->show();
+		if (listSave.completed) {
+			FLAlertLayer::create("Rank Info", fmt::format("{}\n\n<cy>{}/{} to Completion</c>", data["bonus"][id]["name"].as_string(), listSave.progress, data["bonus"][id]["levelIDs"].as_array().size()), "OK")->show();
+		}
+		else {
+			FLAlertLayer::create("Rank Info", fmt::format("{}\n\n{}/{} to Completion", data["bonus"][id]["name"].as_string(), listSave.progress, data["bonus"][id]["levelIDs"].as_array().size()), "OK")->show();
+		}
 	}
 	else {
 		FLAlertLayer::create("Oops!!", "Something went wrong, you should probably tell the dev about this.", "OK")->show();
@@ -1093,10 +1109,10 @@ int StatsPopup::getScore() {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 	//check for errors
-	auto jsonCheck = JsonChecker(data);
+	auto jsonCheck = checkJson(data, "");
 
-	if (jsonCheck.isError()) {
-		log::info("Something went wrong validating the list data. ({})", jsonCheck.getError());
+	if (!jsonCheck.ok()) {
+		log::info("Something went wrong validating the GDDP list data.");
 
 		return 0; //NO WAY GEOMETRY DASH REFERENCE OOOOOOOOOOOOOOOO
 	}
@@ -1119,14 +1135,14 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 	//check for errors
-	auto jsonCheck = JsonChecker(data);
+	auto jsonCheck = checkJson(data, "");
 
-	if (jsonCheck.isError()) {
-		log::info("Something went wrong validating the list data. ({})", jsonCheck.getError());
+	if (!jsonCheck.ok()) {
+		log::info("Something went wrong validating the GDDP list data.");
 
 		return 0.f;
 	}
-
+	
 	auto progress = 0;
 	auto totalLvls = 0;
 

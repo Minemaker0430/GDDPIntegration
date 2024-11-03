@@ -1,3 +1,18 @@
+# v1.0.0-beta.46
+
+* Optimized the Recommendations and XP System a bit
+* Futureproofed the Recommendations and XP System
+* Fixed a minor detail I missed with the Swing XP update, whoopsies!
+* Added a new option that lets you hide Monthly levels outside of GDDP Menus
+* Tweaked text in the Ranks section of Stats
+* Added Compact Lists compatibility (kinda)
+* Fixed Current Monthly BG Extending past where it was supposed to
+* Monthly Packs now have the Red Progress Bar before Partial Completion
+* Monthly Packs now have a subtle background color based on year
+	* Can be turned off in settings
+* Updated for Geode 3.9
+* Tweaked settings a bit
+
 # v1.0.0-beta.45
 
 * Added the Search Menu

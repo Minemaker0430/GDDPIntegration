@@ -185,20 +185,18 @@ void SearchPopup::restoreFilters() {
 	auto skillsets = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::parse("{\"unknown\": {\"display-name\": \"Unknown\",\"description\": \"This skill does not have a description.\",\"sprite\": \"DP_Skill_Unknown\"}}"));
 
 	//check for errors
-	auto jsonCheck = JsonChecker(data);
+	auto jsonCheck = checkJson(data, "");
 
-	if (jsonCheck.isError()) {
-		auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
-		alert->setParent(this);
-		alert->show();
+	if (!jsonCheck.ok()) {
+		log::info("Something went wrong validating the GDDP list data.");
 
 		return;
 	}
 
-	auto jsonCheck2 = JsonChecker(skillsets);
+	auto jsonCheck2 = checkJson(skillsets, "");
 
-	if (jsonCheck2.isError()) {
-		log::info("Something went wrong validating the skillset data. ({})", jsonCheck2.getError());
+	if (!jsonCheck2.ok()) {
+		log::info("Something went wrong validating the skillset data.");
 
 		return;
 	}
@@ -264,20 +262,18 @@ void SearchPopup::loadTab(int id) {
 	auto skillsets = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::parse("{\"unknown\": {\"display-name\": \"Unknown\",\"description\": \"This skill does not have a description.\",\"sprite\": \"DP_Skill_Unknown\"}}"));
 
 	//check for errors
-	auto jsonCheck = JsonChecker(data);
+	auto jsonCheck = checkJson(data, "");
 
-	if (jsonCheck.isError()) {
-		auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong validating the list data. ({})", jsonCheck.getError()), "OK");
-		alert->setParent(this);
-		alert->show();
+	if (!jsonCheck.ok()) {
+		log::info("Something went wrong validating the GDDP list data.");
 
 		return;
 	}
 
-	auto jsonCheck2 = JsonChecker(skillsets);
+	auto jsonCheck2 = checkJson(skillsets, "");
 
-	if (jsonCheck2.isError()) {
-		log::info("Something went wrong validating the skillset data. ({})", jsonCheck2.getError());
+	if (!jsonCheck2.ok()) {
+		log::info("Something went wrong validating the skillset data.");
 
 		return;
 	}

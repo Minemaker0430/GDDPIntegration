@@ -9,6 +9,7 @@ using namespace geode::prelude;
 const std::vector<std::string> XPUtils::skillIDs = { "chokepoints", "duals", "fastPaced", "cps", "memory", "nerve", "ship", "swing", "timings", "wave" };
 
 const float PI = 3.1415926535897932384626433f;
+const std::vector<int> FIBONACCI = {1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181};
 
 void XPUtils::getMaxLevels() {
 	/*
@@ -18,10 +19,11 @@ void XPUtils::getMaxLevels() {
 
 	log::info("Getting Max Levels...");
 
-	matjson::Array skills = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	const float scaling = 1.f / 500.f;
+	matjson::Array skills = {};
+	for (int i = 0; i < skillIDs.size(); i++) { skills.push_back(0); }
+	const float scaling = (1.f / 500.f);
 
-	for (int i = 0; i <= 9; i++) {
+	for (int i = 0; i < skillIDs.size(); i++) {
 		skills[i] = ceil(getTotalWeightedSum(skillIDs[i]) * scaling);
 		//log::info("{} max level: {}", skillIDs[i], skills[i]);
 	}
@@ -34,11 +36,12 @@ void XPUtils::getMaxLevels() {
 void XPUtils::getXP() {
 	log::info("Getting XP...");
 
-	matjson::Array skills = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
+	matjson::Array skills = {};
+	for (int i = 0; i < skillIDs.size(); i++) { skills.push_back(0.f); }
 
-	for (int i = 0; i <= 9; i++) {
+	for (int i = 0; i < skillIDs.size(); i++) {
 		skills[i] = getCompletedWeightedSum(skillIDs[i]) / getTotalWeightedSum(skillIDs[i]);
-		log::info("{}: {}", skillIDs[i], skills[i]);
+		//log::info("{}: {}", skillIDs[i], skills[i]);
 	}
 
 	Mod::get()->setSavedValue<matjson::Array>("xp", skills);
@@ -54,10 +57,12 @@ void XPUtils::getLevels() {
 	log::info("Getting Levels...");
 
 	auto xp = Mod::get()->getSavedValue<matjson::Array>("xp");
-	matjson::Array skills = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	matjson::Array percent = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
+	matjson::Array skills = {};
+	for (int i = 0; i < skillIDs.size(); i++) { skills.push_back(0); }
+	matjson::Array percent = {};
+	for (int i = 0; i < skillIDs.size(); i++) { percent.push_back(0.f); }
 	
-	for (int i = 0; i <= 9; i++) {
+	for (int i = 0; i < skillIDs.size(); i++) {
 		//Get XP Requirements
 		std::vector<float> xpRequirements = { 0.f };
 		auto maxLvl = Mod::get()->getSavedValue<matjson::Array>("max-levels");
@@ -95,32 +100,14 @@ void XPUtils::getLevels() {
 	return;
 }
 
-std::vector<int> XPUtils::generateFibbonachi() {
-	std::vector<int> sequence = { 1, 1 };
-
-	for (int i = 2; i < 20; i++) {
-		if (sequence[i - 2] + sequence[i - 1] > 1e9) {
-			break;
-		}
-		else {
-			sequence.push_back(sequence[i - 2] + sequence[i - 1]);
-		}
-	}
-
-	//log::info("Fibbonachi: {}", sequence);
-
-	return sequence;
-}
-
 float XPUtils::getTotalWeightedSum(std::string skillID) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	auto fib = generateFibbonachi();
 
 	auto sum = 0.f;
 
 	for (int i = 0; i < data["main"].as_array().size(); i++) {
 		auto levelIDs = data["main"][i]["levelIDs"].as_array();
-		auto multiplier = fib[i + 1];
+		auto multiplier = FIBONACCI[i + 1];
 
 		auto tierSum = 0.f;
 
@@ -144,13 +131,12 @@ float XPUtils::getTotalWeightedSum(std::string skillID) {
 float XPUtils::getCompletedWeightedSum(std::string skillID) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
-	auto fib = generateFibbonachi();
 
 	auto sum = 0.f;
 
 	for (int i = 0; i < data["main"].as_array().size(); i++) {
 		auto levelIDs = data["main"][i]["levelIDs"].as_array();
-		auto multiplier = fib[i + 1];
+		auto multiplier = FIBONACCI[i + 1];
 
 		auto tierSum = 0.f;
 

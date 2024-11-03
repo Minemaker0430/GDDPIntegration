@@ -17,7 +17,7 @@ class $modify(CreatorLayer) {
 	bool init() {
 		if (!CreatorLayer::init()) return false;
 		
-		if (Mod::get()->getSavedValue<int>("database-version", 10) < 10) { 
+		if (Mod::get()->getSavedValue<int>("database-version", 13) < 13) { 
 			auto alert = FLAlertLayer::create(
 			"IMPORTANT",
 			"Your GDDP Data is outdated. Go into the Progression Menu to refresh it.",

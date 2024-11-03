@@ -43,10 +43,10 @@ class $modify(DemonProgression, LevelCell) {
 		}
 		
 		//check for errors
-		auto jsonCheck = JsonChecker(data);
+		auto jsonCheck = checkJson(data, "");
 
-		if (jsonCheck.isError()) {
-			log::info("Something went wrong validating the list data. ({})", jsonCheck.getError());
+		if (!jsonCheck.ok()) {
+			log::info("Something went wrong validating the GDDP list data.");
 
 			return;
 		}
@@ -69,6 +69,57 @@ class $modify(DemonProgression, LevelCell) {
 				}
 			}
 
+			//if a gddp level that's only in a monthly pack, return
+			if (Mod::get()->getSettingValue<bool>("hide-monthly-outside") && !Mod::get()->getSavedValue<bool>("in-gddp")) {
+
+				//check monthly, if check returns with nothing, skip the rest
+				auto isMonthly = false;
+				for (int i = 0; i < data["monthly"].as_array().size(); i++) {
+					auto monthlyPack = data["monthly"][i]["levelIDs"].as_array();
+					if (std::find(monthlyPack.begin(), monthlyPack.end(), this->m_level->m_levelID.value()) != monthlyPack.end()) {
+						isMonthly = true;
+						break;
+					}	
+				}
+				
+				if (isMonthly) {
+					auto uniqueMonthly = true; //false = level is in main/legacy/bonus, so don't return if false
+
+					//check main
+					for (int i = 0; i < data["main"].as_array().size(); i++) {
+						auto pack = data["main"][i]["levelIDs"].as_array();
+						if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
+							uniqueMonthly = false;
+							break;
+						}
+					}
+
+					//check legacy
+					if (uniqueMonthly) {
+						for (int i = 0; i < data["legacy"].as_array().size(); i++) {
+							auto pack = data["legacy"][i]["levelIDs"].as_array();
+							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
+								uniqueMonthly = false;
+								break;
+							}
+						}
+					}
+
+					//check bonus
+					if (uniqueMonthly) {
+						for (int i = 0; i < data["bonus"].as_array().size(); i++) {
+							auto pack = data["bonus"][i]["levelIDs"].as_array();
+							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
+								uniqueMonthly = false;
+								break;
+							}
+						}
+					}
+
+					if (uniqueMonthly) { return; }
+				}
+			}
+
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
 			auto id = Mod::get()->getSavedValue<int>("current-pack-index", 0);
 
@@ -83,10 +134,10 @@ class $modify(DemonProgression, LevelCell) {
 			auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::parse("{\"unknown\": {\"display-name\": \"Unknown\",\"description\": \"This skill does not have a description.\",\"sprite\": \"DP_Skill_Unknown\"}}"));
 
 			//check for errors
-			auto jsonCheck2 = JsonChecker(skillsetData);
+			auto jsonCheck2 = checkJson(skillsetData, "");
 
-			if (jsonCheck2.isError()) {
-				log::info("Something went wrong validating the skillset data. ({})", jsonCheck2.getError());
+			if (!jsonCheck2.ok()) {
+				log::info("Something went wrong validating the skillset data.");
 
 				return;
 			}
@@ -129,7 +180,12 @@ class $modify(DemonProgression, LevelCell) {
 				skillMenu->setLayout(skillLayout, true, false);
 				skillMenu->setID("skillset-menu"_spr);
 				if (layer->getChildByID("level-place")) {
-					skillMenu->setPosition({ diffSpr->getPositionX() + 45, diffSpr->getPositionY() - 17 });
+					if (!layer->getChildByID("level-place")->isVisible()) {
+						skillMenu->setPosition({ 25.f, -12.f });
+					}
+					else {
+						skillMenu->setPosition({ 45.f, -12.f });
+					}
 					skillMenu->setScale(0.4f);
 				}
 				else {
@@ -191,9 +247,9 @@ class $modify(DemonProgression, LevelCell) {
 
 					//find and identify the grandpa demon icons
 					for (int i = 0; i < layer->getChildrenCount(); i++) {
-						if (getChildOfType<CCSprite>(layer, i)) {
-							if (!(getChildOfType<CCSprite>(layer, i)->getID() != "") && getChildOfType<CCSprite>(layer, i)->getTag() != 69420) {
-								getChildOfType<CCSprite>(layer, i)->setID("grd-difficulty-face");
+						if (layer->getChildByType<CCSprite>(i)) {
+							if (!(layer->getChildByType<CCSprite>(i)->getID() != "") && layer->getChildByType<CCSprite>(i)->getTag() != 69420) {
+								layer->getChildByType<CCSprite>(i)->setID("grd-difficulty-face");
 							}
 						}
 					}
