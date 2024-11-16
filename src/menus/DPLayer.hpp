@@ -54,25 +54,23 @@ struct ListSaveFormat {
 
 template<>
 struct matjson::Serialize<ListSaveFormat> {
-	static ListSaveFormat from_json(matjson::Value const& value) {
-		return ListSaveFormat{
-			.progress = value["progress"].as_int(),
-			.completed = value["completed"].as_bool(),
-			.hasRank = value["has-rank"].as_bool()
+	static Result<ListSaveFormat> fromJson(matjson::Value const& value) {
+		auto lsf = ListSaveFormat{
+			.progress = value["progress"].as<int>().unwrapOr(0),
+			.completed = value["completed"].asBool().unwrapOr(false),
+			.hasRank = value["has-rank"].asBool().unwrapOr(false)
 		};
+
+		return Ok(lsf);
 	}
 
-	static matjson::Value to_json(ListSaveFormat const& value) {
-		auto obj = matjson::Object();
-		obj["progress"] = value.progress;
-		obj["completed"] = value.completed;
-		obj["has-rank"] = value.hasRank;
+	static matjson::Value toJson(ListSaveFormat const& value) {
+		auto obj = matjson::makeObject({
+			{ "progress", value.progress },
+			{ "completed", value.completed },
+			{ "has-rank", value.hasRank }
+		});
 		return obj;
-	}
-
-	static bool is_json(Value const& value) {
-		// TODO: this is intentionally lazy..
-		return value.is_object();
 	}
 };
 

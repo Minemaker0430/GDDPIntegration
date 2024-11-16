@@ -1,3 +1,10 @@
+# v1.0.0-beta.47
+
+* Reorganized Settings
+* Updated for GD 2.207 & Geode 4.0
+* Added a new setting that moves skillset badges on the Level Info page
+* Added a new setting that lets you hide Bonus levels outside of GDDP Menus 
+
 # v1.0.0-beta.46
 
 * Optimized the Recommendations and XP System a bit

@@ -29,7 +29,7 @@ std::vector<int> DPSearchLayer::compareDifficulty(matjson::Value data, std::vect
 	std::vector<CompareDifficulty> out;
 
 	for (int level : IDs) {
-		out.push_back(CompareDifficulty(level, data["level-data"][std::to_string(level)]["difficulty"].as_int()));
+		out.push_back(CompareDifficulty(level, data["level-data"][std::to_string(level)]["difficulty"].as<int>().unwrap()));
 	}
 
 	//sort
@@ -49,7 +49,7 @@ std::vector<int> DPSearchLayer::compareName(matjson::Value data, std::vector<int
 	std::vector<CompareName> out;
 
 	for (int level : IDs) {
-		std::string lvlName = data["level-data"][std::to_string(level)]["name"].as_string();
+		std::string lvlName = data["level-data"][std::to_string(level)]["name"].asString().unwrap();
 		std::transform(lvlName.begin(), lvlName.end(), lvlName.begin(), [](unsigned char c) { return std::tolower(c); }); 
 		//level name NEEDS to be converted to lowercase otherwise levels with capital letters get priority and we don't want that
 		out.push_back(CompareName(level, lvlName));
@@ -163,7 +163,7 @@ bool DPSearchLayer::init(std::vector<int> IDs) {
 	firstBtnSpr2->setPositionX(-5.f);
 	firstBtnSpr->addChild(firstBtnSpr2);
 	m_first = CCMenuItemSpriteExtra::create(firstBtnSpr, this, menu_selector(DPSearchLayer::pageFirst));
-	getChildOfType<CCSprite>(m_first, 0)->setPosition({14.5f, 10.f});
+	m_first->getChildByType<CCSprite>(0)->setPosition({14.5f, 10.f});
 	m_first->setPosition(24.f, (size.height / 2) - 40.f);
 	m_first->setVisible(false);
 	m_pagesMenu->addChild(m_first);
@@ -178,7 +178,7 @@ bool DPSearchLayer::init(std::vector<int> IDs) {
 	lastBtnSpr2->setZOrder(-1);
 	lastBtnSpr->addChild(lastBtnSpr2);
 	m_last = CCMenuItemSpriteExtra::create(lastBtnSpr, this, menu_selector(DPSearchLayer::pageLast));
-	getChildOfType<CCSprite>(m_last, 0)->setPosition({14.5f, 10.f});
+	m_last->getChildByType<CCSprite>(0)->setPosition({14.5f, 10.f});
 	m_last->setPosition(size.width - 24.f, (size.height / 2) - 40.f);
 	m_last->setVisible(false);
 	m_pagesMenu->addChild(m_last);
@@ -448,8 +448,8 @@ void DPSearchLayer::loadLevels(int page) {
 		m_page = page;
 	}
 	
-	getChildOfType<ButtonSprite>(m_select, 0)->setString(std::to_string(page + 1).c_str());
-	getChildOfType<ButtonSprite>(m_select, 0)->m_BGSprite->setContentSize({ 40.f, 40.f });
+	m_select->getChildByType<ButtonSprite>(0)->setString(std::to_string(page + 1).c_str());
+	m_select->getChildByType<ButtonSprite>(0)->m_BGSprite->setContentSize({ 40.f, 40.f });
 
 	//borrowed some stuff from integrated demon list
 	auto glm = GameLevelManager::sharedState();
@@ -589,7 +589,7 @@ bool PagePopup::setup() {
 
 void PagePopup::confirmPage(CCObject* sender) {
 
-	DPSearchLayer* searchLayer = getChildOfType<DPSearchLayer>(this->getParent(), 0);
+	DPSearchLayer* searchLayer = this->getParent()->getChildByType<DPSearchLayer>(0);
 	searchLayer->loadLevelsAtPage(std::stoi(m_value->getString()) - 1);
 
 	this->removeMeAndCleanup();

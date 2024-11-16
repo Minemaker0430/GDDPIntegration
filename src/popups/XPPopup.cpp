@@ -26,10 +26,10 @@ bool XPPopup::setup() {
 	m_mainLayer = mainLayer;
 
 	//Get XP
-	auto xp = Mod::get()->getSavedValue<matjson::Array>("xp");
-	auto levelProgress = Mod::get()->getSavedValue<matjson::Array>("percent-to-level");
-	auto level = Mod::get()->getSavedValue<matjson::Array>("level");
-	auto maxLevel = Mod::get()->getSavedValue<matjson::Array>("max-levels");
+	auto xp = Mod::get()->getSavedValue<std::vector<float>>("xp");
+	auto levelProgress = Mod::get()->getSavedValue<std::vector<float>>("percent-to-level");
+	auto level = Mod::get()->getSavedValue<std::vector<int>>("level");
+	auto maxLevel = Mod::get()->getSavedValue<std::vector<int>>("max-levels");
 
 	//Create Info Button
 	auto infoMenu = CCMenu::create();
@@ -76,8 +76,8 @@ bool XPPopup::setup() {
 		progressFront->setZOrder(1);
 		progressFront->setColor(skillColors[i]);
 
-		auto percent = levelProgress[i].as_double();
-		if (xp[i].as_double() >= 1.f) {
+		auto percent = levelProgress[i];
+		if (xp[i] >= 1.f) {
 			percent = 1.f;
 		}
 
@@ -98,7 +98,7 @@ bool XPPopup::setup() {
 		progressBack->setScaleX(0.6f);
 		progressBack->setScaleY(0.65f);
 
-		auto levelLabel = CCLabelBMFont::create(fmt::format("Level {}/{}", level[i].as_int(), maxLevel[i].as_int()).c_str(), "bigFont.fnt");
+		auto levelLabel = CCLabelBMFont::create(fmt::format("Level {}/{}", level[i], maxLevel[i]).c_str(), "bigFont.fnt");
 		levelLabel->setPosition({ 10.f, 11.5f });
 		levelLabel->setAnchorPoint({ 0.f, 0.5f });
 		levelLabel->setScale(0.65f);
@@ -123,7 +123,7 @@ bool XPPopup::setup() {
 	//Least Improved Skill
 	auto leastImproved = 9;
 	for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
-		if (xp[i].as_double() < xp[leastImproved].as_double()) {
+		if (xp[i] < xp[leastImproved]) {
 			leastImproved = i;
 		}
 	}
@@ -146,7 +146,7 @@ bool XPPopup::setup() {
 	//Most Improved Skill
 	auto mostImproved = 0;
 	for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
-		if (xp[i].as_double() > xp[mostImproved].as_double()) {
+		if (xp[i] > xp[mostImproved]) {
 			mostImproved = i;
 		}
 	}
@@ -222,8 +222,8 @@ bool DemonXPPopup::setup() {
 		auto levelID = std::to_string(m_levelID);
 		//log::info("id: {}, skill: {}", levelID, skill);
 		auto skillValue = 0;
-		if (data["level-data"][levelID]["xp"][skill].is_number()) {
-			skillValue = data["level-data"][levelID]["xp"][skill].as_int();
+		if (data["level-data"][levelID]["xp"][skill].isNumber()) {
+			skillValue = data["level-data"][levelID]["xp"][skill].as<int>().unwrap();
 		}
 
 		auto title = CCNode::create();
@@ -253,7 +253,7 @@ bool DemonXPPopup::setup() {
 		progressFront->setZOrder(1);
 		progressFront->setColor(skillColors[i]);
 
-		auto percent = static_cast<float>(skillValue) / 3;
+		auto percent = static_cast<float>(skillValue) / 3.f;
 
 		auto clippingNode = CCClippingNode::create();
 		auto stencil = CCScale9Sprite::create("square02_001.png");

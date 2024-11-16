@@ -16,12 +16,12 @@ protected:
 	int m_currentTab = 0;
 	float m_offset = 1.f;
 
-	matjson::Array m_difficulties = { true };
-	matjson::Array m_packs = { true };
-	matjson::Array m_skills = { true };
-	matjson::Array m_xp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // 0 = Min, 3 = Max
-	matjson::Array m_xpToggle = { false, false, false, false, false, false, false, false, false, false };
-	matjson::Array m_xpMode = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 }; //0 = GreaterEquals, 1 = Greater, 2 = Equals, 3 = Less, 4 = LessEquals
+	std::vector<bool> m_difficulties = { true };
+	std::vector<bool> m_packs = { true };
+	std::vector<bool> m_skills = { true };
+	std::vector<int> m_xp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // 0 = Min, 3 = Max
+	std::vector<bool> m_xpToggle = { false, false, false, false, false, false, false, false, false, false };
+	std::vector<int> m_xpMode = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 }; //0 = GreaterEquals, 1 = Greater, 2 = Equals, 3 = Less, 4 = LessEquals
 	bool m_completed = true;
 	bool m_uncompleted = true;
 public:

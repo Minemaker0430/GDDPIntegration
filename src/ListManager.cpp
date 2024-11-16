@@ -17,9 +17,9 @@ std::vector<ListRating> ListManager::ratings;
 std::string getUserAgent() {
     return fmt::format("{}/{}; GeometryDash/{} (GeodeSDK/{}); {}",
         Mod::get()->getID(),
-        Mod::get()->getVersion().toString(true),
+        Mod::get()->getVersion().toVString(true),
         GEODE_STR(GEODE_GD_VERSION),
-        Loader::get()->getVersion().toString(true),
+        Loader::get()->getVersion().toVString(true),
         GEODE_PLATFORM_NAME
     );
 }
@@ -37,7 +37,7 @@ void ListManager::parseResponse(std::string val) {
     // MAKE SURE WE ARE NOT SPLITTING THE COMMAS IN THE QUOTATION MARKS
     auto lines = string::split(val, "\n");
     auto keys = string::split(lines[0].substr(1, lines[0].size() - 2), "\",\"");
-    static auto demons = matjson::Array();
+    //static auto demons = matjson::Array();
     for (size_t i = 1; i < lines.size(); i++) {
         auto values = string::split(lines[i].substr(1, lines[i].size() - 2), "\",\"");
         ListRating demon;
@@ -185,7 +185,7 @@ bool GDDLListener::init() {
         this->bind([this](web::WebTask::Event* e) {
             if (auto res = e->getValue()) {
                 if (res->ok() && res->string().isOk()) {
-                    auto response = res->string().value();
+                    auto response = res->string().unwrap();
 
                     log::info("Successfully obtained GDDL Data.");
 

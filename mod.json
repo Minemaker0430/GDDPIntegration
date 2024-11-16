@@ -1,10 +1,10 @@
 {
-		"geode": "3.9.0",
+		"geode": "4.0.0-beta.1",
 		"gd": {
-			"win": "2.206",
-			"android": "2.206"
+			"win": "2.2074",
+			"android": "2.2074"
 		},
-		"version": "v1.0.0-beta.46",
+		"version": "v1.0.0-beta.47",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP Integration",
 		"developer": "Minemaker0430",
@@ -49,7 +49,7 @@
 
 	"settings": {
 		"bypass-section": {
-			"name": "Bypass",
+			"name": "Progression Bypass",
 			"type": "title"
 		},
 		"unlock-all-tiers": {
@@ -64,18 +64,15 @@
 			"type": "bool",
 			"default": false
 		},
+		"utility-section": {
+			"name": "Utility",
+			"type": "title"
+		},
 		"enable-practice": {
 			"name": "Enable Practice Packs",
 			"description": "Adds Practice versions of the Main Packs to help you practice Main Tier levels.",
 			"type": "bool",
 			"default": true
-		},
-		"show-outside-menus": {
-			"name": "Show Faces Outside Menus",
-			"description": "Makes Custom Difficulty Faces no longer require GDDP Menus to activate.",
-			"type": "bool",
-			"default": false,
-			"enable-if": "custom-difficulty-faces"
 		},
 		"skillset-badges": {
 			"name": "Enable Skillset Badges",
@@ -89,55 +86,22 @@
 			"type": "bool",
 			"default": true
 		},
-		"show-support": {
-			"name": "Show Support Button",
-			"description": "Controls the support button in the GDDP Menu. No hard feelings if you disable this.",
-			"type": "bool",
-			"default": true
-		},
-		"menu-section": {
-			"name": "Menu",
+		"faces-section": {
+			"name": "Difficulty Faces",
 			"type": "title"
-		},
-		"alt-button-texture": {
-			"name": "Alternate Button Texture",
-			"description": "Changes the menu button to something less nightmarish.",
-			"type": "bool",
-			"default": false
-		},
-		"compact-button": {
-			"name": "Compact Menu Button",
-			"description": "Changes the menu button to a Circle Button rather than a typical Creator Menu Button.",
-			"type": "bool",
-			"default": false
-		},
-		"replace-map-packs": {
-			"name": "Replace Map Packs",
-			"description": "Replaces the Map Packs button with the Demon Progression button.",
-			"type": "bool",
-			"default": false
-		},
-		"show-database-version": {
-			"name": "Show Database Version",
-			"description": "Shows what version of the database you're currently on.",
-			"type": "bool",
-			"default": false
-		},
-		"cosmetic-section": {
-			"name": "Cosmetic",
-			"type": "title"
-		},
-		"restore-bg-color": {
-			"name": "Vanilla Background Color",
-			"description": "Changes the background color in the GDDP Menus to the Vanilla Color.",
-			"type": "bool",
-			"default": false
 		},
 		"custom-difficulty-faces": {
 			"name": "Custom Difficulty Faces",
 			"description": "Shows custom difficulty faces in the GDDP Menus.",
 			"type": "bool",
 			"default": true
+		},
+		"show-outside-menus": {
+			"name": "Show Faces Outside Menus",
+			"description": "Makes Custom Difficulty Faces no longer require GDDP Menus to activate.",
+			"type": "bool",
+			"default": false,
+			"enable-if": "custom-difficulty-faces"
 		},
 		"all-demons-rated": {
 			"name": "Rate All Demons [BROKEN]",
@@ -180,11 +144,62 @@
 			"default": true,
 			"enable-if": "show-outside-menus"
 		},
+		"hide-bonus-outside": {
+			"name": "Hide Bonus Outside Menus",
+			"description": "Hides GDDP difficulty faces outside menus for levels only in a GDDP Bonus Pack.",
+			"type": "bool",
+			"default": false,
+			"enable-if": "show-outside-menus"
+		},
+		"menu-section": {
+			"name": "Menu Tweaks",
+			"type": "title"
+		},
+		"alt-button-texture": {
+			"name": "Alternate Button Texture",
+			"description": "Changes the menu button to something less nightmarish.",
+			"type": "bool",
+			"default": false
+		},
+		"compact-button": {
+			"name": "Compact Menu Button",
+			"description": "Changes the menu button to a Circle Button rather than a typical Creator Menu Button.",
+			"type": "bool",
+			"default": false
+		},
+		"replace-map-packs": {
+			"name": "Replace Map Packs",
+			"description": "Replaces the Map Packs button with the Demon Progression button.",
+			"type": "bool",
+			"default": false
+		},
+		"show-database-version": {
+			"name": "Show Database Version",
+			"description": "Shows what version of the database you're currently on.",
+			"type": "bool",
+			"default": false
+		},
+		"cosmetic-section": {
+			"name": "Cosmetic",
+			"type": "title"
+		},
+		"restore-bg-color": {
+			"name": "Vanilla Background Color",
+			"description": "Changes the background color in the GDDP Menus to the Vanilla Color.",
+			"type": "bool",
+			"default": false
+		},
 		"disable-year-color": {
 			"name": "Disable Year Colors",
 			"description": "Disables the subtle Background coloring on Monthly Packs.",
 			"type": "bool",
 			"default": false
+		},
+		"show-support": {
+			"name": "Show Support Button",
+			"description": "Controls the support button in the GDDP Menu. No hard feelings if you disable this.",
+			"type": "bool",
+			"default": true
 		},
 		"compatibility-section": {
 			"name": "Compatibility",
@@ -216,6 +231,13 @@
 			"type": "bool",
 			"default": false,
 			"enable-if": "show-xp"
+		},
+		"move-skill-badges": {
+			"name": "Move Skillset Badges",
+			"description": "Moves the Skillset Badges on the Level Info page to the right.",
+			"type": "bool",
+			"default": false,
+			"enable-if": "skillset-badges"
 		}
 	}
 }

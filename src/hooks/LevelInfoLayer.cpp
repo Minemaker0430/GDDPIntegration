@@ -35,8 +35,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 		auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info");
 
 		FLAlertLayer::create(
-			skillsetData[skillID]["display-name"].as_string().c_str(),
-			skillsetData[skillID]["description"].as_string().c_str(),
+			skillsetData[skillID]["display-name"].asString().unwrap().c_str(),
+			skillsetData[skillID]["description"].asString().unwrap().c_str(),
 			"OK"
 		)->show();
 
@@ -86,8 +86,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 				//check monthly, if check returns with nothing, skip the rest
 				auto isMonthly = false;
-				for (int i = 0; i < data["monthly"].as_array().size(); i++) {
-					auto monthlyPack = data["monthly"][i]["levelIDs"].as_array();
+				for (int i = 0; i < data["monthly"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
+					auto monthlyPack = data["monthly"][i]["levelIDs"].as<std::vector<int>>().unwrap();
 					if (std::find(monthlyPack.begin(), monthlyPack.end(), this->m_level->m_levelID.value()) != monthlyPack.end()) {
 						isMonthly = true;
 						break;
@@ -98,8 +98,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					auto uniqueMonthly = true; //false = level is in main/legacy/bonus, so don't return if false
 
 					//check main
-					for (int i = 0; i < data["main"].as_array().size(); i++) {
-						auto pack = data["main"][i]["levelIDs"].as_array();
+					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
+						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrap();
 						if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 							uniqueMonthly = false;
 							break;
@@ -108,8 +108,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 					//check legacy
 					if (uniqueMonthly) {
-						for (int i = 0; i < data["legacy"].as_array().size(); i++) {
-							auto pack = data["legacy"][i]["levelIDs"].as_array();
+						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
+							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrap();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueMonthly = false;
 								break;
@@ -119,8 +119,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 					//check bonus
 					if (uniqueMonthly) {
-						for (int i = 0; i < data["bonus"].as_array().size(); i++) {
-							auto pack = data["bonus"][i]["levelIDs"].as_array();
+						for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
+							auto pack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrap();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueMonthly = false;
 								break;
@@ -129,6 +129,46 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					}
 
 					if (uniqueMonthly) { return true; }
+				}
+			}
+
+			//if a gddp level that's only in a bonus pack, return
+			if (Mod::get()->getSettingValue<bool>("hide-bonus-outside") && !Mod::get()->getSavedValue<bool>("in-gddp")) {
+
+				//check bonus, if check returns with nothing, skip the rest
+				auto isBonus = false;
+				for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
+					auto bonusPack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+					if (std::find(bonusPack.begin(), bonusPack.end(), this->m_level->m_levelID.value()) != bonusPack.end()) {
+						isBonus = true;
+						break;
+					}	
+				}
+				
+				if (isBonus) {
+					auto uniqueBonus = true; //false = level is in main/legacy, so don't return if false
+
+					//check main
+					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
+						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+						if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
+							uniqueBonus = false;
+							break;
+						}
+					}
+
+					//check legacy
+					if (uniqueBonus) {
+						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
+							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
+								uniqueBonus = false;
+								break;
+							}
+						}
+					}
+
+					if (uniqueBonus) { return true; }
 				}
 			}
 
@@ -149,14 +189,21 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 			std::string saveID = "null";
 			if (type == "main") {
-				if (!data["main"][id]["saveID"].is_null()) { saveID = data["main"][id]["saveID"].as_string(); }
+				if (!data["main"][id]["saveID"].isNull()) { saveID = data["main"][id]["saveID"].asString().unwrap(); }
 			}
 
 			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(saveID).hasRank;
 
 			auto diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
 			
-			auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::parse("{\"unknown\": {\"display-name\": \"Unknown\",\"description\": \"This skill does not have a description.\",\"sprite\": \"DP_Skill_Unknown\"}}"));
+			auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::makeObject({
+				{"unknown", matjson::makeObject({
+						{ "display-name", "Unknown" },
+						{ "description", "This skill does not have a description." },
+						{ "sprite", "DP_Skill_Unknown" }
+					})
+				}
+			}));
 
 			//check for errors
 			auto jsonCheck2 = checkJson(skillsetData, "");
@@ -168,19 +215,19 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			}
 
 			int gddpDiff = 0;
-			matjson::Array skillsets = {};
+			std::vector<std::string> skillsets = {};
 			auto levelID = std::to_string(this->m_level->m_levelID.value());
 
 			if (data["level-data"].contains(levelID)) {
-				if (!data["level-data"][levelID]["difficulty"].is_null()) { gddpDiff = data["level-data"][levelID]["difficulty"].as_int(); }
-				if (!data["level-data"][levelID]["skillsets"].is_null()) { skillsets = data["level-data"][levelID]["skillsets"].as_array(); }
+				if (!data["level-data"][levelID]["difficulty"].isNull()) { gddpDiff = data["level-data"][levelID]["difficulty"].as<int>().unwrap(); }
+				if (!data["level-data"][levelID]["skillsets"].isNull()) { skillsets = data["level-data"][levelID]["skillsets"].as<std::vector<std::string>>().unwrap(); }
 
 				if (this->m_level->m_normalPercent.value() == 100) {
-					auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
+					auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 
 					if (std::find(completedLvls.begin(), completedLvls.end(), this->m_level->m_levelID.value()) == completedLvls.end()) {
 						completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
-						Mod::get()->setSavedValue<matjson::Array>("completed-levels", completedLvls);
+						Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
 					}
 				}
 			}
@@ -196,6 +243,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				skillMenu->setLayout(skillLayout, true, false);
 				skillMenu->setID("skillset-menu"_spr);
 				skillMenu->setPosition({ diffSpr->getPositionX() + 14, diffSpr->getPositionY() - 26 });
+				if (Mod::get()->getSettingValue<bool>("move-skill-badges")) { skillMenu->setPosition({ diffSpr->getPositionX() + 17, diffSpr->getPositionY() - 26 }); }
 				skillMenu->setZOrder(42);
 				skillMenu->setContentSize({ 31.5f, 65.0f });
 				skillMenu->setAnchorPoint({ 1.0f, 0.5f });
@@ -204,7 +252,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				//add skillset buttons
 				for (int i = 0; i < skillsets.size(); i++) {
 
-					std::string skillID = skillsets[i].as_string();
+					std::string skillID = skillsets[i];
 
 					//check data entry
 					if (!skillsetData.contains(skillID)) {
@@ -212,13 +260,13 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					}
 
 					//get data
-					auto name = skillsetData[skillID]["display-name"].as_string();
-					auto desc = skillsetData[skillID]["description"].as_string();
-					auto spriteName = fmt::format("{}.png", skillsetData[skillID]["sprite"].as_string());
+					auto name = skillsetData[skillID]["display-name"].asString().unwrap();
+					auto desc = skillsetData[skillID]["description"].asString().unwrap();
+					auto spriteName = fmt::format("{}.png", skillsetData[skillID]["sprite"].asString().unwrap());
 
 					CCSprite* sprite;
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr) {
-						spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].as_string());
+						spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].asString().unwrap());
 						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
 					}
 					else {
@@ -237,7 +285,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			}
 
 			//xp button
-			if (data["level-data"][levelID]["xp"]["chokepoints"].is_number()) { //just use chokepoints, all demons with xp will have this value so it's fine
+			if (data["level-data"][levelID]["xp"]["chokepoints"].isNumber()) { //just use chokepoints, all demons with xp will have this value so it's fine
 				auto xpText = CCLabelBMFont::create("XP", "bigFont.fnt");
 				auto xpSpr = CircleButtonSprite::create(xpText, CircleBaseColor::Green, CircleBaseSize::Small);
 				typeinfo_cast<CCLabelBMFont*>(xpSpr->getChildren()->objectAtIndex(0))->setPosition({ 20.375f, 21.5f });
@@ -248,7 +296,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				xpMenu->setAnchorPoint({ 0.f, 0.f });
 				xpMenu->setScale(0.65f);
 				xpMenu->setPosition({ diffSpr->getPositionX() - 34.f, diffSpr->getPositionY() + 7.f });
-				if (Mod::get()->getSettingValue<bool>("lower-xp")) { xpMenu->setPosition({ diffSpr->getPositionX() - 34.f, diffSpr->getPositionY() - 24.f }); }
+				if (Mod::get()->getSettingValue<bool>("lower-xp")) { xpMenu->setPosition({ diffSpr->getPositionX() - 37.f, diffSpr->getPositionY() - 24.f }); }
 				xpMenu->addChild(xpBtn);
 				xpMenu->setID("gddp-xp-menu");
 				if (Mod::get()->getSettingValue<bool>("show-xp")) { this->addChild(xpMenu); }
@@ -266,8 +314,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				plusSprite = fmt::format("{}Plus", sprite);
 			}
 			else {
-				sprite = data["main"][gddpDiff]["sprite"].as_string();
-				plusSprite = data["main"][gddpDiff]["plusSprite"].as_string();
+				sprite = data["main"][gddpDiff]["sprite"].asString().unwrap();
+				plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrap();
 			}
 
 			//fallbacks
@@ -302,7 +350,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				this->addChild(customSpr);
 
 				//check if the level is recommended and the effect is enabled
-				auto recommendations = Mod::get()->getSavedValue<matjson::Array>("recommended-levels");
+				auto recommendations = Mod::get()->getSavedValue<std::vector<int>>("recommended-levels");
 				if (!Mod::get()->getSettingValue<bool>("disable-recommended-effect") && std::find(recommendations.begin(), recommendations.end(), this->m_level->m_levelID.value()) != recommendations.end()) {
 					auto recommendedSpr = CCSprite::createWithSpriteFrameName("DP_RecommendGlow.png"_spr);
 					recommendedSpr->setPosition({ 37.f, 37.f });
@@ -468,11 +516,11 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 			if (this->m_level->m_normalPercent.value() == 100) {
-				auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
+				auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 
 				if (std::find(completedLvls.begin(), completedLvls.end(), this->m_level->m_levelID.value()) == completedLvls.end()) {
 					completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
-					Mod::get()->setSavedValue<matjson::Array>("completed-levels", completedLvls);
+					Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
 				}
 			}
 

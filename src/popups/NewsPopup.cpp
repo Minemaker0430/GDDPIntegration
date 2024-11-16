@@ -92,7 +92,7 @@ bool NewsPopup::setup() {
 				m_loadCircle->fadeAndRemove();
 			}
 			else {
-				auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the News. ({}, {})", res->code(), res->json().has_error()), "OK");
+				auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the News. ({}, {})", res->code(), res->json().isErr()), "OK");
 				alert->m_scene = this;
 				alert->show();
 
@@ -111,13 +111,13 @@ bool NewsPopup::setup() {
 }
 
 void NewsPopup::loadPage(int page) {
-	m_right->setVisible(m_page < m_news["news"].as_array().size() - 1);
+	m_right->setVisible(m_page < m_news["news"].as<std::vector<matjson::Value>>().unwrap().size() - 1);
 	m_left->setVisible(m_page > 0);
-	m_last->setVisible(m_page < m_news["news"].as_array().size() - 1);
+	m_last->setVisible(m_page < m_news["news"].as<std::vector<matjson::Value>>().unwrap().size() - 1);
 	m_first->setVisible(m_page > 0);
 
-	typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("header"))->setCString(m_news["news"][page]["date"].as_string().c_str());
-	typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("text"))->setCString(m_news["news"][page]["text"].as_string().c_str());
+	typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("header"))->setCString(m_news["news"][page]["date"].asString().unwrap().c_str());
+	typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("text"))->setCString(m_news["news"][page]["text"].asString().unwrap().c_str());
 }
 
 void NewsPopup::pageLeft(CCObject*) {
@@ -145,7 +145,7 @@ void NewsPopup::firstPage(CCObject*) {
 }
 
 void NewsPopup::lastPage(CCObject*) {
-	m_page = m_news["news"].as_array().size() - 1;
+	m_page = m_news["news"].as<std::vector<matjson::Value>>().unwrap().size() - 1;
 
 	loadPage(m_page);
 

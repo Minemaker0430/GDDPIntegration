@@ -26,6 +26,8 @@ add_library(${PROJECT_NAME} SHARED
     src/RecommendedUtils.cpp
     src/menus/DPSearchLayer.cpp
     src/popups/SearchPopup.cpp
+    src/RouletteUtils.cpp
+    src/popups/RoulettePopup.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

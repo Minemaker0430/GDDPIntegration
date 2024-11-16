@@ -9,7 +9,7 @@ public:
 	static void validateLevels();
 	static void generateRecommendations();
 
-	static std::vector<int> sortSkills(matjson::Array);
+	static std::vector<int> sortSkills(std::vector<float>);
 
 	static bool hasPartial(int);
 };

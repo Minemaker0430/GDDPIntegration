@@ -171,12 +171,12 @@ void RecommendedLayer::loadLevels(int page) {
 
 	m_list->m_listView->setVisible(false);
 
-	matjson::Array levelIDs = Mod::get()->getSavedValue<matjson::Array>("recommended-levels");
+	std::vector<int> levelIDs = Mod::get()->getSavedValue<std::vector<int>>("recommended-levels");
 		
 	m_IDs.clear();
 
 	for (auto const& level : levelIDs) {
-		m_IDs.push_back(std::to_string(level.as_int()));
+		m_IDs.push_back(std::to_string(level));
 	}
 
 	log::info("{}", m_IDs);

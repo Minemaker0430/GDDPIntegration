@@ -108,8 +108,8 @@ bool SupporterList::setup() {
 				
 				auto fullList = CCNode::create();
 
-				for (auto supporter : list.as_array()) {
-					fullList->addChild(CCLabelBMFont::create(supporter.as_string().c_str(), "chatFont.fnt"));
+				for (auto supporter : list.asArray().unwrap()) {
+					fullList->addChild(CCLabelBMFont::create(supporter.asString().unwrap().c_str(), "chatFont.fnt"));
 				}
 
 				/*listText->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
@@ -127,7 +127,7 @@ bool SupporterList::setup() {
 				m_loadCircle->fadeAndRemove();
 			}
 			else {
-				auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the Supporter List. ({}, {})", res->code(), res->json().has_error()), "OK");
+				auto alert = FLAlertLayer::create("ERROR", fmt::format("Something went wrong getting the Supporter List. ({}, {})", res->code(), res->json().isErr()), "OK");
 				alert->m_scene = this;
 				alert->show();
 

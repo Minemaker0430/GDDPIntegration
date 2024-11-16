@@ -14,6 +14,7 @@
 #include "../popups/NewsPopup.hpp"
 #include "../popups/XPPopup.hpp"
 #include "../popups/SearchPopup.hpp"
+#include "../popups/RoulettePopup.hpp"
 #include "../Utils.hpp"
 #include "../XPUtils.hpp"
 #include "../RecommendedUtils.hpp"
@@ -143,7 +144,7 @@ void DPLayer::reloadData(bool isInit) {
 					alert->m_scene = this;
 					alert->show();*/
 
-					m_errorText->setCString(fmt::format("Something went wrong...\n(Code: {}, JSON Error: {})", res->code(), res->json().has_error()).c_str());
+					m_errorText->setCString(fmt::format("Something went wrong...\n(Code: {}, JSON Error: {})", res->code(), res->json().isErr()).c_str());
 					m_errorText->setVisible(true);
 
 					m_finishedLoading = true;
@@ -172,7 +173,7 @@ void DPLayer::reloadData(bool isInit) {
 					}
 				}
 				else {
-					log::info("Something went wrong getting the Skillset Data. ({}, {})", res->code(), res->json().has_error());
+					log::info("Something went wrong getting the Skillset Data. ({}, {})", res->code(), res->json().isErr());
 				}
 			}
 			else if (e->isCancelled()) {
@@ -207,16 +208,16 @@ void DPLayer::openList(CCObject* sender) {
 
 	//auto listID = m_data[type][id]["listID"].as_int();
 	auto reqLevels = 0;
-	if (type == "main") { reqLevels = m_data[type][id]["reqLevels"].as_int(); }
+	if (type == "main") { reqLevels = m_data[type][id]["reqLevels"].as<int>().unwrap(); }
 	auto hasPractice = false;
-	if (type == "main") { hasPractice = m_data[type][id]["practice"].as_bool(); }
+	if (type == "main") { hasPractice = m_data[type][id]["practice"].asBool().unwrapOr(false); }
 	auto mainPack = 0;
-	if (type == "legacy") { mainPack = m_data[type][id]["mainPack"].as_int(); }
-	matjson::Array levelIDs = {};
-	levelIDs = m_data[type][id]["levelIDs"].as_array();
-	matjson::Array practiceIDs = {};
-	if (type == "main") { practiceIDs = m_data["main"][id]["practiceIDs"].as_array(); }
-	if (type == "legacy") { practiceIDs = m_data["main"][mainPack]["practiceIDs"].as_array(); }
+	if (type == "legacy") { mainPack = m_data[type][id]["mainPack"].as<int>().unwrap(); }
+	std::vector<int> levelIDs = {};
+	levelIDs = m_data[type][id]["levelIDs"].as<std::vector<int>>().unwrap();
+	std::vector<int> practiceIDs = {};
+	if (type == "main") { practiceIDs = m_data["main"][id]["practiceIDs"].as<std::vector<int>>().unwrap(); }
+	if (type == "legacy") { practiceIDs = m_data["main"][mainPack]["practiceIDs"].as<std::vector<int>>().unwrap(); }
 
 	auto scene = CCScene::create(); // creates the scene
 	auto dpLayer = DPListLayer::create(type.c_str(), id, isPractice); //creates the layer
@@ -258,7 +259,7 @@ void DPLayer::searchCallback(CCObject* sender) {
 
 void DPLayer::rouletteCallback(CCObject* sender) {
 	if (m_finishedLoading && !m_error) {
-		soonCallback(sender);
+		RoulettePopup::create()->show();
 	}
 
 	return;
@@ -426,25 +427,25 @@ bool DPLayer::init() {
 
 	//utility tabs
 	auto skillsetsSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Search.png"_spr);
-	//auto rouletteSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
+	auto rouletteSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
 	auto recommendedSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Recommended.png"_spr);
 
 	auto skillsetsBtn = CCMenuItemSpriteExtra::create(skillsetsSpr, this, menu_selector(DPLayer::searchCallback));
-	//auto rouletteBtn = CCMenuItemSpriteExtra::create(rouletteSpr, this, menu_selector(DPLayer::rouletteCallback));
+	auto rouletteBtn = CCMenuItemSpriteExtra::create(rouletteSpr, this, menu_selector(DPLayer::soonCallback));
 	auto recommendedBtn = CCMenuItemSpriteExtra::create(recommendedSpr, this, menu_selector(DPLayer::recommendedCallback));
 
-	skillsetsBtn->setPositionY(25.f); //skillsetsBtn->setPositionY(50.f);
-	//rouletteBtn->setPositionY(0.f);
-	recommendedBtn->setPositionY(-25.f); //recommendedBtn->setPositionY(-50.f);
+	skillsetsBtn->setPositionY(50.f);
+	rouletteBtn->setPositionY(0.f);
+	recommendedBtn->setPositionY(-50.f);
 
 	skillsetsBtn->setID("skillsets-btn");
-	//rouletteBtn->setID("roulette-btn");
+	rouletteBtn->setID("roulette-btn");
 	recommendedBtn->setID("recommended-btn");
 
 	auto utilityMenu = CCMenu::create();
 	utilityMenu->setPosition({ 63.f, 167.f });
 	utilityMenu->addChild(skillsetsBtn);
-	//utilityMenu->addChild(rouletteBtn);
+	utilityMenu->addChild(rouletteBtn);
 	utilityMenu->addChild(recommendedBtn);
 	utilityMenu->setID("utility-menu");
 	this->addChild(utilityMenu);
@@ -539,7 +540,7 @@ void DPLayer::reloadList(int type) {
 	//all save stuff
 	auto localDatabaseVer = Mod::get()->getSavedValue<int>("database-version", 0);
 
-	Mod::get()->setSavedValue<int>("database-version", m_data["database-version"].as_int());
+	Mod::get()->setSavedValue<int>("database-version", m_data["database-version"].as<int>().unwrap());
 	log::info("{}", Mod::get()->getSavedValue<int>("database-version"));
 
 	//do everything else
@@ -558,12 +559,12 @@ void DPLayer::reloadList(int type) {
 		dataIdx = "monthly";
 	}
 
-	auto packs = m_data[dataIdx].as_array();
+	auto packs = m_data[dataIdx].as<std::vector<matjson::Value>>().unwrap();
 
-	auto versionTxt = fmt::format("Database Version: {}", std::to_string(m_data["database-version"].as_int()));
+	auto versionTxt = fmt::format("Database Version: {}", std::to_string(m_data["database-version"].as<int>().unwrap()));
 	m_databaseVer->setCString(versionTxt.c_str());
 
-	if (m_data[dataIdx].as_array().size() <= 0) { return; }
+	if (packs.size() <= 0) { return; }
 
 	RecommendedUtils::validateLevels();
 
@@ -576,26 +577,26 @@ void DPLayer::reloadList(int type) {
 		std::string plusSprite = "DP_Beginner"; //Main Only
 		//int listID = 0;
 		std::string saveID = "null";
-		matjson::Array levelIDs = {};
-		matjson::Array practiceIDs = {};
+		std::vector<int> levelIDs = {};
+		std::vector<int> practiceIDs = {};
 		int reqLevels = 0; //Main Only
 		int month = 1; //Monthly Only
 		int year = 0; //Monthly Only
 		bool hasPractice = false; //Main Only
 		int mainPack = 0; //Legacy Only
 
-		if (!m_data[dataIdx][i]["name"].is_null()) { name = m_data[dataIdx][i]["name"].as_string(); }
-		if (!m_data[dataIdx][i]["sprite"].is_null()) { sprite = m_data[dataIdx][i]["sprite"].as_string(); }
-		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["plusSprite"].is_null()) { plusSprite = m_data[dataIdx][i]["plusSprite"].as_string(); }
+		if (!m_data[dataIdx][i]["name"].isNull()) { name = m_data[dataIdx][i]["name"].asString().unwrap(); }
+		if (!m_data[dataIdx][i]["sprite"].isNull()) { sprite = m_data[dataIdx][i]["sprite"].asString().unwrap(); }
+		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["plusSprite"].isNull()) { plusSprite = m_data[dataIdx][i]["plusSprite"].asString().unwrap(); }
 		//listID = m_data[dataIdx][i]["listID"].as_int(); //only used to obtain old saves
-		if (type != static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["saveID"].is_null()) { saveID = m_data[dataIdx][i]["saveID"].as_string(); }
-		if (!m_data[dataIdx][i]["levelIDs"].is_null()) { levelIDs = m_data[dataIdx][i]["levelIDs"].as_array(); }
-		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["practiceIDs"].is_null()) { practiceIDs = m_data[dataIdx][i]["practiceIDs"].as_array(); }
-		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["reqLevels"].is_null()) { reqLevels = m_data[dataIdx][i]["reqLevels"].as_int(); }
-		if (type == static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["month"].is_null()) { month = m_data[dataIdx][i]["month"].as_int(); }
-		if (type == static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["year"].is_null()) { year = m_data[dataIdx][i]["year"].as_int(); }
-		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["practice"].is_null()) { hasPractice = m_data[dataIdx][i]["practice"].as_bool(); }
-		if (type == static_cast<int>(DPListType::Legacy) && !m_data[dataIdx][i]["mainPack"].is_null()) { mainPack = m_data[dataIdx][i]["mainPack"].as_int(); }
+		if (type != static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["saveID"].isNull()) { saveID = m_data[dataIdx][i]["saveID"].asString().unwrap(); }
+		if (!m_data[dataIdx][i]["levelIDs"].isNull()) { levelIDs = m_data[dataIdx][i]["levelIDs"].as<std::vector<int>>().unwrap(); }
+		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["practiceIDs"].isNull()) { practiceIDs = m_data[dataIdx][i]["practiceIDs"].as<std::vector<int>>().unwrap(); }
+		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["reqLevels"].isNull()) { reqLevels = m_data[dataIdx][i]["reqLevels"].as<int>().unwrap(); }
+		if (type == static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["month"].isNull()) { month = m_data[dataIdx][i]["month"].as<int>().unwrap(); }
+		if (type == static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["year"].isNull()) { year = m_data[dataIdx][i]["year"].as<int>().unwrap(); }
+		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["practice"].isNull()) { hasPractice = m_data[dataIdx][i]["practice"].asBool().unwrap(); }
+		if (type == static_cast<int>(DPListType::Legacy) && !m_data[dataIdx][i]["mainPack"].isNull()) { mainPack = m_data[dataIdx][i]["mainPack"].as<int>().unwrap(); }
 
 		if (type == static_cast<int>(DPListType::Monthly)) { saveID = fmt::format("{}-{}", month, year); }
 
@@ -728,7 +729,7 @@ void DPLayer::reloadList(int type) {
 			if (!listSave.hasRank) {
 				std::string nextTier = "???";
 				if (i + 1 < packs.size()) {
-					nextTier = m_data[dataIdx][i + 1]["name"].as_string();
+					nextTier = m_data[dataIdx][i + 1]["name"].asString().unwrap();
 				}
 				progStr = fmt::format("{}/{} to {} Tier", std::to_string(listSave.progress), std::to_string(reqLevels), nextTier);
 			}
@@ -824,7 +825,7 @@ void DPLayer::reloadList(int type) {
 			practiceBtn->setID("main-practice");
 			cellMenu->addChild(practiceBtn);
 		}
-		else if (type == static_cast<int>(DPListType::Legacy) && m_data["main"][mainPack]["practice"].as_bool() && Mod::get()->getSettingValue<bool>("enable-practice")) {
+		else if (type == static_cast<int>(DPListType::Legacy) && m_data["main"][mainPack]["practice"].asBool() && Mod::get()->getSettingValue<bool>("enable-practice")) {
 			auto practiceSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
 			auto practiceBtn = CCMenuItemSpriteExtra::create(practiceSpr, this, menu_selector(DPLayer::openList));
 			practiceBtn->setPosition({ 288, 14 });
@@ -870,7 +871,7 @@ void DPLayer::reloadList(int type) {
 		if (i > 0 && type == static_cast<int>(DPListType::Main) && !Mod::get()->getSettingValue<bool>("unlock-all-tiers")) {
 
 			//get rank of previous main pack
-			auto prevSaveID = m_data[dataIdx][i - 1]["saveID"].as_string();
+			auto prevSaveID = m_data[dataIdx][i - 1]["saveID"].asString().unwrap();
 			auto rankCheck = Mod::get()->getSavedValue<ListSaveFormat>(prevSaveID).hasRank;
 
 			if (!rankCheck) {
@@ -883,15 +884,15 @@ void DPLayer::reloadList(int type) {
 				if (i > 1) {
 
 					//check for the one before that
-					prevSaveID = m_data[dataIdx][i - 2]["saveID"].as_string();
+					prevSaveID = m_data[dataIdx][i - 2]["saveID"].asString().unwrap();
 					rankCheck = Mod::get()->getSavedValue<ListSaveFormat>(prevSaveID).hasRank;
 
 					if (rankCheck) {
-						rankText = m_data[dataIdx][i - 1]["name"].as_string();
+						rankText = m_data[dataIdx][i - 1]["name"].asString().unwrap();
 					}
 				}
 				else {
-					rankText = m_data[dataIdx][i - 1]["name"].as_string();
+					rankText = m_data[dataIdx][i - 1]["name"].asString().unwrap();
 				}
 
 				std::string fullLockText = fmt::format("Get the {} Rank to unlock!", rankText);
@@ -917,7 +918,7 @@ void DPLayer::reloadList(int type) {
 		else if (type == static_cast<int>(DPListType::Legacy) && !Mod::get()->getSettingValue<bool>("unlock-all-legacy")) {
 
 			//get main pack list ID
-			auto mainSaveID = m_data["main"][mainPack]["saveID"].as_string();
+			auto mainSaveID = m_data["main"][mainPack]["saveID"].asString().unwrap();
 			auto rankCheck = Mod::get()->getSavedValue<ListSaveFormat>(mainSaveID).hasRank;
 
 			if (!rankCheck) {
@@ -930,15 +931,15 @@ void DPLayer::reloadList(int type) {
 				if (mainPack > 0) {
 
 					//get previous main pack
-					auto prevSaveID = m_data["main"][mainPack - 1]["saveID"].as_string();
+					auto prevSaveID = m_data["main"][mainPack - 1]["saveID"].asString().unwrap();
 					rankCheck = Mod::get()->getSavedValue<ListSaveFormat>(prevSaveID).hasRank;
 
 					if (rankCheck) {
-						rankText = m_data["main"][mainPack]["name"].as_string();
+						rankText = m_data["main"][mainPack]["name"].asString().unwrap();
 					}
 				}
 				else {
-					rankText = m_data["main"][mainPack]["name"].as_string();
+					rankText = m_data["main"][mainPack]["name"].asString().unwrap();
 				}
 				std::string fullLockText = fmt::format("Get the {} Rank to unlock!", rankText);
 
@@ -1034,7 +1035,7 @@ void DPLayer::onTab(CCObject* pSender) {
 	}
 	else if (menuType == static_cast<int>(DPListType::Monthly)) {
 		log::info("Switched to Monthly Tab");
-
+		
 		btn->toggle(true);
 		static_cast<TabButton*>(legacybtn)->toggle(false);
 		static_cast<TabButton*>(bonusbtn)->toggle(false);

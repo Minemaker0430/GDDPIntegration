@@ -54,8 +54,8 @@ using namespace geode::prelude;
 
 void RecommendedUtils::validateLevels() {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	auto levels = Mod::get()->getSavedValue<matjson::Array>("recommended-levels");
-	auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
+	auto levels = Mod::get()->getSavedValue<std::vector<int>>("recommended-levels");
+	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 
 	//check for errors
 	auto jsonCheck = checkJson(data, "");
@@ -67,7 +67,7 @@ void RecommendedUtils::validateLevels() {
 	}
 
 	//check if data exists
-	if (!data["main"].is_array() && !data["legacy"].is_array()) { return; }
+	if (!data["main"].isArray() && !data["legacy"].isArray()) { return; }
 
 	if (levels.empty() && completedLvls.size() > 0) {
 		generateRecommendations();
@@ -76,23 +76,22 @@ void RecommendedUtils::validateLevels() {
 
 		//check if you completed a recommended level
 		for (int i = 0; i < levels.size(); i++) {
-			if (levels[i].is_number() && std::find(completedLvls.begin(), completedLvls.end(), levels[i].as_int()) != completedLvls.end()) {
+			if (std::find(completedLvls.begin(), completedLvls.end(), levels[i]) != completedLvls.end()) {
 				generateRecommendations();
 				break;
 			}
 		}
 
 		//check if a level was moved to legacy
-		for (int i = 0; i < data["legacy"].as_array().size(); i++) {
-			auto levelIDs = data["legacy"][i]["levelIDs"].as_array();
-			auto mainList = data["main"][data["legacy"][i]["mainPack"].as_int()]["levelIDs"].as_array();
+		for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
+			auto levelIDs = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+			auto mainList = data["main"][data["legacy"][i]["mainPack"].as<int>().unwrap()]["levelIDs"].as<std::vector<int>>().unwrap();
 			auto stop = false;
 
 			for (int j = 0; j < levelIDs.size(); j++) {
-				if (!levelIDs[j].is_number()) { continue; }
-				auto levelID = std::to_string(levelIDs[j].as_int());
+				auto levelID = std::to_string(levelIDs[j]);
 
-				if (std::find(mainList.begin(), mainList.end(), levelIDs[j].as_int()) != mainList.end()) {
+				if (std::find(mainList.begin(), mainList.end(), levelIDs[j]) != mainList.end()) {
 					generateRecommendations();
 					stop = true;
 					break;
@@ -106,13 +105,13 @@ void RecommendedUtils::validateLevels() {
 	return;
 }
 
-std::vector<int> RecommendedUtils::sortSkills(matjson::Array xp) {
+std::vector<int> RecommendedUtils::sortSkills(std::vector<float> xp) {
 	
 	//assign skills to key
 	std::vector<SkillSort> out;
 
 	for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
-		out.push_back(SkillSort(i, xp[i].as_double()));
+		out.push_back(SkillSort(i, xp[i]));
 	}
 
 	//sort
@@ -131,7 +130,7 @@ void RecommendedUtils::generateRecommendations() {
 	log::info("Generating Recommendations...");
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	auto completedLvls = Mod::get()->getSavedValue<matjson::Array>("completed-levels");
+	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 	auto skillIDs = XPUtils::skillIDs;
 
 	XPUtils::getXP();
@@ -147,7 +146,7 @@ void RecommendedUtils::generateRecommendations() {
 
 	//Get Highest Rank
 	auto highest = 0; //Defaults to Beginner
-	for (int i = 0; i < data["main"].as_array().size(); i++) {
+	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
 		//Check For Non-Plus Rank
 		if (StatsPopup::getPercentToRank(i, false) >= 1.f) {
 			highest = i;
@@ -155,7 +154,7 @@ void RecommendedUtils::generateRecommendations() {
 
 		//Check For Plus Rank
 		if (StatsPopup::getPercentToRank(i, true) >= 1.f) {
-			highest = std::min(i + 1, static_cast<int>(data["main"].as_array().size() - 1));
+			highest = std::min(i + 1, static_cast<int>(data["main"].as<std::vector<matjson::Value>>().unwrap().size() - 1));
 		}
 
 	}
@@ -163,7 +162,7 @@ void RecommendedUtils::generateRecommendations() {
 
 	//Get Highest Partial Rank
 	auto highestPartial = -1;
-	for (int i = 0; i < data["main"].as_array().size(); i++) {
+	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
 		if (hasPartial(i)) {
 			highestPartial = i;
 		}
@@ -171,7 +170,7 @@ void RecommendedUtils::generateRecommendations() {
 	log::info("highest partial rank: {}", highestPartial);
 
 	//Sort Skills
-	auto xp = Mod::get()->getSavedValue<matjson::Array>("xp", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+	auto xp = Mod::get()->getSavedValue<std::vector<float>>("xp", { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f });
 	std::vector<int> skills = sortSkills(xp); //Highest -> Lowest
 	log::info("sorted skills: (highest) {} (lowest)", skills);
 	
@@ -191,22 +190,22 @@ void RecommendedUtils::generateRecommendations() {
 
 		stop = false;
 
-		for (int j = std::min(highest + 1, static_cast<int>(data["main"].as_array().size() - 1)); j < data["main"].as_array().size(); j++) { //search the tier above your highest, it'll move on to the next tier if it can't find anything
+		for (int j = std::min(highest + 1, static_cast<int>(data["main"].as<std::vector<matjson::Value>>().unwrap().size() - 1)); j < data["main"].as<std::vector<matjson::Value>>().unwrap().size(); j++) { //search the tier above your highest, it'll move on to the next tier if it can't find anything
 			//log::info("current tier: {}", data["main"][j]["name"].as_string());
-			auto levelIDs = data["main"][j]["levelIDs"].as_array();
+			auto levelIDs = data["main"][j]["levelIDs"].as<std::vector<int>>().unwrap();
 
 			for (int rating = 2; rating <= 3; rating++) { //cycles through ratings. if it can't find a rating of 2 for any level with that skill, it starts searching for 3
 
 				//log::info("looking for rating: {}", rating);
 
 				for (int k = 0; k < levelIDs.size(); k++) { //search through all levels of that tier
-					auto id = std::to_string(levelIDs[k].as_int());
+					auto id = std::to_string(levelIDs[k]);
 
-					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k].as_int()) == recommendations.end()
-						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k].as_int()) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].is_number() && data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching and go to the next skill
+					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k]) == recommendations.end()
+						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k]) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
+						if (data["level-data"][id]["xp"][currentSkill].isNumber() && data["level-data"][id]["xp"][currentSkill].as<int>().unwrap() == rating) { // found a level that matches criteria, stop searching and go to the next skill
 							//log::info("found level with id: {}", levelIDs[k].as_int());
-							recommendations.push_back(levelIDs[k].as_int());
+							recommendations.push_back(levelIDs[k]);
 							stop = true; 
 							break;
 						}
@@ -231,20 +230,20 @@ void RecommendedUtils::generateRecommendations() {
 			stop = false;
 
 			//log::info("current tier: {}", data["main"][highestPartial]["name"].as_string());
-			auto levelIDs = data["main"][highestPartial]["levelIDs"].as_array();
+			auto levelIDs = data["main"][highestPartial]["levelIDs"].as<std::vector<int>>().unwrap();
 
 			for (int rating = 2; rating <= 3; rating++) { //cycles through ratings. if it can't find a rating of 2 for any level with that skill, it starts searching for 3
 
 				//log::info("looking for rating: {}", rating);
 
 				for (int k = 0; k < levelIDs.size(); k++) { //search through all levels of that tier
-					auto id = std::to_string(levelIDs[k].as_int());
+					auto id = std::to_string(levelIDs[k]);
 
-					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k].as_int()) == recommendations.end()
-						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k].as_int()) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].is_number() && data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching and go to the next skill
+					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k]) == recommendations.end()
+						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k]) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
+						if (data["level-data"][id]["xp"][currentSkill].isNumber() && data["level-data"][id]["xp"][currentSkill].as<int>().unwrap() == rating) { // found a level that matches criteria, stop searching and go to the next skill
 							//log::info("found level with id: {}", levelIDs[k].as_int());
-							recommendations.push_back(levelIDs[k].as_int());
+							recommendations.push_back(levelIDs[k]);
 							stop = true;
 							break;
 						}
@@ -279,20 +278,20 @@ void RecommendedUtils::generateRecommendations() {
 
 		if (i == 0 && highest > 0) { // if scenario a and the tier below is available
 			//log::info("current tier: {}", data["main"][highest - 1]["name"].as_string());
-			auto levelIDs = data["main"][highest - 1]["levelIDs"].as_array();
+			auto levelIDs = data["main"][highest - 1]["levelIDs"].as<std::vector<int>>().unwrap();
 
 			for (int rating = 3; rating >= 2; rating--) { //cycles through ratings. if it can't find a rating of 3 for any level with that skill, it starts searching for 2
 
 				//log::info("looking for rating: {}", rating);
 
 				for (int k = 0; k < levelIDs.size(); k++) { //search through all levels of that tier
-					auto id = std::to_string(levelIDs[k].as_int());
+					auto id = std::to_string(levelIDs[k]);
 
-					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k].as_int()) == recommendations.end()
-						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k].as_int()) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].is_number() && data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching
+					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k]) == recommendations.end()
+						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k]) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
+						if (data["level-data"][id]["xp"][currentSkill].isNumber() && data["level-data"][id]["xp"][currentSkill].as<int>().unwrap() == rating) { // found a level that matches criteria, stop searching
 							//log::info("found level with id: {}", levelIDs[k].as_int());
-							recommendations.push_back(levelIDs[k].as_int());
+							recommendations.push_back(levelIDs[k]);
 							stop = true;
 							break;
 						}
@@ -305,20 +304,20 @@ void RecommendedUtils::generateRecommendations() {
 		}
 		else { // scenario b
 			//log::info("current tier: {}", data["main"][highest]["name"].as_string());
-			auto levelIDs = data["main"][highest]["levelIDs"].as_array();
+			auto levelIDs = data["main"][highest]["levelIDs"].as<std::vector<int>>().unwrap();
 
 			for (int rating = 3; rating > 0; rating--) { //cycles through ratings. if it can't find a rating of 3 for any level with that skill, it starts searching for 2, then 1
 
 				//log::info("looking for rating: {}", rating);
 
 				for (int k = levelIDs.size() - 1; k >= 0; k--) { //search through all levels of that tier (reverse order)
-					auto id = std::to_string(levelIDs[k].as_int());
+					auto id = std::to_string(levelIDs[k]);
 
-					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k].as_int()) == recommendations.end()
-						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k].as_int()) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].is_number() && data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching
+					if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k]) == recommendations.end()
+						&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k]) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
+						if (data["level-data"][id]["xp"][currentSkill].isNumber() && data["level-data"][id]["xp"][currentSkill].as<int>().unwrap() == rating) { // found a level that matches criteria, stop searching
 							//log::info("found level with id: {}", levelIDs[k].as_int());
-							recommendations.push_back(levelIDs[k].as_int());
+							recommendations.push_back(levelIDs[k]);
 							stop = true;
 							break;
 						}
@@ -347,20 +346,20 @@ void RecommendedUtils::generateRecommendations() {
 		stop = false;
 
 		//log::info("current tier: {}", data["main"][highest]["name"].as_string());
-		auto levelIDs = data["main"][highest]["levelIDs"].as_array();
+		auto levelIDs = data["main"][highest]["levelIDs"].as<std::vector<int>>().unwrap();
 
 		for (int rating = 3; rating > 0; rating--) { //cycles through ratings. if it can't find a rating of 3 for any level with that skill, it starts searching for 2, then 1
 
 			//log::info("looking for rating: {}", rating);
 
 			for (int k = levelIDs.size() - 1; k >= 0; k--) { //search through all levels of that tier (reverse order)
-				auto id = std::to_string(levelIDs[k].as_int());
+				auto id = std::to_string(levelIDs[k]);
 
-				if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k].as_int()) == recommendations.end()
-					&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k].as_int()) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-					if (data["level-data"][id]["xp"][currentSkill].is_number() && data["level-data"][id]["xp"][currentSkill].as_int() == rating) { // found a level that matches criteria, stop searching
+				if (std::find(recommendations.begin(), recommendations.end(), levelIDs[k]) == recommendations.end()
+					&& std::find(completedLvls.begin(), completedLvls.end(), levelIDs[k]) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
+					if (data["level-data"][id]["xp"][currentSkill].isNumber() && data["level-data"][id]["xp"][currentSkill].as<int>().unwrap() == rating) { // found a level that matches criteria, stop searching
 						//log::info("found level with id: {}", levelIDs[k].as_int());
-						recommendations.push_back(levelIDs[k].as_int());
+						recommendations.push_back(levelIDs[k]);
 						stop = true;
 						break;
 					}
@@ -373,11 +372,7 @@ void RecommendedUtils::generateRecommendations() {
 	}
 
 	log::info("Recommendations: {}", recommendations);
-	matjson::Array r;
-	for (auto level : recommendations) {
-		r.push_back(level);
-	}
-	Mod::get()->setSavedValue<matjson::Array>("recommended-levels", r);
+	Mod::get()->setSavedValue<std::vector<int>>("recommended-levels", recommendations);
 	return;
 }
 
@@ -393,8 +388,8 @@ bool RecommendedUtils::hasPartial(int id) {
 		return false;
 	}
 
-	auto saveID = data["main"][id]["saveID"].as_string();
-	auto reqLevels = data["main"][id]["reqLevels"].as_int();
+	auto saveID = data["main"][id]["saveID"].asString().unwrap();
+	auto reqLevels = data["main"][id]["reqLevels"].asInt().unwrap();
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 	if (listSave.progress >= reqLevels - 2 && listSave.progress < reqLevels && listSave.progress > 0) {
