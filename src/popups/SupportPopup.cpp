@@ -104,12 +104,12 @@ bool SupporterList::setup() {
 	m_listener.bind([&](web::WebTask::Event* e) {
 		if (auto res = e->getValue()) {
 			if (res->ok() && res->json().isOk()) {
-				auto list = res->json().unwrap();
+				auto list = res->json().unwrapOrDefault();
 				
 				auto fullList = CCNode::create();
 
 				for (auto supporter : list.asArray().unwrap()) {
-					fullList->addChild(CCLabelBMFont::create(supporter.asString().unwrap().c_str(), "chatFont.fnt"));
+					fullList->addChild(CCLabelBMFont::create(supporter.asString().unwrapOr("???").c_str(), "chatFont.fnt"));
 				}
 
 				/*listText->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);

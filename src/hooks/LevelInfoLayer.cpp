@@ -4,7 +4,7 @@
 #include <Geode/utils/JsonValidation.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include "../menus/DPLayer.hpp"
-#include "../ListManager.hpp"
+//#include "../ListManager.hpp"
 #include "../popups/XPPopup.hpp"
 #include "../RecommendedUtils.hpp"
 
@@ -35,8 +35,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 		auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info");
 
 		FLAlertLayer::create(
-			skillsetData[skillID]["display-name"].asString().unwrap().c_str(),
-			skillsetData[skillID]["description"].asString().unwrap().c_str(),
+			skillsetData[skillID]["display-name"].asString().unwrapOr("null").c_str(),
+			skillsetData[skillID]["description"].asString().unwrapOr("erm that\'s awkward").c_str(),
 			"OK"
 		)->show();
 
@@ -65,10 +65,10 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			inGDDP = true;
 		}
 
-		if (inGDDP && (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value())) || Mod::get()->getSettingValue<bool>("all-demons-rated"))) {
+		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 
 			//if not on the GDDP or GDDL, return
-			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars == 10 && ListManager::getSpriteName(this->m_level) == "") {
+			/*if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars == 10 && ListManager::getSpriteName(this->m_level) == "") {
 				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 					return true;
 				}
@@ -79,15 +79,15 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 					return true;
 				}
-			}
+			}*/
 
 			//if a gddp level that's only in a monthly pack, return
 			if (Mod::get()->getSettingValue<bool>("hide-monthly-outside") && !Mod::get()->getSavedValue<bool>("in-gddp")) {
 
 				//check monthly, if check returns with nothing, skip the rest
 				auto isMonthly = false;
-				for (int i = 0; i < data["monthly"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-					auto monthlyPack = data["monthly"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+				for (int i = 0; i < data["monthly"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+					auto monthlyPack = data["monthly"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 					if (std::find(monthlyPack.begin(), monthlyPack.end(), this->m_level->m_levelID.value()) != monthlyPack.end()) {
 						isMonthly = true;
 						break;
@@ -98,8 +98,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					auto uniqueMonthly = true; //false = level is in main/legacy/bonus, so don't return if false
 
 					//check main
-					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 						if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 							uniqueMonthly = false;
 							break;
@@ -108,8 +108,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 					//check legacy
 					if (uniqueMonthly) {
-						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueMonthly = false;
 								break;
@@ -119,8 +119,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 					//check bonus
 					if (uniqueMonthly) {
-						for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-							auto pack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+						for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+							auto pack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueMonthly = false;
 								break;
@@ -137,8 +137,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 				//check bonus, if check returns with nothing, skip the rest
 				auto isBonus = false;
-				for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-					auto bonusPack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+				for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+					auto bonusPack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 					if (std::find(bonusPack.begin(), bonusPack.end(), this->m_level->m_levelID.value()) != bonusPack.end()) {
 						isBonus = true;
 						break;
@@ -149,8 +149,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					auto uniqueBonus = true; //false = level is in main/legacy, so don't return if false
 
 					//check main
-					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 						if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 							uniqueBonus = false;
 							break;
@@ -159,8 +159,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 					//check legacy
 					if (uniqueBonus) {
-						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueBonus = false;
 								break;
@@ -189,7 +189,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 			std::string saveID = "null";
 			if (type == "main") {
-				if (!data["main"][id]["saveID"].isNull()) { saveID = data["main"][id]["saveID"].asString().unwrap(); }
+				if (!data["main"][id]["saveID"].isNull()) { saveID = data["main"][id]["saveID"].asString().unwrapOr("null"); }
 			}
 
 			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(saveID).hasRank;
@@ -219,8 +219,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			auto levelID = std::to_string(this->m_level->m_levelID.value());
 
 			if (data["level-data"].contains(levelID)) {
-				if (!data["level-data"][levelID]["difficulty"].isNull()) { gddpDiff = data["level-data"][levelID]["difficulty"].as<int>().unwrap(); }
-				if (!data["level-data"][levelID]["skillsets"].isNull()) { skillsets = data["level-data"][levelID]["skillsets"].as<std::vector<std::string>>().unwrap(); }
+				if (!data["level-data"][levelID]["difficulty"].isNull()) { gddpDiff = data["level-data"][levelID]["difficulty"].as<int>().unwrapOrDefault(); }
+				if (!data["level-data"][levelID]["skillsets"].isNull()) { skillsets = data["level-data"][levelID]["skillsets"].as<std::vector<std::string>>().unwrapOrDefault(); }
 
 				if (this->m_level->m_normalPercent.value() == 100) {
 					auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
@@ -260,13 +260,13 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					}
 
 					//get data
-					auto name = skillsetData[skillID]["display-name"].asString().unwrap();
-					auto desc = skillsetData[skillID]["description"].asString().unwrap();
-					auto spriteName = fmt::format("{}.png", skillsetData[skillID]["sprite"].asString().unwrap());
+					auto name = skillsetData[skillID]["display-name"].asString().unwrapOr("null");
+					auto desc = skillsetData[skillID]["description"].asString().unwrapOr("erm that\'s awkward");
+					auto spriteName = fmt::format("{}.png", skillsetData[skillID]["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
 
 					CCSprite* sprite;
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr) {
-						spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].asString().unwrap());
+						spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
 						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
 					}
 					else {
@@ -309,14 +309,12 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			std::string sprite = "DP_Beginner";
 			std::string plusSprite = "DP_BeginnerPlus";
 
-			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
+			/*if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 				sprite = ListManager::getSpriteName(this->m_level);
 				plusSprite = fmt::format("{}Plus", sprite);
-			}
-			else {
-				sprite = data["main"][gddpDiff]["sprite"].asString().unwrap();
-				plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrap();
-			}
+			}*/
+			sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Beginner");
+			plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_BeginnerPlus");
 
 			//fallbacks
 			if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data()) == nullptr) {
@@ -429,6 +427,11 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				}
 			}
 
+			/*if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && this->getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite")) {
+				auto betweenDiffSpr = this->getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite");
+				betweenDiffSpr->setVisible(false);
+			}*/
+
 		}
 
 		return true;
@@ -458,23 +461,79 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			inGDDP = true;
 		}
 
-		if (inGDDP && (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value())) || Mod::get()->getSettingValue<bool>("all-demons-rated"))) {
-			
+		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
+
 			//if not on the GDDP or GDDL, return
-			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars == 10 && ListManager::getSpriteName(this->m_level) == "") {
+			/*if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars == 10 && ListManager::getSpriteName(this->m_level) == "") {
 				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
-					return;
+					return true;
 				}
 			}
 
 			//if not a non-demon level that's registered on the gddp, return
 			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars != 10) {
 				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
-					return;
+					return true;
 				}
-			}
+			}*/
 			
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
+
+			//GrD Effects
+			if (Mod::get()->getSettingValue<bool>("disable-grandpa-demon-effects") && Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
+				if (Loader::get()->isModLoaded("itzkiba.grandpa_demon")) {
+					int num = 0;
+
+					for (int i = 0; i < this->getChildrenCount(); i++) {
+						if (this->getChildByType<CCSprite>(i)) {
+							if (!(this->getChildByType<CCSprite>(i)->getID() != "") && (this->getChildByType<CCSprite>(i)->getTag() != 69420) && (this->getChildByType<CCSprite>(i)->getContentHeight() >= 750.0f)) {
+								num += 1;
+								this->getChildByType<CCSprite>(i)->setID(fmt::format("grd-bg-{}", num));
+							}
+						}
+
+						if (num == 2) {
+							break;
+						}
+					}
+
+					num = 0;
+
+					for (int i = 0; i < this->getChildrenCount(); i++) {
+						if (this->getChildByType<CCParticleSystemQuad>(i)) {
+							if (!(this->getChildByType<CCParticleSystemQuad>(i)->getID() != "") && (this->getChildByType<CCParticleSystemQuad>(i)->getPositionY() >= 230)) {
+								num += 1;
+								this->getChildByType<CCParticleSystemQuad>(i)->setID(fmt::format("grd-particles-{}", num));
+							}
+						}
+
+						if (num == 2) {
+							break;
+						}
+					}
+
+					if (this->getChildByID("grd-bg-1")) {
+						this->getChildByID("grd-bg-1")->setVisible(false);
+						
+
+						typeinfo_cast<CCSprite*>(this->getChildByID("background"))->setOpacity(255);
+						typeinfo_cast<CCSprite*>(this->getChildByID("bottom-left-art"))->setOpacity(255);
+						typeinfo_cast<CCSprite*>(this->getChildByID("bottom-right-art"))->setOpacity(255);
+					}
+
+					if (this->getChildByID("grd-bg-2")) {
+						this->getChildByID("grd-bg-2")->setVisible(false);
+					}
+
+					if (this->getChildByID("grd-particles-1")) {
+						this->getChildByID("grd-particles-1")->setVisible(false);
+					}
+
+					if (this->getChildByID("grd-particles-2")) {
+						this->getChildByID("grd-particles-2")->setVisible(false);
+					}
+				}
+			}
 
 			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && Mod::get()->getSettingValue<bool>("override-grandpa-demon")) {
 				if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && this->getChildByID("grd-difficulty")) {
@@ -484,6 +543,11 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					this->getChildByID("grd-difficulty")->removeMeAndCleanup();
 				}
 			}
+
+			/*if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && this->getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite")) {
+				auto betweenDiffSpr = this->getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite");
+				betweenDiffSpr->setVisible(false);
+			}*/
 		}
 
 		return;

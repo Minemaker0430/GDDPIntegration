@@ -4,7 +4,7 @@
 #include <Geode/utils/JsonValidation.hpp>
 #include <Geode/modify/LevelCell.hpp>
 #include "../menus/DPLayer.hpp"
-#include "../ListManager.hpp"
+//#include "../ListManager.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -23,8 +23,8 @@ class $modify(DemonProgression, LevelCell) {
 		auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info");
 
 		FLAlertLayer::create(
-			skillsetData[skillID]["display-name"].asString().unwrap().c_str(),
-			skillsetData[skillID]["description"].asString().unwrap().c_str(),
+			skillsetData[skillID]["display-name"].asString().unwrapOr("null").c_str(),
+			skillsetData[skillID]["description"].asString().unwrapOr("erm that\'s awkward").c_str(),
 			"OK"
 		)->show();
 
@@ -53,29 +53,29 @@ class $modify(DemonProgression, LevelCell) {
 
 		//log::info("{}", inGDDP);
 
-		if (inGDDP && (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value())) || Mod::get()->getSettingValue<bool>("all-demons-rated"))) {
+		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 
 			//if not on the GDDP or GDDL, return
-			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars == 10 && ListManager::getSpriteName(this->m_level) == "") {
+			/*if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars == 10 && ListManager::getSpriteName(this->m_level) == "") {
 				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
-					return;
+					return true;
 				}
 			}
 
 			//if not a non-demon level that's registered on the gddp, return
 			if (Mod::get()->getSettingValue<bool>("all-demons-rated") && this->m_level->m_stars != 10) {
 				if (!data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
-					return;
+					return true;
 				}
-			}
+			}*/
 
 			//if a gddp level that's only in a monthly pack, return
 			if (Mod::get()->getSettingValue<bool>("hide-monthly-outside") && !Mod::get()->getSavedValue<bool>("in-gddp")) {
 
 				//check monthly, if check returns with nothing, skip the rest
 				auto isMonthly = false;
-				for (int i = 0; i < data["monthly"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-					auto monthlyPack = data["monthly"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+				for (int i = 0; i < data["monthly"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+					auto monthlyPack = data["monthly"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 					if (std::find(monthlyPack.begin(), monthlyPack.end(), this->m_level->m_levelID.value()) != monthlyPack.end()) {
 						isMonthly = true;
 						break;
@@ -86,8 +86,8 @@ class $modify(DemonProgression, LevelCell) {
 					auto uniqueMonthly = true; //false = level is in main/legacy/bonus, so don't return if false
 
 					//check main
-					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 						if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 							uniqueMonthly = false;
 							break;
@@ -96,8 +96,8 @@ class $modify(DemonProgression, LevelCell) {
 
 					//check legacy
 					if (uniqueMonthly) {
-						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueMonthly = false;
 								break;
@@ -107,8 +107,8 @@ class $modify(DemonProgression, LevelCell) {
 
 					//check bonus
 					if (uniqueMonthly) {
-						for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-							auto pack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+						for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+							auto pack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueMonthly = false;
 								break;
@@ -125,8 +125,8 @@ class $modify(DemonProgression, LevelCell) {
 
 				//check bonus, if check returns with nothing, skip the rest
 				auto isBonus = false;
-				for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-					auto bonusPack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+				for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+					auto bonusPack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 					if (std::find(bonusPack.begin(), bonusPack.end(), this->m_level->m_levelID.value()) != bonusPack.end()) {
 						isBonus = true;
 						break;
@@ -137,8 +137,8 @@ class $modify(DemonProgression, LevelCell) {
 					auto uniqueBonus = true; //false = level is in main/legacy, so don't return if false
 
 					//check main
-					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 						if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 							uniqueBonus = false;
 							break;
@@ -147,8 +147,8 @@ class $modify(DemonProgression, LevelCell) {
 
 					//check legacy
 					if (uniqueBonus) {
-						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrap().size(); i++) {
-							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrap();
+						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueBonus = false;
 								break;
@@ -165,7 +165,7 @@ class $modify(DemonProgression, LevelCell) {
 
 			std::string saveID = "null";
 			if (type == "main") {
-				if (!data["main"][id]["saveID"].isNull()) { saveID = data["main"][id]["saveID"].asString().unwrap(); }
+				if (!data["main"][id]["saveID"].isNull()) { saveID = data["main"][id]["saveID"].asString().unwrapOr("null"); }
 			}
 
 			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(saveID).hasRank;
@@ -194,8 +194,8 @@ class $modify(DemonProgression, LevelCell) {
 			auto levelID = std::to_string(this->m_level->m_levelID.value());
 
 			if (data["level-data"].contains(levelID)) {
-				if (!data["level-data"][levelID]["difficulty"].isNull()) { gddpDiff = data["level-data"][levelID]["difficulty"].as<int>().unwrap(); }
-				if (!data["level-data"][levelID]["skillsets"].isNull()) { skillsets = data["level-data"][levelID]["skillsets"].as<std::vector<std::string>>().unwrap(); }
+				if (!data["level-data"][levelID]["difficulty"].isNull()) { gddpDiff = data["level-data"][levelID]["difficulty"].as<int>().unwrapOr(0); }
+				if (!data["level-data"][levelID]["skillsets"].isNull()) { skillsets = data["level-data"][levelID]["skillsets"].as<std::vector<std::string>>().unwrapOrDefault(); }
 
 				if (typeinfo_cast<CCSprite*>(this->m_mainLayer->getChildByID("completed-icon"))) {
 					auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
@@ -259,13 +259,13 @@ class $modify(DemonProgression, LevelCell) {
 					}
 
 					//get data
-					auto name = skillsetData[skillID]["display-name"].asString().unwrap();
-					auto desc = skillsetData[skillID]["description"].asString().unwrap();
-					auto spriteName = fmt::format("{}.png", skillsetData[skillID]["sprite"].asString().unwrap());
+					auto name = skillsetData[skillID]["display-name"].asString().unwrapOr("null");
+					auto desc = skillsetData[skillID]["description"].asString().unwrapOr("erm that\'s awkward");
+					auto spriteName = fmt::format("{}.png", skillsetData[skillID]["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
 					
 					CCSprite* sprite;
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr) {
-						spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].asString().unwrap());
+						spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
 						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
 					}
 					else {
@@ -314,14 +314,12 @@ class $modify(DemonProgression, LevelCell) {
 					std::string sprite = "DP_Beginner";
 					std::string plusSprite = "DP_BeginnerPlus";
 
-					if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
+					/*if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 						sprite = ListManager::getSpriteName(this->m_level);
 						plusSprite = fmt::format("{}Plus", sprite);
-					}
-					else {
-						sprite = data["main"][gddpDiff]["sprite"].asString().unwrap();
-						plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrap();
-					}
+					}*/
+					sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Beginner");
+					plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_BeginnerPlus");
 					
 					//fallbacks
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data()) == nullptr) {
@@ -373,14 +371,12 @@ class $modify(DemonProgression, LevelCell) {
 					std::string sprite = "DP_Beginner";
 					std::string plusSprite = "DP_BeginnerPlus";
 
-					if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
+					/*if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 						sprite = ListManager::getSpriteName(this->m_level);
 						plusSprite = fmt::format("{}Plus", sprite);
-					}
-					else {
-						sprite = data["main"][gddpDiff]["sprite"].asString().unwrap();
-						plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrap();
-					}
+					}*/
+					sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Beginner");
+					plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_BeginnerPlus");
 
 					//fallbacks
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data()) == nullptr) {

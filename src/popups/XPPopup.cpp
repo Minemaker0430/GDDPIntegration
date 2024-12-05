@@ -223,7 +223,7 @@ bool DemonXPPopup::setup() {
 		//log::info("id: {}, skill: {}", levelID, skill);
 		auto skillValue = 0;
 		if (data["level-data"][levelID]["xp"][skill].isNumber()) {
-			skillValue = data["level-data"][levelID]["xp"][skill].as<int>().unwrap();
+			skillValue = data["level-data"][levelID]["xp"][skill].as<int>().unwrapOr(0);
 		}
 
 		auto title = CCNode::create();

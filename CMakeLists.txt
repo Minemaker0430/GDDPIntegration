@@ -13,7 +13,7 @@ add_library(${PROJECT_NAME} SHARED
     src/hooks/CreatorLayer.cpp
     src/hooks/LevelInfoLayer.cpp
     src/hooks/LevelCell.cpp
-    src/ListManager.cpp
+    src/hooks/PlayLayer.cpp
     src/popups/StatsPopup.cpp
     src/Utils.cpp
     src/menus/DPListLayer.cpp
@@ -28,6 +28,7 @@ add_library(${PROJECT_NAME} SHARED
     src/popups/SearchPopup.cpp
     src/RouletteUtils.cpp
     src/popups/RoulettePopup.cpp
+    src/menus/RouletteSafeLayer.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})
@@ -40,3 +41,4 @@ add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
 # Set up dependencies, resources, link Geode
 setup_geode_mod(${PROJECT_NAME})
+

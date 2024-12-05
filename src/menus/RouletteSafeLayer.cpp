@@ -3,30 +3,35 @@
 
 //other headers
 #include <Geode/utils/web.hpp>
-#include <Geode/loader/Event.hpp>
 #include <Geode/utils/JsonValidation.hpp>
+#include <Geode/loader/Event.hpp>
 
 #include "DPLayer.hpp"
-#include "../popups/StatsPopup.hpp"
-#include "RecommendedLayer.hpp"
+#include "RouletteSafeLayer.hpp"
 #include "../Utils.hpp"
 #include "../RecommendedUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
 
-void RecommendedLayer::keyBackClicked() {
+void RouletteSafeLayer::keyBackClicked() {
 	m_loadingCancelled = true;
 
 	CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
+
+	return;
 };
 
-void RecommendedLayer::backButton(CCObject* sender) {
+void RouletteSafeLayer::backButton(CCObject* sender) {
 	keyBackClicked();
+
+	return;
 };
 
-bool RecommendedLayer::init() {
+bool RouletteSafeLayer::init(std::vector<int> IDs) {
 	if (!CCLayer::init()) return false;
+
+    m_IDs = IDs;
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
@@ -65,56 +70,13 @@ bool RecommendedLayer::init() {
 
 	//back button
 	auto backSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
-	auto backButton = CCMenuItemSpriteExtra::create(backSprite, this, menu_selector(RecommendedLayer::backButton));
+	auto backButton = CCMenuItemSpriteExtra::create(backSprite, this, menu_selector(RouletteSafeLayer::backButton));
 	auto backMenu = CCMenu::create();
 	backMenu->addChild(backButton);
 	backMenu->setPosition({ 25, size.height - 25 });
 	backMenu->setZOrder(2);
 	backMenu->setID("back-menu");
 	this->addChild(backMenu);
-
-	//info button
-	auto infoMenu = CCMenu::create();
-	auto infoButton = InfoAlertButton::create("Recommendations", "Levels that have been selected through an algorithm to give you the best options to improve your skills.", 1.0f);
-	infoMenu->setPosition({ 25, 25 });
-	infoMenu->setZOrder(2);
-	infoMenu->addChild(infoButton);
-	infoMenu->setID("info-menu");
-	this->addChild(infoMenu);
-
-	//reload menu
-	auto reloadMenu = CCMenu::create();
-	reloadMenu->setPosition({ size.width - 30, size.height - 30 });
-	auto reloadBtnSprite = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
-	auto reloadBtn = CCMenuItemSpriteExtra::create(reloadBtnSprite, this, menu_selector(RecommendedLayer::reloadLevels));
-	reloadBtn->setPosition({ 0, 0 });
-	reloadMenu->addChild(reloadBtn);
-	reloadMenu->setID("reload-menu");
-	this->addChild(reloadMenu);
-
-	//pages menu
-	m_pagesMenu = CCMenu::create();
-	m_pagesMenu->setPosition({ 0, 0 });
-	m_pagesMenu->setID("pages-menu");
-
-	m_left = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png"), this, menu_selector(RecommendedLayer::pageLeft));
-	m_left->setPosition(24.f, size.height / 2);
-	m_left->setVisible(false);
-	m_pagesMenu->addChild(m_left);
-
-	auto rightBtnSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
-	rightBtnSpr->setFlipX(true);
-	m_right = CCMenuItemSpriteExtra::create(rightBtnSpr, this, menu_selector(RecommendedLayer::pageRight));
-	m_right->setPosition(size.width - 24.0f, size.height / 2);
-	m_right->setVisible(false);
-	m_pagesMenu->addChild(m_right);
-
-	this->addChild(m_pagesMenu);
-
-	m_list = GJListLayer::create(CustomListView::create(CCArray::create(), BoomListType::Level, 220.0f, 358.0f), "", { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
-	m_list->setZOrder(2);
-	m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
-	this->addChild(m_list);
 
 	//check for errors
 	auto jsonCheck = checkJson(data, "");
@@ -125,6 +87,40 @@ bool RecommendedLayer::init() {
 		return true;
 	}
 
+	//reload menu
+	auto reloadMenu = CCMenu::create();
+	reloadMenu->setPosition({ size.width - 30, size.height - 30 });
+	auto reloadBtnSprite = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
+	auto reloadBtn = CCMenuItemSpriteExtra::create(reloadBtnSprite, this, menu_selector(RouletteSafeLayer::reloadLevels));
+	reloadBtn->setPosition({ 0, 0 });
+	reloadMenu->addChild(reloadBtn);
+	reloadMenu->setID("reload-menu");
+	this->addChild(reloadMenu);
+
+	//pages menu
+	m_pagesMenu = CCMenu::create();
+	m_pagesMenu->setPosition({ 0, 0 });
+	m_pagesMenu->setID("pages-menu");
+
+	m_left = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png"), this, menu_selector(RouletteSafeLayer::pageLeft));
+	m_left->setPosition(24.f, size.height / 2);
+	m_left->setVisible(false);
+	m_pagesMenu->addChild(m_left);
+
+	auto rightBtnSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
+	rightBtnSpr->setFlipX(true);
+	m_right = CCMenuItemSpriteExtra::create(rightBtnSpr, this, menu_selector(RouletteSafeLayer::pageRight));
+	m_right->setPosition(size.width - 24.0f, size.height / 2);
+	m_right->setVisible(false);
+	m_pagesMenu->addChild(m_right);
+
+	this->addChild(m_pagesMenu);
+
+	m_list = GJListLayer::create(CustomListView::create(CCArray::create(), BoomListType::Level, 220.0f, 358.0f), "", {194, 114, 62, 255}, 358.0f, 220.0f, 0);
+	m_list->setZOrder(2);
+	m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
+	this->addChild(m_list);
+
 	loadLevels(0);
 
 	this->setKeyboardEnabled(true);
@@ -133,10 +129,8 @@ bool RecommendedLayer::init() {
 	return true;
 }
 
-void RecommendedLayer::reloadLevels(CCObject* sender) {
+void RouletteSafeLayer::reloadLevels(CCObject* sender) {
 	m_errorText->setVisible(false);
-
-	RecommendedUtils::validateLevels();
 
 	if (m_levelsLoaded) {
 		loadLevels(m_page);
@@ -145,7 +139,7 @@ void RecommendedLayer::reloadLevels(CCObject* sender) {
 	return;
 }
 
-void RecommendedLayer::pageLeft(CCObject* sender) {
+void RouletteSafeLayer::pageLeft(CCObject* sender) {
 	m_page -= 1;
 
 	loadLevels(m_page);
@@ -153,7 +147,7 @@ void RecommendedLayer::pageLeft(CCObject* sender) {
 	return;
 }
 
-void RecommendedLayer::pageRight(CCObject* sender) {
+void RouletteSafeLayer::pageRight(CCObject* sender) {
 	m_page += 1;
 
 	loadLevels(m_page);
@@ -161,7 +155,7 @@ void RecommendedLayer::pageRight(CCObject* sender) {
 	return;
 }
 
-void RecommendedLayer::loadLevels(int page) {
+void RouletteSafeLayer::loadLevels(int page) {
 
 	m_pagesMenu->setVisible(false);
 
@@ -173,30 +167,27 @@ void RecommendedLayer::loadLevels(int page) {
 
 	m_list->m_listView->setVisible(false);
 
-	std::vector<int> levelIDs = Mod::get()->getSavedValue<std::vector<int>>("recommended-levels");
-		
-	m_IDs.clear();
-
-	for (auto const& level : levelIDs) {
-		m_IDs.push_back(std::to_string(level));
+    std::vector<std::string> lvlIDStr = {};
+	for (auto const& lvl : m_IDs) {
+		lvlIDStr.push_back(std::to_string(lvl));
 	}
 
-	log::info("{}", m_IDs);
+	log::info("{}", lvlIDStr);
 
-	m_right->setVisible(m_IDs.size() > 10);
+	m_right->setVisible(lvlIDStr.size() > 10);
 
 	//borrowed some stuff from integrated demon list
 	auto glm = GameLevelManager::sharedState();
 	glm->m_levelManagerDelegate = this;
-	auto results = std::vector<std::string>(m_IDs.begin() + m_page * 10,
-		m_IDs.begin() + std::min(static_cast<int>(m_IDs.size()), (m_page + 1) * 10));
+	auto results = std::vector<std::string>(lvlIDStr.begin() + m_page * 10,
+		lvlIDStr.begin() + std::min(static_cast<int>(lvlIDStr.size()), (m_page + 1) * 10));
 	auto searchObject = GJSearchObject::create(SearchType::Type19, string::join(results, ","));
 	auto storedLevels = glm->getStoredOnlineLevels(searchObject->getKey());
 
 	//log::info("{}", searchObject);
 	//log::info("{}", searchObject->getKey());
 	//log::info("{}", storedLevels);
-
+	
 	if (storedLevels) {
 		loadLevelsFinished(storedLevels, "");
 	}
@@ -208,7 +199,7 @@ void RecommendedLayer::loadLevels(int page) {
 	return;
 }
 
-void RecommendedLayer::loadLevelsFinished(CCArray* levels, const char*) {
+void RouletteSafeLayer::loadLevelsFinished(CCArray* levels, const char*) {
 
 	if (m_loadingCancelled) { return; }
 
@@ -220,15 +211,15 @@ void RecommendedLayer::loadLevelsFinished(CCArray* levels, const char*) {
 
 	m_levelsLoaded = true;
 	m_list->m_listView->setVisible(true);
-
+	
 	m_loadCircle->fadeAndRemove();
 
 	auto director = CCDirector::sharedDirector();
 	auto size = director->getWinSize();
 
 	if (m_list->getParent() == this) { this->removeChild(m_list); }
-
-	m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), "Recommendations", {194, 114, 62, 255}, 358.0f, 220.0f, 0);
+	
+	m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), "Roulette Safe", { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
 	m_list->setZOrder(2);
 	m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
 	this->addChild(m_list);
@@ -236,33 +227,21 @@ void RecommendedLayer::loadLevelsFinished(CCArray* levels, const char*) {
 	return;
 }
 
-void RecommendedLayer::loadLevelsFailed(const char*) {
-
+void RouletteSafeLayer::loadLevelsFailed(const char*) {
 	if (m_loadingCancelled) { return; }
-
+	
 	m_levelsLoaded = true;
 
 	m_loadCircle->fadeAndRemove();
-
-	if (m_IDs.size() > 0) {
-		m_errorText->setCString("Something went wrong...");
-	}
-	else {
-		m_errorText->setCString("Beat a level to generate Recommendations!");
-	}
-
-	/*auto alert = FLAlertLayer::create("ERROR", "Failed to load levels. Please try again later.", "OK");
-	alert->setParent(this);
-	alert->show();*/
 
 	m_errorText->setVisible(true);
 
 	return;
 }
 
-RecommendedLayer* RecommendedLayer::create() {
-	auto pRet = new RecommendedLayer();
-	if (pRet && pRet->init()) {
+RouletteSafeLayer* RouletteSafeLayer::create(std::vector<int> IDs) {
+	auto pRet = new RouletteSafeLayer();
+	if (pRet && pRet->init(IDs)) {
 		pRet->autorelease();
 		return pRet;
 	}
@@ -270,6 +249,6 @@ RecommendedLayer* RecommendedLayer::create() {
 	return nullptr;
 }
 
-RecommendedLayer::~RecommendedLayer() {
-	this->removeAllChildrenWithCleanup(true);
+RouletteSafeLayer::~RouletteSafeLayer() {
+    this->removeAllChildrenWithCleanup(true);
 }

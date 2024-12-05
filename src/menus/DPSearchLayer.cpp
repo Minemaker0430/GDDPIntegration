@@ -29,7 +29,7 @@ std::vector<int> DPSearchLayer::compareDifficulty(matjson::Value data, std::vect
 	std::vector<CompareDifficulty> out;
 
 	for (int level : IDs) {
-		out.push_back(CompareDifficulty(level, data["level-data"][std::to_string(level)]["difficulty"].as<int>().unwrap()));
+		out.push_back(CompareDifficulty(level, data["level-data"][std::to_string(level)]["difficulty"].as<int>().unwrapOr(0)));
 	}
 
 	//sort
@@ -49,7 +49,7 @@ std::vector<int> DPSearchLayer::compareName(matjson::Value data, std::vector<int
 	std::vector<CompareName> out;
 
 	for (int level : IDs) {
-		std::string lvlName = data["level-data"][std::to_string(level)]["name"].asString().unwrap();
+		std::string lvlName = data["level-data"][std::to_string(level)]["name"].asString().unwrapOr("-");
 		std::transform(lvlName.begin(), lvlName.end(), lvlName.begin(), [](unsigned char c) { return std::tolower(c); }); 
 		//level name NEEDS to be converted to lowercase otherwise levels with capital letters get priority and we don't want that
 		out.push_back(CompareName(level, lvlName));
@@ -501,6 +501,9 @@ void DPSearchLayer::loadLevelsFinished(CCArray* levels, const char*) {
 }
 
 void DPSearchLayer::loadLevelsFailed(const char*) {
+	
+	if (m_loadingCancelled) { return; }
+	
 	m_levelsLoaded = true;
 
 	m_loadCircle->fadeAndRemove();

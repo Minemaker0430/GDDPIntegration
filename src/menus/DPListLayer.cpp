@@ -30,12 +30,12 @@ void DPListLayer::backButton(CCObject* sender) {
 	return;
 };
 
-bool DPListLayer::init(const char* type, int id, bool isPractice) {
+bool DPListLayer::init(const char* type, int id) {
 	if (!CCLayer::init()) return false;
 
 	m_type = type;
 	m_id = id;
-	m_isPractice = isPractice;
+	//m_isPractice = isPractice;
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
@@ -93,7 +93,7 @@ bool DPListLayer::init(const char* type, int id, bool isPractice) {
 
 	//info button
 	auto infoMenu = CCMenu::create();
-	auto infoButton = InfoAlertButton::create("Pack Info", data[m_type][m_id]["description"].asString().unwrap().c_str(), 1.0f);
+	auto infoButton = InfoAlertButton::create("Pack Info", data[m_type][m_id]["description"].asString().unwrapOr("erm that\'s awkward").c_str(), 1.0f);
 	infoMenu->setPosition({ 25, 25 });
 	infoMenu->setZOrder(2);
 	infoMenu->addChild(infoButton);
@@ -208,9 +208,9 @@ void DPListLayer::updateProgressBar() {
 		saveID = fmt::format("{}-{}", month, year);
 	}
 	else {
-		if (!data[m_type][m_id]["saveID"].isNull()) { saveID = data[m_type][m_id]["saveID"].asString().unwrap(); }
+		if (!data[m_type][m_id]["saveID"].isNull()) { saveID = data[m_type][m_id]["saveID"].asString().unwrapOr("null"); }
 	}
-	if (!data[m_type][m_id]["levelIDs"].isNull()) { levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrap(); }
+	if (!data[m_type][m_id]["levelIDs"].isNull()) { levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); }
 	if (m_type == "main" && !data[m_type][m_id]["reqLevels"].isNull()) { reqLevels = data[m_type][m_id]["reqLevels"].as<int>().unwrapOr(999); }
 
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
@@ -287,7 +287,7 @@ void DPListLayer::updateProgressBar() {
 
 void DPListLayer::updateSave() {
 
-	if (m_isPractice) { return; }
+	//if (m_isPractice) { return; }
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	
@@ -297,16 +297,16 @@ void DPListLayer::updateSave() {
 	std::vector<int> levelIDs = {};
 	int reqLevels = 0;
 
-	if (m_type == "monthly" && !data[m_type][m_id]["month"].isNull()) { month = data[m_type][m_id]["month"].as<int>().unwrap(); }
-	if (m_type == "monthly" && !data[m_type][m_id]["year"].isNull()) { year = data[m_type][m_id]["year"].as<int>().unwrap(); }
+	if (m_type == "monthly" && !data[m_type][m_id]["month"].isNull()) { month = data[m_type][m_id]["month"].as<int>().unwrapOr(1); }
+	if (m_type == "monthly" && !data[m_type][m_id]["year"].isNull()) { year = data[m_type][m_id]["year"].as<int>().unwrapOr(1987); }
 	if (m_type == "monthly") {
 		saveID = fmt::format("{}-{}", month, year);
 	}
 	else {
-		if (!data[m_type][m_id]["saveID"].isNull()) { saveID = data[m_type][m_id]["saveID"].asString().unwrap(); }
+		if (!data[m_type][m_id]["saveID"].isNull()) { saveID = data[m_type][m_id]["saveID"].asString().unwrapOr("null"); }
 	}
-	if (!data[m_type][m_id]["levelIDs"].isNull()) { levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrap(); }
-	if (m_type == "main" && !data[m_type][m_id]["reqLevels"].isNull()) { reqLevels = data[m_type][m_id]["reqLevels"].as<int>().unwrap(); }
+	if (!data[m_type][m_id]["levelIDs"].isNull()) { levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); }
+	if (m_type == "main" && !data[m_type][m_id]["reqLevels"].isNull()) { reqLevels = data[m_type][m_id]["reqLevels"].as<int>().unwrapOr(999); }
 
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
@@ -416,14 +416,14 @@ void DPListLayer::loadLevels(int page) {
 	
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	std::vector<int> levelIDs = {0};
-	if (!data[m_type][m_id]["levelIDs"].isNull()) { levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrap(); }
+	if (!data[m_type][m_id]["levelIDs"].isNull()) { levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); }
 
-	if (m_isPractice) {
+	/*if (m_isPractice) {
 
 		m_IDs.clear();
 
 		if (m_type == "main") {
-			auto practiceIDs = data[m_type][m_id]["practiceIDs"].as<std::vector<int>>().unwrap();
+			auto practiceIDs = data[m_type][m_id]["practiceIDs"].as<std::vector<int>>().unwrapOrDefault();
 
 			for (int i = 0; i < levelIDs.size(); i++)
 			{
@@ -432,23 +432,21 @@ void DPListLayer::loadLevels(int page) {
 			}
 		}
 		else if (m_type == "legacy") {
-			auto mainPack = data[m_type][m_id]["mainPack"].as<int>().unwrap();
-			auto practiceIDs = data["main"][mainPack]["practiceIDs"].as<std::vector<int>>().unwrap();
+			auto mainPack = data[m_type][m_id]["mainPack"].as<int>().unwrapOrDefault();
+			auto practiceIDs = data["main"][mainPack]["practiceIDs"].as<std::vector<int>>().unwrapOrDefault();
 
-			for (int i = data["main"][mainPack]["levelIDs"].as<std::vector<int>>().unwrap().size(); i < practiceIDs.size(); i++)
+			for (int i = data["main"][mainPack]["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size(); i < practiceIDs.size(); i++)
 			{
 				int num = practiceIDs.at(i);
 				m_IDs.push_back(std::to_string(num));
 			}
 		}
-	}
-	else {
+	}*/
 
-		m_IDs.clear();
+	m_IDs.clear();
 
-		for (auto const& level : levelIDs) {
-			m_IDs.push_back(std::to_string(level));
-		}
+	for (auto const& level : levelIDs) {
+		m_IDs.push_back(std::to_string(level));
 	}
 
 	log::info("{}", m_IDs);
@@ -501,21 +499,19 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 	if (m_type == "main" || m_type == "legacy") {
-		if (m_isPractice) {
-			m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), fmt::format("{} Demons (Practice)", data[m_type][m_id]["name"].asString().unwrap()).c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
+		/*if (m_isPractice) {
+			m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), fmt::format("{} Demons (Practice)", data[m_type][m_id]["name"].asString().unwrapOrDefault()).c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
 			m_list->setZOrder(2);
 			m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
 			this->addChild(m_list);
-		}
-		else {
-			m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), fmt::format("{} Demons", data[m_type][m_id]["name"].asString().unwrap()).c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
-			m_list->setZOrder(2);
-			m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
-			this->addChild(m_list);
-		}
+		}*/
+		m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), fmt::format("{} Demons", data[m_type][m_id]["name"].asString().unwrapOr("null")).c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
+		m_list->setZOrder(2);
+		m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
+		this->addChild(m_list);
 	}
 	else {
-		m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), data[m_type][m_id]["name"].asString().unwrap().c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
+		m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), data[m_type][m_id]["name"].asString().unwrapOr("null").c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
 		m_list->setZOrder(2);
 		m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
 		this->addChild(m_list);
@@ -585,6 +581,8 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 }
 
 void DPListLayer::loadLevelsFailed(const char*) {
+	if (m_loadingCancelled) { return; }
+	
 	m_levelsLoaded = true;
 
 	m_loadCircle->fadeAndRemove();
@@ -598,9 +596,9 @@ void DPListLayer::loadLevelsFailed(const char*) {
 	return;
 }
 
-DPListLayer* DPListLayer::create(const char* type, int id, bool isPractice) {
+DPListLayer* DPListLayer::create(const char* type, int id) {
 	auto pRet = new DPListLayer();
-	if (pRet && pRet->init(type, id, isPractice)) {
+	if (pRet && pRet->init(type, id)) {
 		pRet->autorelease();
 		return pRet;
 	}

@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/utils/web.hpp>
 #include <Geode/loader/Event.hpp>
+#include <ctime>
 
 //geode namespace
 using namespace geode::prelude;
@@ -21,6 +22,10 @@ protected:
 	bool m_finishedLoading = false;
 	bool m_error = false;
 	CCLabelBMFont* m_errorText;
+	CCLabelBMFont* m_monthlyTimer;
+
+	int m_currentMonth = 0;
+	int m_currentYear = 87;
 
 	//listeners
 	EventListener<web::WebTask> m_listListener;
@@ -44,6 +49,7 @@ public:
 	void rouletteCallback(CCObject*);
 	void recommendedCallback(CCObject*);
 	void xpCallback(CCObject*);
+	void updateMonthlyTimer(float dt);
 };
 
 struct ListSaveFormat {

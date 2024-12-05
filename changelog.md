@@ -1,3 +1,28 @@
+# v1.0.0
+
+This is now the definitive version of the mod. It took me over 8 months to program, and several years for the mod to come into fruition, but it's finally done. I'd like to thank everyone, especially the GDDP Staff, who supported me along the way. More updates will come eventually. Thanks for playing. <3
+~ Mocha
+
+* Renamed the mod (GDDP Integration -> GDDP - Demon Progression)
+* Added the Roulette Menu
+	* Select Packs to use in it
+	* Can be Random Seed or Set Seed
+	* Extra Challenge Modes included
+	* Export and share your Saves and Settings with friends
+* Removed Practice Packs and Rate All Demons
+	* Practice Packs are too hard to maintain, all startpos levels have to be official, so when new levels get added/replaced, it gets confusing
+	* Rate All Demons isn't very useful or necessary now, with the introduction of mods like "Fake Rate" and "Demons in Between"
+* Various Bugfixes
+	* Futureproofed some stuff
+	* Fixed some crashes
+	* Searching should be faster
+	* Minor XP Speed Improvements
+* Quality of Life Improvements
+	* The Mod will now try to get completed GDDP Levels from your save file
+	* Packs will now detect whether or not levels were completed outside that respective pack
+	* Recommendations now check for new ones on refreshing the menu
+	* Added time until next Monthly Pack
+
 # v1.0.0-beta.47
 
 * Reorganized Settings

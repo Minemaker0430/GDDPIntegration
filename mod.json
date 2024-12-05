@@ -1,14 +1,17 @@
 {
-		"geode": "4.0.0-beta.1",
+		"geode": "4.0.1",
 		"gd": {
 			"win": "2.2074",
 			"android": "2.2074"
 		},
-		"version": "v1.0.0-beta.47",
+		"version": "v1.0.0",
 		"id": "minemaker0430.gddp_integration",
-		"name": "GDDP Integration",
+		"name": "GDDP - Demon Progression",
 		"developer": "Minemaker0430",
-		"description": "Adds a new Menu for GDDP Progression",
+		"description": "Adds various utilities for Demon Progression",
+		"links": {
+			"source": "https://github.com/Minemaker0430/GDDPIntegration/"
+		},
 
 		"issues": {
 			"info": "Submit problems to the GitHub or @minemaker0430 on Discord.",
@@ -42,7 +45,7 @@
 		"dependencies": [
 			{
 				"id": "geode.node-ids",
-				"version": ">=1.16.0",
+				"version": ">=1.18.0",
 				"importance": "required"
 			}
 		],
@@ -67,12 +70,6 @@
 		"utility-section": {
 			"name": "Utility",
 			"type": "title"
-		},
-		"enable-practice": {
-			"name": "Enable Practice Packs",
-			"description": "Adds Practice versions of the Main Packs to help you practice Main Tier levels.",
-			"type": "bool",
-			"default": true
 		},
 		"skillset-badges": {
 			"name": "Enable Skillset Badges",
@@ -102,13 +99,6 @@
 			"type": "bool",
 			"default": false,
 			"enable-if": "custom-difficulty-faces"
-		},
-		"all-demons-rated": {
-			"name": "Rate All Demons [BROKEN]",
-			"description": "Shows custom difficulty faces on all rated demons. Please note that demons without GDDL Ratings will not be given ratings.\n\n(Option created by wint0r)",
-			"type": "bool",
-			"default": false,
-			"enable-if": "custom-difficulty-faces && show-outside-menus"
 		},
 		"replace-epic": {
 			"name": "Replace Epic Fire",
