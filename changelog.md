@@ -1,3 +1,7 @@
+# v1.0.1
+
+* Added sprite for 12 Demons of Christmas (2024)
+
 # v1.0.0
 
 This is now the definitive version of the mod. It took me over 8 months to program, and several years for the mod to come into fruition, but it's finally done. I'd like to thank everyone, especially the GDDP Staff, who supported me along the way. More updates will come eventually. Thanks for playing. <3
