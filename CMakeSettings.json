@@ -13,7 +13,7 @@
       "variables": [
         {
           "name": "GEODE_CLI",
-          "value": "M:/SteamLibrary/steamapps/common/Geometry Dash/Modding/cli/geode.exe",
+          "value": "D:/SteamLibrary/steamapps/common/Geometry Dash/Modding/cli/geode.exe",
           "type": "FILEPATH"
         }
       ]

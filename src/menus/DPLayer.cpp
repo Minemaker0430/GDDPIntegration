@@ -125,10 +125,9 @@ void DPLayer::reloadData(bool isInit) {
 		m_listListener.bind([&](web::WebTask::Event* e) {
 			if (auto res = e->getValue()) {
 				//log::info("{}", res->string().unwrapOr("Uh oh!"));
-				if (res->ok() && res->json().isOk()) {
-					Mod::get()->setSavedValue<matjson::Value>("cached-data", res->json().unwrapOrDefault());
-					m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-					reloadList(m_currentTab);
+				if (res->ok() && res->json().isOk() && !res->json().isErr()) {
+					m_data = res->json().unwrapOrDefault();
+					Mod::get()->setSavedValue<matjson::Value>("cached-data", m_data);
 
 					m_tabs->setVisible(true);
 					m_loadcircle->fadeAndRemove();
@@ -141,18 +140,22 @@ void DPLayer::reloadData(bool isInit) {
 					auto glm = GameLevelManager::sharedState();
 					auto glmCompletedLvls = glm->getCompletedLevels(false);
 
-					for (int i = 0; i < glmCompletedLvls->indexOfObject(glmCompletedLvls->lastObject()); i++) {
-						auto lvl = static_cast<GJGameLevel*>(glmCompletedLvls->objectAtIndex(i));
-						auto lvlID = lvl->m_levelID.value();
+					if (glmCompletedLvls->count() > 0) {
+						for (int i = 0; i < glmCompletedLvls->indexOfObject(glmCompletedLvls->lastObject()); i++) {
+							auto lvl = static_cast<GJGameLevel*>(glmCompletedLvls->objectAtIndex(i));
+							auto lvlID = lvl->m_levelID.value();
 
-						if (m_data["level-data"].contains(std::to_string(lvlID))) {
-							auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-							if (std::find(completedLvls.begin(), completedLvls.end(), lvlID) == completedLvls.end()) {
-								completedLvls.insert(completedLvls.begin(), lvlID);
-								Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
+							if (m_data["level-data"].contains(std::to_string(lvlID))) {
+								auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
+								if (std::find(completedLvls.begin(), completedLvls.end(), lvlID) == completedLvls.end()) {
+									completedLvls.insert(completedLvls.begin(), lvlID);
+									Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
+								}
 							}
 						}
 					}
+
+					reloadList(m_currentTab);
 				}
 				else {
 					m_loadcircle->fadeAndRemove();
@@ -176,7 +179,7 @@ void DPLayer::reloadData(bool isInit) {
 		m_skillListener.bind([&](web::WebTask::Event* e) {
 			if (web::WebResponse* res = e->getValue()) {
 				//log::info("{}", res->string().unwrapOr("Uh oh!"));
-				if (res->ok() && res->json().isOk()) {
+				if (res->ok() && res->json().isOk() && !res->json().isErr()) {
 					Mod::get()->setSavedValue<matjson::Value>("skillset-info", res->json().unwrapOrDefault());
 					log::info("Updated skillset info.");
 				}
@@ -350,7 +353,7 @@ bool DPLayer::init() {
 	m_monthlyTimer->setID("monthly-text");
 	this->addChild(m_monthlyTimer);
 
-	this->schedule(schedule_selector(DPLayer::updateMonthlyTimer), 1.f);
+	if (Mod::get()->getSettingValue<bool>("show-monthly-timer")) { this->schedule(schedule_selector(DPLayer::updateMonthlyTimer), 1.f); }
 
 	//back button
 	auto backSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -389,6 +392,11 @@ bool DPLayer::init() {
 	listTop->setZOrder(10);
 	listBottom->setZOrder(10);
 
+	listLeft->setID("list-left");
+	listRight->setID("list-right");
+	listTop->setID("list-top");
+	listBottom->setID("list-bottom");
+
 	//if (!Loader::get()->isModLoaded("alphalaneous.transparent_lists")) {}
 	this->addChild(listMiddle);
 	this->addChild(listLeft);
@@ -404,6 +412,7 @@ bool DPLayer::init() {
 	reloadBtn->setPosition({ 30.f, 30.f });
 	reloadMenu->addChild(reloadBtn);
 	reloadMenu->setID("reload-menu");
+	reloadMenu->setZOrder(11);
 	this->addChild(reloadMenu);
 	m_reload = reloadMenu;
 
@@ -415,6 +424,7 @@ bool DPLayer::init() {
 	supportBtn->setPosition({ 75.f, 30.f });
 	supportMenu->addChild(supportBtn);
 	supportMenu->setID("support-menu");
+	supportMenu->setZOrder(11);
 	if (Mod::get()->getSettingValue<bool>("show-support")) { this->addChild(supportMenu); }
 
 	//news menu
@@ -443,6 +453,7 @@ bool DPLayer::init() {
 	//extrasMenu->addChild(leaderboardButton);
 	extrasMenu->addChild(achievementButton);
 	extrasMenu->setID("extras-menu");
+	extrasMenu->setZOrder(11);
 	this->addChild(extrasMenu);
 
 	//utility tabs
@@ -454,20 +465,20 @@ bool DPLayer::init() {
 	auto rouletteBtn = CCMenuItemSpriteExtra::create(rouletteSpr, this, menu_selector(DPLayer::rouletteCallback));
 	auto recommendedBtn = CCMenuItemSpriteExtra::create(recommendedSpr, this, menu_selector(DPLayer::recommendedCallback));
 
-	skillsetsBtn->setPositionY(50.f);
-	rouletteBtn->setPositionY(0.f);
-	recommendedBtn->setPositionY(-50.f);
-
 	skillsetsBtn->setID("skillsets-btn");
 	rouletteBtn->setID("roulette-btn");
 	recommendedBtn->setID("recommended-btn");
 
+	auto utilityLayout = AxisLayout::create(Axis::Column);
+	utilityLayout->setAxisReverse(true);
+
 	auto utilityMenu = CCMenu::create();
-	utilityMenu->setPosition({ 63.f, 167.f });
-	utilityMenu->addChild(skillsetsBtn);
-	utilityMenu->addChild(rouletteBtn);
-	utilityMenu->addChild(recommendedBtn);
+	utilityMenu->setPosition({ listLeft->getPositionX() - 35.f, size.height / 2 });
+	if (Mod::get()->getSettingValue<bool>("enable-search")) { utilityMenu->addChild(skillsetsBtn); }
+	if (Mod::get()->getSettingValue<bool>("enable-roulette")) { utilityMenu->addChild(rouletteBtn); }
+	if (Mod::get()->getSettingValue<bool>("enable-recommendations")) { utilityMenu->addChild(recommendedBtn); }
 	utilityMenu->setID("utility-menu");
+	utilityMenu->setLayout(utilityLayout, true);
 	this->addChild(utilityMenu);
 
 	//xp button
@@ -478,7 +489,7 @@ bool DPLayer::init() {
 	xpBtn->setID("xp-btn");
 
 	auto xpMenu = CCMenu::create();
-	xpMenu->setPosition({ listRight->getPositionX() + 35.f, 167.f });
+	xpMenu->setPosition({ listRight->getPositionX() + 35.f, size.height / 2 });
 	xpMenu->addChild(xpBtn);
 	xpMenu->setID("xp-menu");
 	if (Mod::get()->getSettingValue<bool>("show-xp")) { this->addChild(xpMenu); }
@@ -622,6 +633,8 @@ void DPLayer::reloadList(int type) {
 		}
 	}
 
+	if (!m_data.contains(dataIdx)) { return; }
+
 	auto packs = m_data[dataIdx].as<std::vector<matjson::Value>>().unwrapOrDefault();
 
 	auto versionTxt = fmt::format("Database Version: {}", std::to_string(m_data["database-version"].as<int>().unwrapOr(0)));
@@ -630,7 +643,7 @@ void DPLayer::reloadList(int type) {
 	if (packs.empty()) { return; }
 
 	m_monthlyTimer->setVisible(false);
-	if (type == static_cast<int>(DPListType::Monthly)) {
+	if (type == static_cast<int>(DPListType::Monthly) && Mod::get()->getSettingValue<bool>("show-monthly-timer")) {
 		m_monthlyTimer->setVisible(true);
 
 		if (m_data["monthly"][0]["name"].asString().unwrapOr("???") != "???") {

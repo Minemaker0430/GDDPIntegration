@@ -349,7 +349,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 				//check if the level is recommended and the effect is enabled
 				auto recommendations = Mod::get()->getSavedValue<std::vector<int>>("recommended-levels");
-				if (!Mod::get()->getSettingValue<bool>("disable-recommended-effect") && std::find(recommendations.begin(), recommendations.end(), this->m_level->m_levelID.value()) != recommendations.end()) {
+				if ((!Mod::get()->getSettingValue<bool>("disable-recommended-effect")) && Mod::get()->getSettingValue<bool>("enable-recommendations") && std::find(recommendations.begin(), recommendations.end(), this->m_level->m_levelID.value()) != recommendations.end()) {
 					auto recommendedSpr = CCSprite::createWithSpriteFrameName("DP_RecommendGlow.png"_spr);
 					recommendedSpr->setPosition({ 37.f, 37.f });
 					if (gddpDiff >= 11) { recommendedSpr->setPosition({ 37.f, 40.f }); }

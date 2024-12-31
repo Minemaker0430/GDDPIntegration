@@ -16,7 +16,7 @@ protected:
 	CCMenu* m_backMenu;
 	matjson::Value m_data;
 	LoadingCircle* m_loadcircle;
-	int m_currentTab;
+	int m_currentTab = 0;
 	CCMenu* m_reload;
 	CCLabelBMFont* m_databaseVer;
 	bool m_finishedLoading = false;

@@ -1,10 +1,10 @@
 {
-		"geode": "4.0.1",
+		"geode": "4.1.2",
 		"gd": {
 			"win": "2.2074",
 			"android": "2.2074"
 		},
-		"version": "v1.0.1",
+		"version": "v1.0.2",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "Minemaker0430",
@@ -53,6 +53,7 @@
 	"settings": {
 		"bypass-section": {
 			"name": "Progression Bypass",
+			"description": "Options that let you bypass the lock system in the GDDP Menus.",
 			"type": "title"
 		},
 		"unlock-all-tiers": {
@@ -69,6 +70,7 @@
 		},
 		"utility-section": {
 			"name": "Utility",
+			"description": "A set of extra/QoL features that may be helpful.",
 			"type": "title"
 		},
 		"skillset-badges": {
@@ -77,14 +79,40 @@
 			"type": "bool",
 			"default": true
 		},
+		"show-skills-in-list": {
+			"name": "Show Skills in List",
+			"description": "If disabled, Skillsets will only be shown on the Level Page.",
+			"type": "bool",
+			"default": true,
+			"enable-if": "skillset-badges"
+		},
+		"enable-search": {
+			"name": "Enable Search Menu",
+			"description": "Enables the Advanced GDDP Search Menu.",
+			"type": "bool",
+			"default": true
+		},
+		"enable-roulette": {
+			"name": "Enable Roulette",
+			"description": "Enables the GDDP Roulette.",
+			"type": "bool",
+			"default": true
+		},
+		"enable-recommendations": {
+			"name": "Enable Recommendations",
+			"description": "Enables GDDP Recommendations. Disabling this option will also disable the Recommended Glow.",
+			"type": "bool",
+			"default": true
+		},
 		"show-xp": {
-			"name": "Show XP",
-			"description": "Controls the XP Buttons in the GDDP Menu and the Level Info Menu.",
+			"name": "Enable XP",
+			"description": "Enables all XP-Related Buttons.",
 			"type": "bool",
 			"default": true
 		},
 		"faces-section": {
 			"name": "Difficulty Faces",
+			"description": "Options relating to the GDDP Difficulties. Purely cosmetic.",
 			"type": "title"
 		},
 		"custom-difficulty-faces": {
@@ -114,18 +142,12 @@
 			"default": false,
 			"enable-if": "custom-difficulty-faces"
 		},
-		"show-skills-in-list": {
-			"name": "Show Skills in List",
-			"description": "If disabled, Skillsets will only be shown on the Level Page.",
-			"type": "bool",
-			"default": true,
-			"enable-if": "skillset-badges"
-		},
 		"disable-recommended-effect": {
 			"name": "Disable Recommended Glow",
 			"description": "Disables the Glow on Recommended Levels.",
 			"type": "bool",
-			"default": false
+			"default": false,
+			"enable-if": "enable-recommendations"
 		},
 		"hide-monthly-outside": {
 			"name": "Hide Monthly Outside Menus",
@@ -143,6 +165,7 @@
 		},
 		"menu-section": {
 			"name": "Menu Tweaks",
+			"description": "Options relating to Creator Menu Customization. Keep in mind some options may not be compatible with other mods.",
 			"type": "title"
 		},
 		"alt-button-texture": {
@@ -171,6 +194,7 @@
 		},
 		"cosmetic-section": {
 			"name": "Cosmetic",
+			"description": "Options that relate to cosmetics in menus.",
 			"type": "title"
 		},
 		"restore-bg-color": {
@@ -191,8 +215,15 @@
 			"type": "bool",
 			"default": true
 		},
+		"show-monthly-timer": {
+			"name": "Show Monthly Timer",
+			"description": "Shows the time until the next Monthly Pack.",
+			"type": "bool",
+			"default": true
+		},
 		"compatibility-section": {
 			"name": "Compatibility",
+			"description": "Compatibility options for certain mods that may conflict.",
 			"type": "title"
 		},
 		"override-grandpa-demon": {

@@ -1,3 +1,11 @@
+# v1.0.2
+
+* Attempted to fix a weird mobile crash
+* Added some options relating to the side buttons of the GDDP Menu
+* Added an option to disable the monthly timer
+* Added Descriptions for each Setting Section
+* Fixed Aspect Ratio and Z Ordering Issues
+
 # v1.0.1
 
 * Added sprite for 12 Demons of Christmas (2024)
