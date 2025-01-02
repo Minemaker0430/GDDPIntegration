@@ -197,7 +197,7 @@ class $modify(DemonProgression, LevelCell) {
 				if (!data["level-data"][levelID]["difficulty"].isNull()) { gddpDiff = data["level-data"][levelID]["difficulty"].as<int>().unwrapOr(0); }
 				if (!data["level-data"][levelID]["skillsets"].isNull()) { skillsets = data["level-data"][levelID]["skillsets"].as<std::vector<std::string>>().unwrapOrDefault(); }
 
-				if (typeinfo_cast<CCSprite*>(this->m_mainLayer->getChildByID("completed-icon"))) {
+				if (typeinfo_cast<CCSprite*>(this->m_mainLayer->getChildByID("completed-icon")) && this->m_level->m_normalPercent.value() == 100) {
 					auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 
 					if (std::find(completedLvls.begin(), completedLvls.end(), this->m_level->m_levelID.value()) == completedLvls.end()) {

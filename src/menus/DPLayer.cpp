@@ -145,7 +145,7 @@ void DPLayer::reloadData(bool isInit) {
 							auto lvl = static_cast<GJGameLevel*>(glmCompletedLvls->objectAtIndex(i));
 							auto lvlID = lvl->m_levelID.value();
 
-							if (m_data["level-data"].contains(std::to_string(lvlID))) {
+							if (m_data["level-data"].contains(std::to_string(lvlID)) && lvl->m_normalPercent.value() == 100) {
 								auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 								if (std::find(completedLvls.begin(), completedLvls.end(), lvlID) == completedLvls.end()) {
 									completedLvls.insert(completedLvls.begin(), lvlID);

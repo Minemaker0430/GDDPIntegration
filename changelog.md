@@ -1,3 +1,7 @@
+# v1.0.3
+
+* Fixed levels being marked as completed when they weren't
+
 # v1.0.2
 
 * Attempted to fix a weird mobile crash
