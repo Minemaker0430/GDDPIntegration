@@ -311,23 +311,23 @@ class $modify(DemonProgression, LevelCell) {
 						layer->getChildByID("grd-difficulty-face")->removeMeAndCleanup();
 					}
 
-					std::string sprite = "DP_Beginner";
-					std::string plusSprite = "DP_BeginnerPlus";
+					std::string sprite = "DP_Unknown";
+					std::string plusSprite = "DP_Unknown";
 
 					/*if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 						sprite = ListManager::getSpriteName(this->m_level);
 						plusSprite = fmt::format("{}Plus", sprite);
 					}*/
-					sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Beginner");
-					plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_BeginnerPlus");
+					sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Unknown");
+					plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_Unknown");
 					
 					//fallbacks
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data()) == nullptr) {
-						sprite = "DP_Invisible";
+						sprite = "DP_Unknown";
 					}
 
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSprite)).data()) == nullptr) {
-						plusSprite = "DP_Invisible";
+						plusSprite = "DP_Unknown";
 					}
 
 					std::string fullSpr = fmt::format("{}SmallText.png", sprite);
@@ -368,23 +368,23 @@ class $modify(DemonProgression, LevelCell) {
 					auto layer = typeinfo_cast<CCNode*>(this->getChildByID("main-layer")->getChildByID("difficulty-container"));
 					typeinfo_cast<GJDifficultySprite*>(layer->getChildByID("difficulty-sprite"))->setOpacity(0);
 
-					std::string sprite = "DP_Beginner";
-					std::string plusSprite = "DP_BeginnerPlus";
+					std::string sprite = "DP_Unknown";
+					std::string plusSprite = "DP_Unknown";
 
 					/*if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 						sprite = ListManager::getSpriteName(this->m_level);
 						plusSprite = fmt::format("{}Plus", sprite);
 					}*/
-					sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Beginner");
-					plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_BeginnerPlus");
+					sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Unknown");
+					plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_Unknown");
 
 					//fallbacks
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data()) == nullptr) {
-						sprite = "DP_Invisible";
+						sprite = "DP_Unknown";
 					}
 
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSprite)).data()) == nullptr) {
-						plusSprite = "DP_Invisible";
+						plusSprite = "DP_Unknown";
 					}
 
 					std::string fullSpr = fmt::format("{}SmallText.png", sprite);

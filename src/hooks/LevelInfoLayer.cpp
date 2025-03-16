@@ -266,7 +266,12 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 					CCSprite* sprite;
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr) {
-						spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
+						if (skillsetData[skillID]["type"].asString().unwrapOr("none") == "special") {
+							spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].asString().unwrapOr("DP_Skill_Special"));
+						}
+						else {
+							spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
+						}
 						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
 					}
 					else {
@@ -306,23 +311,23 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				diffSpr->setOpacity(0);
 			}
 
-			std::string sprite = "DP_Beginner";
-			std::string plusSprite = "DP_BeginnerPlus";
+			std::string sprite = "DP_Unknown";
+			std::string plusSprite = "DP_Unknown";
 
 			/*if (Mod::get()->getSettingValue<bool>("all-demons-rated") && !data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
 				sprite = ListManager::getSpriteName(this->m_level);
 				plusSprite = fmt::format("{}Plus", sprite);
 			}*/
-			sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Beginner");
-			plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_BeginnerPlus");
+			sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Unknown");
+			plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_Unknown");
 
 			//fallbacks
 			if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data()) == nullptr) {
-				sprite = "DP_Invisible";
+				sprite = "DP_Unknown";
 			}
 
 			if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSprite)).data()) == nullptr) {
-				plusSprite = "DP_Invisible";
+				plusSprite = "DP_Unknown";
 			}
 
 			std::string fullSpr = fmt::format("{}Text.png", sprite);

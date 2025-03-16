@@ -17,6 +17,7 @@
 #include "../popups/XPPopup.hpp"
 #include "../popups/SearchPopup.hpp"
 #include "../popups/RoulettePopup.hpp"
+#include "../popups/dev/VerificationPopup.hpp"
 #include "../Utils.hpp"
 #include "../XPUtils.hpp"
 #include "../RecommendedUtils.hpp"
@@ -108,16 +109,16 @@ void DPLayer::reloadData(bool isInit) {
 		//this->setKeyboardEnabled(false);
 		//this->setKeypadEnabled(false);
 
-		std::string dataURL;
+		std::string dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json";
 
 		//log::info("{}", GameManager::sharedState()->m_playerName);
-		if (GameManager::sharedState()->m_playerName == "Minemaker0430") {
+		/*if (GameManager::sharedState()->m_playerName == "Minemaker0430") {
 			log::info("Hello, me");
 			dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/dev-list.json";
 		}
-		else {
-			dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json";
-		}
+		else {*/
+		
+		//}
 
 		// download data
 
@@ -539,12 +540,36 @@ bool DPLayer::init() {
 	m_databaseVer->setAnchorPoint({ 1, 1 });
 	m_databaseVer->setPosition({ size.width - 1, size.height - 1 });
 	m_databaseVer->setScale(0.5f);
+	m_databaseVer->setZOrder(1);
 
 	if (!Mod::get()->getSettingValue<bool>("show-database-version")) {
 		m_databaseVer->setVisible(false);
 	}
 
 	this->addChild(m_databaseVer);
+
+	// mod/dev stuff
+	auto secretFile = Mod::get()->getConfigDir() += std::filesystem::path("\\client_id.txt");
+
+	auto fileCheck = file::readDirectory(Mod::get()->getConfigDir()).unwrapOrDefault();
+	log::info("{}, {}", fileCheck, secretFile);
+
+	if (std::find(fileCheck.begin(), fileCheck.end(), secretFile) != fileCheck.end()) {
+		log::info("Found Client ID File.");
+
+		//dev menu
+		auto devMenu = CCMenu::create();
+		devMenu->setPosition({ 0, 0 });
+		auto devBtnSprite = CCSprite::createWithSpriteFrameName("GJ_starBtnMod_001.png");
+		auto devBtn = CCMenuItemSpriteExtra::create(devBtnSprite, this, menu_selector(DPLayer::devCallback));
+		devBtn->setPosition({ size.width - 30.f, size.height - 30.f });
+		devMenu->addChild(devBtn);
+		devMenu->setID("dev-menu");
+		this->addChild(devMenu);
+	}
+	else {
+		log::info("Client ID File not found, don't add mod button.");
+	}
 
 	// download data
 	reloadData(true);
@@ -553,6 +578,13 @@ bool DPLayer::init() {
 	this->setKeypadEnabled(true);
 
 	return true;
+}
+
+void DPLayer::devCallback(CCObject*) {
+	auto popup = VerificationPopup::create();
+	popup->show();
+
+	return;
 }
 
 void DPLayer::updateMonthlyTimer(float dt) {
@@ -589,6 +621,9 @@ void DPLayer::updateMonthlyTimer(float dt) {
 }
 
 void DPLayer::reloadList(int type) {
+
+	auto director = CCDirector::sharedDirector();
+	auto size = director->getWinSize();
 
 	//check for errors
 	auto jsonCheck = checkJson(m_data, "");
@@ -672,8 +707,8 @@ void DPLayer::reloadList(int type) {
 		int mainPack = 0; //Legacy Only
 
 		if (!m_data[dataIdx][i]["name"].isNull()) { name = m_data[dataIdx][i]["name"].asString().unwrapOr("null"); }
-		if (!m_data[dataIdx][i]["sprite"].isNull()) { sprite = m_data[dataIdx][i]["sprite"].asString().unwrapOr("DP_Invisible"); }
-		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["plusSprite"].isNull()) { plusSprite = m_data[dataIdx][i]["plusSprite"].asString().unwrapOr("DP_Invisible"); }
+		if (!m_data[dataIdx][i]["sprite"].isNull()) { sprite = m_data[dataIdx][i]["sprite"].asString().unwrapOr("DP_Unknown"); }
+		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["plusSprite"].isNull()) { plusSprite = m_data[dataIdx][i]["plusSprite"].asString().unwrapOr("DP_Unknown"); }
 		//listID = m_data[dataIdx][i]["listID"].as_int(); //only used to obtain old saves
 		if (type != static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["saveID"].isNull()) { saveID = m_data[dataIdx][i]["saveID"].asString().unwrapOr("null"); }
 		if (!m_data[dataIdx][i]["levelIDs"].isNull()) { levelIDs = m_data[dataIdx][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); }
@@ -757,12 +792,12 @@ void DPLayer::reloadList(int type) {
 		auto fullPlusSprite = fmt::format("{}.png", plusSprite);
 
 		//fallbacks
-		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSprite).data()) == nullptr) {
-			fullSprite = "DP_Invisible.png";
+		if (!CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSprite).data())) {
+			fullSprite = "DP_Unknown.png";
 		}
 
-		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSprite).data()) == nullptr) {
-			fullPlusSprite = "DP_Invisible.png";
+		if (!CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullPlusSprite).data())) {
+			fullPlusSprite = "DP_Unknown.png";
 		}
 
 		CCNode* cell = ListCell::create();
@@ -1157,9 +1192,6 @@ void DPLayer::reloadList(int type) {
 	};
 
 	//list
-	auto director = CCDirector::sharedDirector();
-	auto size = director->getWinSize();
-
 	ListView* packListMenu = ListView::create(packListCells, 50.0f, 358.0f, 220.0f);
 	packListMenu->setAnchorPoint({ 0.5f, 0.5f });
 	packListMenu->setPosition({ (size.width / 2) - 180, (size.height / 2) - 115 });
@@ -1168,6 +1200,11 @@ void DPLayer::reloadList(int type) {
 	this->addChild(packListMenu);
 	m_list = packListMenu;
 	m_currentTab = type;
+
+	//scrollbar everywhere compatibility
+	/*if (auto scrollbar = this->getChildByID("user95401.scrollbar_everywhere/scrollbar")) {
+		scrollbar->setPosition({ (size.width / 2) + 185.f, size.height / 2});
+	}*/
 
 	return;
 }

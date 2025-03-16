@@ -26,7 +26,7 @@ bool SupportPopup::setup() {
 	m_mainLayer = mainLayer;
 
 	//Add Text
-	auto text = CCLabelBMFont::create("Hi there!\n\nThank you for playing the mod.\nThis mod takes me a lot of time and effort to make,\n and I'm still trying to constantly improve it wherever I can.\n\nPlease consider donating to help me out, even if it's just $1,\n it really helps. No pressure of course.\n\nDonation button is below.\n\nThanks! ~ Minemaker", "bigFont.fnt");
+	auto text = CCLabelBMFont::create("Hi there!\n\nThank you for playing the mod.\nThis mod takes me a lot of time and effort to make,\n and I'm still trying to constantly improve it wherever I can.\n\nPlease consider donating to help me out, even if it's just $1,\n it really helps. No pressure of course.\n\nDonation button is below.\n\nThanks! ~ Mocha", "bigFont.fnt");
 	text->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
 	text->setScale(0.375f);
 	text->setPosition({ 210.f, 215.f });

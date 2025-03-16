@@ -1,3 +1,10 @@
+# v1.0.4
+
+* Updated my username and all references to my old username
+* Added Unique Placeholder Pack Sprite
+* Added Sprites for some Special Skillset Badges
+* Fixed a visual bug involving the "Titles" section of the Stats menu
+
 # v1.0.3
 
 * Fixed levels being marked as completed when they weren't

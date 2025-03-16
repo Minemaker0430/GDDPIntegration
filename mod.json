@@ -1,20 +1,20 @@
 {
-		"geode": "4.1.2",
+		"geode": "4.3.1",
 		"gd": {
 			"win": "2.2074",
 			"android": "2.2074"
 		},
-		"version": "v1.0.3",
+		"version": "v1.0.4",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
-		"developer": "Minemaker0430",
+		"developer": "ItsMochaTheOtter",
 		"description": "Adds various utilities for Demon Progression",
 		"links": {
 			"source": "https://github.com/Minemaker0430/GDDPIntegration/"
 		},
 
 		"issues": {
-			"info": "Submit problems to the GitHub or @minemaker0430 on Discord.",
+			"info": "Submit problems to the GitHub or @itsmochatheotter on Discord.",
 			"url": "https://github.com/Minemaker0430/GDDPIntegration/issues"
 		},
 
@@ -45,7 +45,7 @@
 		"dependencies": [
 			{
 				"id": "geode.node-ids",
-				"version": ">=1.18.0",
+				"version": ">=1.20.0",
 				"importance": "required"
 			}
 		],

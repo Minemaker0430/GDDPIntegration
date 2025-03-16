@@ -24,6 +24,8 @@ protected:
 	CCLabelBMFont* m_errorText;
 	CCLabelBMFont* m_monthlyTimer;
 
+	std::string m_devSecret;
+
 	int m_currentMonth = 0;
 	int m_currentYear = 87;
 
@@ -38,9 +40,11 @@ public:
 	void callback(CCObject*); //callback for the button to go to this layer
 	void onTab(CCObject*); //tabs switched?
 	void openList(CCObject*); //open list with the id tagged on the btn
+	
 	void reloadCallback(CCObject*); //when reload is pressed
 	void reloadData(bool); //reload all data
 	void reloadList(int type);
+	
 	void soonCallback(CCObject*); //Coming Soon
 	void achievementsCallback(CCObject*);
 	void supportCallback(CCObject*);
@@ -49,7 +53,10 @@ public:
 	void rouletteCallback(CCObject*);
 	void recommendedCallback(CCObject*);
 	void xpCallback(CCObject*);
+	void devCallback(CCObject*);
+	
 	void updateMonthlyTimer(float dt);
+	
 };
 
 struct ListSaveFormat {

@@ -980,6 +980,7 @@ void StatsPopup::loadTab(int id) {
 			contentLayer->addChild(plusSection);
 
 			contentLayer->setPositionY(350.f);
+			contentLayer->setContentHeight(1000.f);
 			scrollLayer->m_contentLayer->setPositionY(-385.f);
 			scrollLayer->m_contentLayer->setContentHeight(560.f);
 

@@ -29,6 +29,9 @@ add_library(${PROJECT_NAME} SHARED
     src/RouletteUtils.cpp
     src/popups/RoulettePopup.cpp
     src/menus/RouletteSafeLayer.cpp
+    src/popups/dev/VerificationPopup.cpp
+    src/popups/dev/SaveContentsPopup.cpp
+    src/base64.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

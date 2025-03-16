@@ -21,7 +21,7 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 
 # Credits
 
-* **Minemaker0430** - Made the mod
+* **ItsMochaTheOtter** - Made the mod
 * Trusta - For making GDDP in the first place
 * ElohmroW - GDDP Co-Owner & Website Programmer, helped with a lot of Data related things
 * GDDP Website - Source of the custom Demon Icons

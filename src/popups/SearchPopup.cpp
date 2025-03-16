@@ -549,64 +549,73 @@ void SearchPopup::loadTab(int id) {
 		}
 		case static_cast<int>(SearchModes::Skills):
 		{
+			std::vector<std::string> skillsetTypes = {"none", "gamemode", "misc", "platformer", "special"};
+
 			int i = 0;
-			for (auto [key, value] : skillsets) {
-				auto skillNode = CCNode::create();
-				skillNode->setID(fmt::format("skill-{}", key));
-				skillNode->setScale(0.75f);
+			for (auto type : skillsetTypes)
+			{
+				for (auto [key, value] : skillsets) {
+					auto skillNode = CCNode::create();
+					skillNode->setID(fmt::format("skill-{}", key));
+					skillNode->setScale(0.75f);
 
-				//log::info("i: {}", i);
-				//log::info("key: {}", key);
-				//log::info("value: {}", value);
+					//log::info("i: {}", i);
+					//log::info("key: {}", key);
+					//log::info("value: {}", value);
 
-				auto skillData = value;
+					auto skillData = value;
 
-				//sprite
-				auto spriteName = fmt::format("{}.png", skillData["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
-				CCSprite* sprite;
-				if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr) {
-					spriteName = fmt::format("{}.png", skillsets["unknown"]["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
-					sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
+					if (skillData["type"].asString().unwrapOr("none") != type) {
+						continue;
+					}
+
+					//sprite
+					auto spriteName = fmt::format("{}.png", skillData["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
+					CCSprite* sprite;
+					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr) {
+						spriteName = fmt::format("{}.png", skillsets["unknown"]["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
+						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
+					}
+					else {
+						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
+					}
+					sprite->setID("sprite");
+					sprite->setScale(0.75f);
+					sprite->setAnchorPoint({ 0.f, 0.5f });
+					sprite->setPosition({ 5.f, 17.5f });
+
+					//label
+					auto label = CCLabelBMFont::create(skillData["display-name"].asString().unwrapOr("null").c_str(), "bigFont.fnt");
+					label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
+					label->setID("label");
+					label->setScale(0.5f);
+					label->setAnchorPoint({ 0.f, 0.5f });
+					label->setPosition({ 30.f, 17.5f });
+
+					//togglebox
+					auto toggleMenu = CCMenu::create();
+					toggleMenu->setScale(0.75f);
+					toggleMenu->setPosition({ 250.f, -25.f });
+					toggleMenu->setID("toggle-menu");
+
+					auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
+					auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+					auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
+					toggle->setTag(i);
+					toggle->setID("toggle");
+					toggle->toggle(m_skills[i]);
+
+					toggleMenu->addChild(toggle);
+
+					//add children
+					skillNode->addChild(sprite);
+					skillNode->addChild(label);
+					skillNode->addChild(toggleMenu);
+
+					cells->addObject(skillNode);
+
+					i += 1;
 				}
-				else {
-					sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
-				}
-				sprite->setID("sprite");
-				sprite->setScale(0.75f);
-				sprite->setAnchorPoint({ 0.f, 0.5f });
-				sprite->setPosition({ 5.f, 17.5f });
-
-				//label
-				auto label = CCLabelBMFont::create(skillData["display-name"].asString().unwrapOr("null").c_str(), "bigFont.fnt");
-				label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-				label->setID("label");
-				label->setScale(0.5f);
-				label->setAnchorPoint({ 0.f, 0.5f });
-				label->setPosition({ 30.f, 17.5f });
-
-				//togglebox
-				auto toggleMenu = CCMenu::create();
-				toggleMenu->setScale(0.75f);
-				toggleMenu->setPosition({ 250.f, -25.f });
-				toggleMenu->setID("toggle-menu");
-
-				auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
-				auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
-				auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
-				toggle->setTag(i);
-				toggle->setID("toggle");
-				toggle->toggle(m_skills[i]);
-
-				toggleMenu->addChild(toggle);
-
-				//add children
-				skillNode->addChild(sprite);
-				skillNode->addChild(label);
-				skillNode->addChild(toggleMenu);
-
-				cells->addObject(skillNode);
-
-				i += 1;
 			}
 			break;
 		}
