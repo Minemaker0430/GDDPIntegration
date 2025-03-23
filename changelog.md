@@ -1,3 +1,10 @@
+# v1.0.5
+
+* Fixed levels being moved to Legacy still having XP
+* Fixed link in support popup
+
+**Thank you all for 500K Downloads <3**
+
 # v1.0.4
 
 * Updated my username and all references to my old username

@@ -59,7 +59,7 @@ bool SupportPopup::setup() {
 }
 
 void SupportPopup::onSupport(CCObject*) {
-	web::openLinkInBrowser("https://ko-fi.com/Minemaker0430");
+	web::openLinkInBrowser("https://ko-fi.com/itsmochatheotter");
 }
 void SupportPopup::getSupporters(CCObject*) {
 	SupporterList::create()->show();

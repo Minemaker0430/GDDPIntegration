@@ -286,8 +286,8 @@ void SaveContentsPopup::compareChanges() {
     if (m_uploadType == (int)UploadType::Dev) {
         m_dataNew.set("database-version", m_dataOld["database-version"].as<int>().unwrapOr(0) + 1);
     }
-    else if (m_uploadType == (int)UploadType::Dev) {
-        m_dataNew.set("database-version", m_dataOld["database-version"].as<int>().unwrapOr(0));
+    else {
+        m_dataNew.set("database-version", m_dataNew["database-version"].as<int>().unwrapOr(0));
     }
 
     //find all levels and trim down unused ones
@@ -298,6 +298,28 @@ void SaveContentsPopup::compareChanges() {
             for (auto lvl : pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault()) {
                 usedLevels.push_back(std::to_string(lvl));
             }
+        }
+    }
+
+    //remove xp on all non-main levels
+    for (auto lvl : usedLevels) {
+        auto isMain = false;
+
+        if (!m_dataNew["level-data"][lvl].contains("xp")) { continue; }
+        
+        for (auto pack : m_dataNew["main"].as<std::vector<matjson::Value>>().unwrapOrDefault()) {
+            for (auto id : pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault()) {
+                if (std::to_string(id) == lvl) {
+                    isMain = true;
+                    break;
+                }
+            }
+
+            if (isMain) { break; }
+        }
+        
+        if (!isMain) {
+            m_dataNew["level-data"][lvl].erase("xp");
         }
     }
 
@@ -322,6 +344,11 @@ void SaveContentsPopup::compareChanges() {
     //start comparing changes
     if (m_dataOld != m_dataNew) { //if these are the same, skip
         changesList.push_back("--List Changes--");
+
+        //database version change
+        if (m_dataOld["database-version"] != m_dataNew["database-version"]) {
+            changesList.push_back(fmt::format("Database Version Changed: {} -> {}", m_dataOld["database-version"].as<int>().unwrapOr(0), m_dataNew["database-version"].as<int>().unwrapOr(0)));
+        }
 
         //check indexes first
         std::vector<std::string> indexes = {"main", "legacy", "bonus", "monthly"};
@@ -390,10 +417,22 @@ void SaveContentsPopup::compareChanges() {
                 }
                 else if (value != m_dataNew["level-data"][key]) {
                     changesList.push_back(fmt::format("- {} Changed", key));
+
+                    if (value.contains("xp") && !m_dataNew["level-data"][key].contains("xp")) {
+                        changesList.push_back(fmt::format("- XP Removed", key));
+                    }
                     
                     for (auto [key2, value2] : value) {
+                        if (!m_dataNew["level-data"][key].contains(key2)) {
+                            continue;
+                        }
+
                         if (value2 != m_dataNew["level-data"][key][key2]) {
-                            if (key2 == "skillsets") {
+                            if (key2 == "difficulty") {
+                                auto newValue = m_dataNew["level-data"][key][key2].as<int>().unwrapOrDefault();
+                                changesList.push_back(fmt::format("   {} Changed: {} -> {}", key2, value2.as<int>().unwrapOrDefault(), newValue));
+                            }
+                            else if (key2 == "skillsets") {
                                 auto newValue = m_dataNew["level-data"][key][key2].as<std::vector<std::string>>().unwrapOrDefault();
                                 changesList.push_back(fmt::format("   {} Changed: {} -> {}", key2, value2.as<std::vector<std::string>>().unwrapOrDefault(), newValue));
                             }
