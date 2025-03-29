@@ -913,6 +913,13 @@ void VerificationPopup::removeObject(std::string type, std::string id, int pos) 
 		lvlList.erase(lvlList.begin() + pos);
 		m_currentData.set("levelIDs", lvlList);
 
+		if ((m_index == "main" || m_index == "legacy") && m_currentData.contains("practiceIDs")) {
+			std::vector<int> practiceList = m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOrDefault();
+
+			practiceList.erase(practiceList.begin() + pos);
+			m_currentData.set("practiceIDs", practiceList);
+		}
+
 		loadPack(m_index, m_packID, true);
 	}
 	
@@ -2038,16 +2045,23 @@ void AddLevelPopup::onAddLevel(CCObject*) {
 	if (std::stoi(m_value->getString())) { lvlID = std::stoi(m_value->getString()); }
 
 	VerificationPopup* popup = this->getParent()->getChildByType<VerificationPopup>(0);
+	auto lvlList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 	if (m_practiceIndex > -1) {
-		auto lvlList = popup->m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size(), 0));
-		lvlList.at(m_practiceIndex) = lvlID;
-		popup->m_currentData.set("practiceIDs", lvlList);
+		auto practiceList = popup->m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(lvlList.size(), 0));
+		practiceList.at(m_practiceIndex) = lvlID;
+		popup->m_currentData.set("practiceIDs", practiceList);
 		popup->loadPack(popup->m_index, popup->m_packID, true);
 	}
 	else {
-		auto lvlList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 		lvlList.insert(lvlList.begin(), lvlID);
 		popup->m_currentData.set("levelIDs", lvlList);
+
+		if ((popup->m_index == "main" || popup->m_index == "legacy") && popup->m_currentData.contains("practiceIDs")) {
+			auto practiceList = popup->m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(lvlList.size(), 0));
+			practiceList.insert(practiceList.begin(), 0);
+			popup->m_currentData.set("practiceIDs", practiceList);
+		}
+
 		popup->loadPack(popup->m_index, popup->m_packID, true);
 	}
 
@@ -2337,14 +2351,22 @@ void MovePopup::onConfirm(CCObject*) {
 		int lvlID = std::stoi(m_ID);
 		int newPos = std::stoi(m_value->getString()) - 1;
 
-		//remove old pack at position since we have the placement stored now
+		//remove old level at position since we have the placement stored now
 		levelList.erase(levelList.begin() + m_pos);
 
-		//place the pack at the new position
+		//place the level at the new position
 		levelList.insert(levelList.begin() + newPos, lvlID);
 
 		//store data
 		popup->m_currentData.set("levelIDs", levelList);
+
+		if ((popup->m_index == "main" || popup->m_index == "legacy") && popup->m_currentData.contains("practiceIDs")) {
+			auto practiceList = popup->m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOrDefault();
+			int practiceID = practiceList.at(m_pos);
+			practiceList.erase(practiceList.begin() + m_pos);
+			practiceList.insert(practiceList.begin() + newPos, practiceID);
+			popup->m_currentData.set("practiceIDs", practiceList);
+		}
 
 		log::info("Level successfully moved.");
 
