@@ -7,7 +7,7 @@ using namespace geode::prelude;
 
 class DPListLayer : public CCLayer, LevelManagerDelegate {
 protected:
-	virtual bool init(const char* type, int id); //add stuff to the layer
+	virtual bool init(const char* type, int id, bool isPractice); //add stuff to the layer
 	void backButton(CCObject*); //when you press back
 	virtual void keyBackClicked(); //when you press escape
 
@@ -30,11 +30,13 @@ protected:
 
 	virtual ~DPListLayer();
 public:
-	static DPListLayer* create(const char* type, int id); //to create the layer
+	static DPListLayer* create(const char* type, int id, bool isPractice); //to create the layer
 
 	void reloadLevels(CCObject*);
 	void pageRight(CCObject*);
 	void pageLeft(CCObject*);
+
+	bool m_isPractice = false;
 
 	void updateProgressBar();
 	void updateSave();

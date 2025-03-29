@@ -207,7 +207,7 @@ void DPLayer::openList(CCObject* sender) {
 	auto id = btn->getTag();
 	auto type = btn->getID();
 
-	/*auto isPractice = false;
+	auto isPractice = false;
 
 	if (type == "main-practice") {
 		isPractice = true;
@@ -216,23 +216,24 @@ void DPLayer::openList(CCObject* sender) {
 	else if (type == "legacy-practice") {
 		isPractice = true;
 		type = "legacy";
-	}*/
+	}
 
 	//auto listID = m_data[type][id]["listID"].as_int();
-	auto reqLevels = 0;
-	if (type == "main") { reqLevels = m_data[type][id]["reqLevels"].as<int>().unwrapOr(999); }
+	//auto reqLevels = 0;
+	//if (type == "main") { reqLevels = m_data[type][id]["reqLevels"].as<int>().unwrapOr(999); }
 	//auto hasPractice = false;
 	//if (type == "main") { hasPractice = m_data[type][id]["practice"].asBool().unwrapOr(false); }
-	auto mainPack = 0;
-	if (type == "legacy") { mainPack = m_data[type][id]["mainPack"].as<int>().unwrapOr(0); }
-	std::vector<int> levelIDs = {};
-	levelIDs = m_data[type][id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+	//auto mainPack = 0;
+	//if (type == "legacy") { mainPack = m_data[type][id]["mainPack"].as<int>().unwrapOr(0); }
+	//std::vector<int> levelIDs = {};
+	//levelIDs = m_data[type][id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 	//std::vector<int> practiceIDs = {};
 	//if (type == "main") { practiceIDs = m_data["main"][id]["practiceIDs"].as<std::vector<int>>().unwrapOrDefault(); }
 	//if (type == "legacy") { practiceIDs = m_data["main"][mainPack]["practiceIDs"].as<std::vector<int>>().unwrapOrDefault(); }
 
 	auto scene = CCScene::create(); // creates the scene
-	auto dpLayer = DPListLayer::create(type.c_str(), id); //creates the layer
+	auto dpLayer = DPListLayer::create(type.c_str(), id, isPractice); //creates the layer
+	dpLayer->m_isPractice = isPractice;
 
 	scene->addChild(dpLayer);
 
@@ -699,7 +700,7 @@ void DPLayer::reloadList(int type) {
 		//int listID = 0;
 		std::string saveID = "null";
 		std::vector<int> levelIDs = {};
-		//std::vector<int> practiceIDs = {};
+		std::vector<int> practiceIDs = {};
 		int reqLevels = 0; //Main Only
 		int month = 1; //Monthly Only
 		int year = 0; //Monthly Only
@@ -712,7 +713,7 @@ void DPLayer::reloadList(int type) {
 		//listID = m_data[dataIdx][i]["listID"].as_int(); //only used to obtain old saves
 		if (type != static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["saveID"].isNull()) { saveID = m_data[dataIdx][i]["saveID"].asString().unwrapOr("null"); }
 		if (!m_data[dataIdx][i]["levelIDs"].isNull()) { levelIDs = m_data[dataIdx][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); }
-		//if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["practiceIDs"].isNull()) { practiceIDs = m_data[dataIdx][i]["practiceIDs"].as<std::vector<int>>().unwrapOrDefault(); }
+		if ((type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) && !m_data[dataIdx][i]["practiceIDs"].isNull()) { practiceIDs = m_data[dataIdx][i]["practiceIDs"].as<std::vector<int>>().unwrapOrDefault(); }
 		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["reqLevels"].isNull()) { reqLevels = m_data[dataIdx][i]["reqLevels"].as<int>().unwrapOr(999); }
 		if (type == static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["month"].isNull()) { month = m_data[dataIdx][i]["month"].as<int>().unwrapOr(1); }
 		if (type == static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["year"].isNull()) { year = m_data[dataIdx][i]["year"].as<int>().unwrapOr(1987); }
@@ -817,7 +818,7 @@ void DPLayer::reloadList(int type) {
 			if (fullTitle.length() > 25) { packText->setScale(0.55f); }
 		}
 
-		CCNode* packSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
+		CCNode* packSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 
 		if (fullSprite != "DP_Invisible.png") {
 			packSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSprite).data());
@@ -1007,24 +1008,30 @@ void DPLayer::reloadList(int type) {
 		viewSpr->addChild(viewText);
 		cellMenu->addChild(viewBtn);
 
-		/*if (type == static_cast<int>(DPListType::Main) && hasPractice && Mod::get()->getSettingValue<bool>("enable-practice")) {
+		if ((type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) && Mod::get()->getSettingValue<bool>("enable-practice")) {
 			auto practiceSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
 			auto practiceBtn = CCMenuItemSpriteExtra::create(practiceSpr, this, menu_selector(DPLayer::openList));
 			practiceBtn->setPosition({ 288, 14 });
 			practiceSpr->setScale(0.45f);
 			practiceBtn->setTag(i);
-			practiceBtn->setID("main-practice");
-			cellMenu->addChild(practiceBtn);
+
+			switch(type) {
+				case static_cast<int>(DPListType::Main):
+				{
+					practiceBtn->setID("main-practice");
+					break;
+				}
+				case static_cast<int>(DPListType::Legacy):
+				{
+					practiceBtn->setID("legacy-practice");
+					break;
+				}
+			}
+
+			if (!practiceIDs.empty()) {
+				cellMenu->addChild(practiceBtn);
+			}
 		}
-		else if (type == static_cast<int>(DPListType::Legacy) && m_data["main"][mainPack]["practice"].asBool() && Mod::get()->getSettingValue<bool>("enable-practice")) {
-			auto practiceSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
-			auto practiceBtn = CCMenuItemSpriteExtra::create(practiceSpr, this, menu_selector(DPLayer::openList));
-			practiceBtn->setPosition({ 288, 14 });
-			practiceSpr->setScale(0.45f);
-			practiceBtn->setTag(i);
-			practiceBtn->setID("legacy-practice");
-			cellMenu->addChild(practiceBtn);
-		}*/
 
 		if (i == 0 && type == static_cast<int>(DPListType::Monthly)) {
 			auto goldBG = CCLayerColor::create({ 255, 200, 0, 255 });

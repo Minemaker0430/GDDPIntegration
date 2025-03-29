@@ -382,9 +382,19 @@ void SaveContentsPopup::compareChanges() {
                                     auto newValue = newPack[key].as<int>().unwrapOr(-999);
                                     changesList.push_back(fmt::format("   {} Changed: {} -> {}", key, value.as<int>().unwrapOr(-999), newValue));
                                 }
-                                else if (key == "levelIDs") {
+                                else if ((key == "levelIDs" || key == "practiceIDs") || (!pack.contains("practiceIDs") && newPack.contains("practiceIDs"))) {
                                     auto newValue = newPack[key].as<std::vector<int>>().unwrapOrDefault();
-                                    changesList.push_back(fmt::format("   {} Changed: {} -> {}", key, value.as<std::vector<int>>().unwrapOrDefault(), newValue));
+                                    auto oldValue = value.as<std::vector<int>>().unwrapOrDefault();
+                                    changesList.push_back(fmt::format("   {} Changed:", key));
+                                    auto pos = 0;
+                                    for (auto id : newValue) {
+                                        if (pos < oldValue.size()) {
+                                            changesList.push_back(fmt::format("     - {} -> {}", oldValue.at(pos), id));
+                                        } else {
+                                            changesList.push_back(fmt::format("     - {}", id));
+                                        }
+                                        pos += 1;
+                                    }
                                 }
                                 else {
                                     auto newValue = newPack[key].as<std::string>().unwrapOr("?");
@@ -567,7 +577,7 @@ void SaveContentsPopup::setContents() {
                     req.header("X-GitHub-Api-Version", "2022-11-28");
                     
                     auto body = matjson::makeObject({
-                        {"message", fmt::format("Database Update: {}", m_dataNew["database-version"].as<int>().unwrapOr(-1))},
+                        {"message", fmt::format("Database Update: {} - {}", m_dataNew["database-version"].as<int>().unwrapOr(-1), GameManager::sharedState()->m_playerName)},
                         {"content", contents},
                         {"sha", m_skillsetsSha}
                     });
@@ -587,7 +597,7 @@ void SaveContentsPopup::setContents() {
                     req.header("X-GitHub-Api-Version", "2022-11-28");
                     
                     auto body = matjson::makeObject({
-                        {"message", fmt::format("Database Update: {}", m_dataNew["database-version"].as<int>().unwrapOr(-1))},
+                        {"message", fmt::format("Database Update: {} - {}", m_dataNew["database-version"].as<int>().unwrapOr(-1), GameManager::sharedState()->m_playerName)},
                         {"content", contents},
                         {"sha", m_skillsetsSha}
                     });
@@ -653,7 +663,7 @@ void SaveContentsPopup::setContents() {
 	    req.header("X-GitHub-Api-Version", "2022-11-28");
         
         auto body = matjson::makeObject({
-            {"message", fmt::format("Database Update: {}", m_dataNew["database-version"].as<int>().unwrapOr(-1))},
+            {"message", fmt::format("Database Update: {} - {}", m_dataNew["database-version"].as<int>().unwrapOr(-1), GameManager::sharedState()->m_playerName)},
             {"content", contents},
             {"sha", m_dataSha}
         });
@@ -673,7 +683,7 @@ void SaveContentsPopup::setContents() {
 	    req.header("X-GitHub-Api-Version", "2022-11-28");
 
         auto body = matjson::makeObject({
-            {"message", fmt::format("Database Update: {}", m_dataNew["database-version"].as<int>().unwrapOr(-1))},
+            {"message", fmt::format("Database Update: {} - {}", m_dataNew["database-version"].as<int>().unwrapOr(-1), GameManager::sharedState()->m_playerName)},
             {"content", contents},
             {"sha", m_dataSha}
         });

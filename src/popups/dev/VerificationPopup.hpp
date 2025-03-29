@@ -54,7 +54,7 @@ class VerificationPopup : public Popup<> {
 
         void getContents();
 
-        void onToggleTab(CCObject*);
+        void onToggle(CCObject*);
         void onBack(CCObject*);
         void onNew(CCObject*);
         void onEdit(CCObject*);
@@ -63,7 +63,6 @@ class VerificationPopup : public Popup<> {
         void onDelete(CCObject*);
         void onChangeLevelSkill(CCObject*);
         void onPushChanges(CCObject*);
-        void onDocs(CCObject*);
     public:
         std::string m_clientID;
 
@@ -72,6 +71,8 @@ class VerificationPopup : public Popup<> {
         std::string m_index;
         int m_packID;
         int m_levelID = -1;
+
+        bool m_practiceToggle = false; // "true" means editing startpos copies
 
         matjson::Value m_currentData; //Use for packs and skillsets
         matjson::Value m_levelData; //ONLY used in packs as there's no need for levels to be used with skillsets
@@ -103,6 +104,8 @@ class AddLevelPopup : public Popup<> {
         void onPaste(CCObject*);
     public:
         static AddLevelPopup* create();
+
+        int m_practiceIndex = -1; // -1 = Not a startpos level
     };
 
 //===================
@@ -195,6 +198,7 @@ class MovePopup : public Popup<> {
         std::string plusSprite = "DP_Unknown";
         std::string saveID = "null";
         std::vector<int> levelIDs = {0};
+        std::vector<int> practiceIDs = {0};
         int reqLevels = 999;
     };
 
@@ -210,6 +214,7 @@ class MovePopup : public Popup<> {
                 .plusSprite = value["plusSprite"].as<std::string>().unwrapOr("DP_Unknown"),
                 .saveID = value["saveID"].as<std::string>().unwrapOr("null"),
                 .levelIDs = value["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
+                .practiceIDs = value["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
                 .reqLevels = value["reqLevels"].as<int>().unwrapOr(999)};
 
             return Ok(f);
@@ -223,6 +228,7 @@ class MovePopup : public Popup<> {
                                             {"plusSprite", value.plusSprite},
                                             {"saveID", value.saveID},
                                             {"levelIDs", value.levelIDs},
+                                            {"practiceIDs", value.practiceIDs},
                                             {"reqLevels", value.reqLevels}});
             return obj;
         }
@@ -240,6 +246,7 @@ struct GDDPLegacyPackFormat
     std::string plusSprite = "DP_Unknown";
     std::string saveID = "null";
     std::vector<int> levelIDs = {0};
+    std::vector<int> practiceIDs = {0};
     int mainPack = 0;
 };
 
@@ -255,6 +262,7 @@ struct matjson::Serialize<GDDPLegacyPackFormat>
             .plusSprite = value["plusSprite"].as<std::string>().unwrapOr("DP_Unknown"),
             .saveID = value["saveID"].as<std::string>().unwrapOr("null"),
             .levelIDs = value["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
+            .practiceIDs = value["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
             .mainPack = value["mainPack"].as<int>().unwrapOr(0)};
 
         return Ok(f);
@@ -268,6 +276,7 @@ struct matjson::Serialize<GDDPLegacyPackFormat>
                                         {"plusSprite", value.plusSprite},
                                         {"saveID", value.saveID},
                                         {"levelIDs", value.levelIDs},
+                                        {"practiceIDs", value.practiceIDs},
                                         {"mainPack", value.mainPack}});
         return obj;
     }

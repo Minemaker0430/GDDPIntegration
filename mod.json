@@ -4,7 +4,7 @@
 			"win": "2.2074",
 			"android": "2.2074"
 		},
-		"version": "v1.0.5",
+		"version": "v1.0.6",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "ItsMochaTheOtter",
@@ -107,6 +107,12 @@
 		"show-xp": {
 			"name": "Enable XP",
 			"description": "Enables all XP-Related Buttons.",
+			"type": "bool",
+			"default": true
+		},
+		"enable-practice": {
+			"name": "Enable Practice",
+			"description": "Enables StartPos Lists to be accessed.",
 			"type": "bool",
 			"default": true
 		},

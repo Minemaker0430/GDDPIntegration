@@ -30,12 +30,12 @@ void DPListLayer::backButton(CCObject* sender) {
 	return;
 };
 
-bool DPListLayer::init(const char* type, int id) {
+bool DPListLayer::init(const char* type, int id, bool isPractice) {
 	if (!CCLayer::init()) return false;
 
 	m_type = type;
 	m_id = id;
-	//m_isPractice = isPractice;
+	m_isPractice = isPractice;
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
@@ -186,6 +186,8 @@ bool DPListLayer::init(const char* type, int id) {
 }
 
 void DPListLayer::updateProgressBar() {
+	if (m_isPractice) { return; }
+
 	m_progressBar->setVisible(true);
 
 	updateSave();
@@ -287,7 +289,7 @@ void DPListLayer::updateProgressBar() {
 
 void DPListLayer::updateSave() {
 
-	//if (m_isPractice) { return; }
+	if (m_isPractice) { return; }
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	
@@ -418,35 +420,28 @@ void DPListLayer::loadLevels(int page) {
 	std::vector<int> levelIDs = {0};
 	if (!data[m_type][m_id]["levelIDs"].isNull()) { levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); }
 
-	/*if (m_isPractice) {
+	if (m_isPractice) {
 
 		m_IDs.clear();
 
-		if (m_type == "main") {
-			auto practiceIDs = data[m_type][m_id]["practiceIDs"].as<std::vector<int>>().unwrapOrDefault();
+		if (m_type == "main" || m_type == "legacy") {
+			auto practiceIDs = data[m_type][m_id]["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(levelIDs.size(), 0));
 
-			for (int i = 0; i < levelIDs.size(); i++)
+			for (auto const& level : practiceIDs)
 			{
-				int num = practiceIDs[i];
-				m_IDs.push_back(std::to_string(num));
+				m_IDs.push_back(std::to_string(level));
 			}
 		}
-		else if (m_type == "legacy") {
-			auto mainPack = data[m_type][m_id]["mainPack"].as<int>().unwrapOrDefault();
-			auto practiceIDs = data["main"][mainPack]["practiceIDs"].as<std::vector<int>>().unwrapOrDefault();
-
-			for (int i = data["main"][mainPack]["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size(); i < practiceIDs.size(); i++)
-			{
-				int num = practiceIDs.at(i);
-				m_IDs.push_back(std::to_string(num));
-			}
+		else {
+			loadLevelsFailed("");
 		}
-	}*/
 
-	m_IDs.clear();
+	} else {
+		m_IDs.clear();
 
-	for (auto const& level : levelIDs) {
-		m_IDs.push_back(std::to_string(level));
+		for (auto const& level : levelIDs) {
+			m_IDs.push_back(std::to_string(level));
+		}
 	}
 
 	log::info("{}", m_IDs);
@@ -499,16 +494,17 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 	if (m_type == "main" || m_type == "legacy") {
-		/*if (m_isPractice) {
+		if (m_isPractice) {
 			m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), fmt::format("{} Demons (Practice)", data[m_type][m_id]["name"].asString().unwrapOrDefault()).c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
 			m_list->setZOrder(2);
 			m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
 			this->addChild(m_list);
-		}*/
-		m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), fmt::format("{} Demons", data[m_type][m_id]["name"].asString().unwrapOr("null")).c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
-		m_list->setZOrder(2);
-		m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
-		this->addChild(m_list);
+		} else {
+			m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), fmt::format("{} Demons", data[m_type][m_id]["name"].asString().unwrapOr("null")).c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
+			m_list->setZOrder(2);
+			m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
+			this->addChild(m_list);
+		}
 	}
 	else {
 		m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), data[m_type][m_id]["name"].asString().unwrapOr("null").c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
@@ -596,9 +592,9 @@ void DPListLayer::loadLevelsFailed(const char*) {
 	return;
 }
 
-DPListLayer* DPListLayer::create(const char* type, int id) {
+DPListLayer* DPListLayer::create(const char* type, int id, bool isPractice) {
 	auto pRet = new DPListLayer();
-	if (pRet && pRet->init(type, id)) {
+	if (pRet && pRet->init(type, id, isPractice)) {
 		pRet->autorelease();
 		return pRet;
 	}

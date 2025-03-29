@@ -510,6 +510,7 @@ void VerificationPopup::onPushChanges(CCObject* sender) {
 void VerificationPopup::loadMain(int tab)
 {
 	m_currentTab = tab;
+	m_practiceToggle = false;
 
 	this->setTitle("Mod Panel");
 	m_mainLayer->removeAllChildrenWithCleanup(true);
@@ -526,7 +527,7 @@ void VerificationPopup::loadMain(int tab)
 	auto packsBtnSprOn = ButtonSprite::create("Packs", "bigFont.fnt", "GJ_button_02.png", 0.65f);
 	packsBtnSprOn->m_BGSprite->setContentSize({175.f, 25.f});
 
-	auto packsBtn = CCMenuItemToggler::create(packsBtnSprOff, packsBtnSprOn, this, menu_selector(VerificationPopup::onToggleTab));
+	auto packsBtn = CCMenuItemToggler::create(packsBtnSprOff, packsBtnSprOn, this, menu_selector(VerificationPopup::onToggle));
 	packsBtn->setContentSize({175.f, 25.f});
 	packsBtn->setPosition({-90.f, 0.f});
 	packsBtn->setID("packs");
@@ -540,7 +541,7 @@ void VerificationPopup::loadMain(int tab)
 	auto skillsBtnSprOn = ButtonSprite::create("Skillsets", "bigFont.fnt", "GJ_button_02.png", 0.65f);
 	skillsBtnSprOn->m_BGSprite->setContentSize({175.f, 25.f});
 
-	auto skillsBtn = CCMenuItemToggler::create(skillsBtnSprOff, skillsBtnSprOn, this, menu_selector(VerificationPopup::onToggleTab));
+	auto skillsBtn = CCMenuItemToggler::create(skillsBtnSprOff, skillsBtnSprOn, this, menu_selector(VerificationPopup::onToggle));
 	skillsBtn->setContentSize({175.f, 25.f});
 	skillsBtn->setPosition({90.f, 0.f});
 	skillsBtn->setID("skills");
@@ -786,7 +787,14 @@ void VerificationPopup::onEdit(CCObject* sender) {
 	auto tag = btn->getTag();
 	auto id = btn->getID();
 
-	if (tag == -200) {
+	if (id == "edit-practice-id") {
+		log::info("Editing Startpos ID at pos: {}", tag);
+
+		auto popup = AddLevelPopup::create();
+		popup->m_practiceIndex = tag;
+		popup->show();
+	}
+	else if (tag == -200) {
 		EditDescriptionPopup::create(m_currentData["description"].asString().unwrapOr("???"))->show();
 	}
 	else if (tag == -100) {
@@ -957,6 +965,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 					.plusSprite = plusSprite,
 					.saveID = saveID,
 					.levelIDs = m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault(),
+					.practiceIDs = m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOrDefault(),
 					.reqLevels = reqLevels
 				};
 			}
@@ -968,6 +977,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 					.plusSprite = plusSprite,
 					.saveID = saveID,
 					.levelIDs = m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault(),
+					.practiceIDs = m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOrDefault(),
 					.mainPack = mainPack
 				};
 			}
@@ -1178,6 +1188,22 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 	newMenu->addChild(newBtn);
 	m_mainLayer->addChild(newMenu);
 
+	//startpos toggle
+	auto toggleMenu = CCMenu::create();
+	toggleMenu->setPosition({187.5f, 168.f});
+	toggleMenu->setScale(0.75f);
+	toggleMenu->setID("toggle-menu");
+
+	auto toggleBtnSprOff = ButtonSprite::create("Startpos", "bigFont.fnt", "GJ_button_01.png", 0.65f);
+	auto toggleBtnSprOn = ButtonSprite::create("Startpos", "bigFont.fnt", "GJ_button_02.png", 0.65f);
+	auto toggleBtn = CCMenuItemToggler::create(toggleBtnSprOff, toggleBtnSprOn, this, menu_selector(VerificationPopup::onToggle));
+	toggleBtn->setID("startpos-toggle");
+	toggleBtn->toggle(m_practiceToggle);
+	toggleMenu->addChild(toggleBtn);
+	if (index == "main" || index == "legacy") {
+		m_mainLayer->addChild(toggleMenu);
+	}
+
 	//set up data
 	m_index = index;
 	m_packID = id;
@@ -1205,7 +1231,7 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 	auto cells = CCArray::create();
 
 	for (auto [key, value] : data) {
-		if (key != "levelIDs" && key != "description") {
+		if (key != "levelIDs" && key != "description" && key != "practiceIDs") {
 			auto propertyNode = CCNode::create();
 			propertyNode->setID(fmt::format("property-{}", key));
 			propertyNode->setScale(0.75f);
@@ -1287,65 +1313,111 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 
 	cells = CCArray::create();
 
-	auto pos = 0;
-	for (auto id : data["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0))) {
-		auto idNode = CCNode::create();
-		idNode->setID(fmt::format("level-{}", id));
-		idNode->setScale(0.75f);
+	if (m_practiceToggle) {
+		auto pos = 0;
+		auto levelIDs = data["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0));
+		for (auto id : data["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(levelIDs.size(), 0))) {
+			auto mainID = levelIDs.at(pos);
+			
+			auto idNode = CCNode::create();
+			idNode->setID(fmt::format("level-sp-{}", id));
+			idNode->setScale(0.75f);
 
-		std::string levelName = "???";
-		if (m_dataDev["level-data"].contains(std::to_string(id))) {
-			levelName = m_dataDev["level-data"][std::to_string(id)]["name"].asString().unwrapOr("???");
+			std::string levelName = "???";
+			if (m_dataDev["level-data"].contains(std::to_string(mainID))) {
+				levelName = m_dataDev["level-data"][std::to_string(mainID)]["name"].asString().unwrapOr("???");
+			}
+
+			// label
+			auto label = CCLabelBMFont::create(fmt::format("{}\n({}) [SP]", levelName, id).c_str(), "bigFont.fnt");
+			label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
+			label->setID("label");
+			label->setScale(0.5f);
+			label->setAnchorPoint({0.f, 0.5f});
+			label->setPosition({5.f, 17.5f});
+			if (id == 0) { label->setColor({ 255, 0, 0 }); }
+
+			// edit menu
+			auto editMenu = CCMenu::create();
+			editMenu->setScale(0.75f);
+			editMenu->setPosition({165.f, -25.f});
+			editMenu->setID("edit-menu");
+
+			auto editSpr = CCSprite::createWithSpriteFrameName("GJ_editBtn_001.png");
+			editSpr->setScale(0.5f);
+			auto editBtn = CCMenuItemSpriteExtra::create(editSpr, this, menu_selector(VerificationPopup::onEdit));
+			editBtn->setID("edit-practice-id");
+			editBtn->setTag(pos);
+			editMenu->addChild(editBtn);
+
+			// add children
+			idNode->addChild(label);
+			idNode->addChild(editMenu);
+
+			cells->addObject(idNode);
+			pos += 1;
 		}
-		else if (id == 0) {
-			levelName = "PLACEHOLDER";
+	} else {
+		auto pos = 0;
+		for (auto id : data["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0))) {
+			auto idNode = CCNode::create();
+			idNode->setID(fmt::format("level-{}", id));
+			idNode->setScale(0.75f);
+
+			std::string levelName = "???";
+			if (m_dataDev["level-data"].contains(std::to_string(id))) {
+				levelName = m_dataDev["level-data"][std::to_string(id)]["name"].asString().unwrapOr("???");
+			}
+			else if (id == 0) {
+				levelName = "PLACEHOLDER";
+			}
+
+			// label
+			auto label = CCLabelBMFont::create(fmt::format("{}\n({})", levelName, id).c_str(), "bigFont.fnt");
+			label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
+			label->setID("label");
+			label->setScale(0.5f);
+			label->setAnchorPoint({0.f, 0.5f});
+			label->setPosition({5.f, 17.5f});
+			if (levelName == "???") { label->setColor({ 255, 0, 0 }); }
+			if (levelName == "PLACEHOLDER") { label->setColor({ 0, 255, 0 }); }
+
+			// edit menu
+			auto editMenu = CCMenu::create();
+			editMenu->setScale(0.75f);
+			editMenu->setPosition({165.f, -25.f});
+			editMenu->setID("edit-menu");
+
+			auto editSpr = CCSprite::createWithSpriteFrameName("GJ_editBtn_001.png");
+			editSpr->setScale(0.5f);
+			auto editBtn = CCMenuItemSpriteExtra::create(editSpr, this, menu_selector(VerificationPopup::onEdit));
+			editBtn->setID(std::to_string(id));
+			editBtn->setTag(-100);
+			editMenu->addChild(editBtn);
+
+			auto moveSpr = CCSprite::createWithSpriteFrameName("GJ_editModeBtn_001.png");
+			moveSpr->setScale(0.85f);
+			auto moveBtn = CCMenuItemSpriteExtra::create(moveSpr, this, menu_selector(VerificationPopup::onMove));
+			moveBtn->setPositionX(-40.f);
+			moveBtn->setTag((-100 - pos));
+			moveBtn->setID(std::to_string(id));
+			editMenu->addChild(moveBtn);
+
+			auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteBtn_001.png");
+			deleteSpr->setScale(0.85f);
+			auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr, this, menu_selector(VerificationPopup::onDelete));
+			deleteBtn->setPositionX(-80.f);
+			deleteBtn->setTag((-100 - pos));
+			deleteBtn->setID(std::to_string(id));
+			editMenu->addChild(deleteBtn);
+
+			// add children
+			idNode->addChild(label);
+			idNode->addChild(editMenu);
+
+			cells->addObject(idNode);
+			pos += 1;
 		}
-
-		// label
-		auto label = CCLabelBMFont::create(fmt::format("{}\n({})", levelName, id).c_str(), "bigFont.fnt");
-		label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-		label->setID("label");
-		label->setScale(0.5f);
-		label->setAnchorPoint({0.f, 0.5f});
-		label->setPosition({5.f, 17.5f});
-		if (levelName == "???") { label->setColor({ 255, 0, 0 }); }
-		if (levelName == "PLACEHOLDER") { label->setColor({ 0, 255, 0 }); }
-
-		// edit menu
-		auto editMenu = CCMenu::create();
-		editMenu->setScale(0.75f);
-		editMenu->setPosition({165.f, -25.f});
-		editMenu->setID("edit-menu");
-
-		auto editSpr = CCSprite::createWithSpriteFrameName("GJ_editBtn_001.png");
-		editSpr->setScale(0.5f);
-		auto editBtn = CCMenuItemSpriteExtra::create(editSpr, this, menu_selector(VerificationPopup::onEdit));
-		editBtn->setID(std::to_string(id));
-		editBtn->setTag(-100);
-		editMenu->addChild(editBtn);
-
-		auto moveSpr = CCSprite::createWithSpriteFrameName("GJ_editModeBtn_001.png");
-		moveSpr->setScale(0.85f);
-		auto moveBtn = CCMenuItemSpriteExtra::create(moveSpr, this, menu_selector(VerificationPopup::onMove));
-		moveBtn->setPositionX(-40.f);
-		moveBtn->setTag((-100 - pos));
-		moveBtn->setID(std::to_string(id));
-		editMenu->addChild(moveBtn);
-
-		auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteBtn_001.png");
-		deleteSpr->setScale(0.85f);
-		auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr, this, menu_selector(VerificationPopup::onDelete));
-		deleteBtn->setPositionX(-80.f);
-		deleteBtn->setTag((-100 - pos));
-		deleteBtn->setID(std::to_string(id));
-		editMenu->addChild(deleteBtn);
-
-		// add children
-		idNode->addChild(label);
-		idNode->addChild(editMenu);
-
-		cells->addObject(idNode);
-		pos += 1;
 	}
 
 	//list
@@ -1761,15 +1833,23 @@ void VerificationPopup::loadSkill(std::string key) {
 	return;
 }
 
-void VerificationPopup::onToggleTab(CCObject* sender)
+void VerificationPopup::onToggle(CCObject* sender)
 {
 	auto btn = static_cast<CCMenuItemToggler*>(sender);
+	auto id = btn->getID();
 	auto menuType = btn->getTag();
 
-	auto packsbtn = m_tabs->getChildByID("packs");
-	auto skillsbtn = m_tabs->getChildByID("skills");
+	if (id == "startpos-toggle") {
+		m_practiceToggle = !m_practiceToggle;
 
-	loadMain(menuType);
+		loadPack(m_index, m_packID, true);
+	}
+	else {
+		auto packsbtn = m_tabs->getChildByID("packs");
+		auto skillsbtn = m_tabs->getChildByID("skills");
+
+		loadMain(menuType);
+	}
 
 	return;
 }
@@ -1958,10 +2038,18 @@ void AddLevelPopup::onAddLevel(CCObject*) {
 	if (std::stoi(m_value->getString())) { lvlID = std::stoi(m_value->getString()); }
 
 	VerificationPopup* popup = this->getParent()->getChildByType<VerificationPopup>(0);
-	auto lvlList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-	lvlList.insert(lvlList.begin(), lvlID);
-	popup->m_currentData.set("levelIDs", lvlList);
-	popup->loadPack(popup->m_index, popup->m_packID, true);
+	if (m_practiceIndex > -1) {
+		auto lvlList = popup->m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size(), 0));
+		lvlList.at(m_practiceIndex) = lvlID;
+		popup->m_currentData.set("practiceIDs", lvlList);
+		popup->loadPack(popup->m_index, popup->m_packID, true);
+	}
+	else {
+		auto lvlList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+		lvlList.insert(lvlList.begin(), lvlID);
+		popup->m_currentData.set("levelIDs", lvlList);
+		popup->loadPack(popup->m_index, popup->m_packID, true);
+	}
 
 	this->removeMeAndCleanup();
 

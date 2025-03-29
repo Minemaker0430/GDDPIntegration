@@ -1,3 +1,7 @@
+# v1.0.6
+
+* Readded Practice Packs since they can now be actively maintained
+
 # v1.0.5
 
 * Fixed levels being moved to Legacy still having XP
