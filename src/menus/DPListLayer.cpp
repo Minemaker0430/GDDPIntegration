@@ -194,7 +194,7 @@ void DPListLayer::updateProgressBar() {
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
-	auto clippingNode = typeinfo_cast<CCClippingNode*>(m_progressBar->getChildByID("clipping-node"));
+	CCClippingNode* clippingNode = m_progressBar->getChildByType<CCClippingNode*>(0);
 	auto front = typeinfo_cast<CCSprite*>(m_progressBar->getChildByID("clipping-node")->getChildByID("progress-bar-front"));
 	auto progressText = typeinfo_cast<CCLabelBMFont*>(m_progressBar->getChildByID("progress-text"));
 
