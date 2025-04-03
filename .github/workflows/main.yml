@@ -49,6 +49,7 @@ jobs:
 
     steps:
       - uses: geode-sdk/build-geode-mod/combine@main
+        sdk: nightly
         id: build
 
       - uses: actions/upload-artifact@v4
