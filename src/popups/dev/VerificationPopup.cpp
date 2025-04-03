@@ -1218,10 +1218,10 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 	if (fromLvl) {
 		data = m_currentData;
 
-		if (m_levelID != -1) {
+		/*if (m_levelID != -1) {
 			data.set("levelIDs", m_dataDev[index][id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault());
 			m_currentData.set("levelIDs", m_dataDev[index][id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault());
-		}
+		}*/
 
 		m_levelID = -1;
 	}

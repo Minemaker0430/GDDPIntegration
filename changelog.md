@@ -1,3 +1,7 @@
+# v1.0.7
+
+* Ported to Mac and iOS
+
 # v1.0.6
 
 * Readded Practice Packs since they can now be actively maintained
