@@ -40,6 +40,7 @@ jobs:
         uses: geode-sdk/build-geode-mod@main
         with:
           combine: true
+          sdk: nightly
           target: ${{ matrix.config.target }}
 
   package:
@@ -49,7 +50,6 @@ jobs:
 
     steps:
       - uses: geode-sdk/build-geode-mod/combine@main
-        sdk: nightly
         id: build
 
       - uses: actions/upload-artifact@v4
