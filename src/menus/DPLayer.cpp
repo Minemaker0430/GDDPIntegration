@@ -735,9 +735,9 @@ void DPLayer::reloadList(int type) {
 			}
 		}
 
-		if (type == static_cast<int>(DPListType::Main) && !listSave.hasRank && progress < listSave.progress) { //If you don't have the rank, any progress you have will be maintained even if a level is moved to legacy
+		/*if (type == static_cast<int>(DPListType::Main) && !listSave.hasRank && progress < listSave.progress) { //If you don't have the rank, any progress you have will be maintained even if a level is moved to legacy
 			progress = listSave.progress;
-		}
+		}*/
 
 		//update status
 

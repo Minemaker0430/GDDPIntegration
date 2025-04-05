@@ -8,6 +8,7 @@
 #include "RoulettePopup.hpp"
 #include "../RouletteUtils.hpp"
 #include "../menus/RouletteSafeLayer.hpp"
+#include "../Utils.hpp"
 
 // geode namespace
 using namespace geode::prelude;
@@ -1841,7 +1842,7 @@ void RouletteImportPopup::onConfirm(CCObject*) {
 
 	if (m_isSettings) {
 		auto result = RouletteUtils::importSettings(m_value->getString());
-		auto seed = std::stoi(result[1]);
+		auto seed = Utils::safe_stoi(result[1], -1);
 		auto settings = result[0];
 
 		RoulettePopup* popup = this->getParent()->getChildByType<RoulettePopup>(0);
@@ -2004,7 +2005,7 @@ void RouletteSettingsPopup::onClose(CCObject *sender) {
 		m_seed = -1;
 	}
 	else {
-		m_seed = abs(std::stoi(m_value->getString()));
+		m_seed = abs(Utils::safe_stoi(m_value->getString()));
 	}
 
 	RoulettePopup *popup = this->getParent()->getChildByType<RoulettePopup>(0);

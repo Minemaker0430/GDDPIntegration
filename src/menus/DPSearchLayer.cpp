@@ -593,7 +593,8 @@ bool PagePopup::setup() {
 void PagePopup::confirmPage(CCObject* sender) {
 
 	DPSearchLayer* searchLayer = this->getParent()->getChildByType<DPSearchLayer>(0);
-	searchLayer->loadLevelsAtPage(std::stoi(m_value->getString()) - 1);
+	int page = Utils::safe_stoi(m_value->getString());
+	searchLayer->loadLevelsAtPage(page - 1);
 
 	this->removeMeAndCleanup();
 
@@ -607,7 +608,7 @@ void PagePopup::resetPage(CCObject* sender) {
 }
 
 void PagePopup::pageLeft(CCObject* sender) {
-	auto value = std::stoi(m_value->getString());
+	int value = Utils::safe_stoi(m_value->getString());
 
 	value -= 1;
 	value = std::max(value, 1);
@@ -617,7 +618,7 @@ void PagePopup::pageLeft(CCObject* sender) {
 }
 
 void PagePopup::pageRight(CCObject* sender) {
-	auto value = std::stoi(m_value->getString());
+	int value = Utils::safe_stoi(m_value->getString());
 
 	value += 1;
 	value = std::min(value, 999);

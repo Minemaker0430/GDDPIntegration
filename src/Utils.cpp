@@ -31,4 +31,24 @@ std::vector<std::string> Utils::substring(std::string s, std::string d) {
 	}
 	res.push_back(token);
 	return res;
-}
+};
+
+int Utils::safe_stoi(std::string input, int fallback) {
+	std::string result = "";
+	std::string allowedChars = "0123456789";
+
+	for (auto c : input) {
+		for (auto ch : allowedChars) {
+			if (c == ch) {
+				result.push_back(c);
+				break;
+			}
+		}
+	}
+
+	if (result.empty()) {
+		return fallback;
+	}
+
+	return std::stoi(result);
+};

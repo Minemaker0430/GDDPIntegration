@@ -254,7 +254,7 @@ void RouletteUtils::importSave(std::string saveStr, bool fromFile) {
             return; 
         }
 
-        std::vector<int> lvls = setupLevels(packs, values[2], std::stoi(values[3]));*/
+        std::vector<int> lvls = setupLevels(packs, values[2], Utils::safe_stoi(values[3]));*/
         std::vector<int> lvls = {};
         auto lvlStrings = Utils::substring(values[3], ",");
 
@@ -269,18 +269,18 @@ void RouletteUtils::importSave(std::string saveStr, bool fromFile) {
 
         for (std::string str : lvlStrings) {
             if (str != "LVLS") {
-                lvls.push_back(std::stoi(str));
+                lvls.push_back(Utils::safe_stoi(str));
             }
         }
 
         auto save = RouletteSaveFormat{
             .name = values[1],
             .settings = values[2],
-            .seed = std::stoi(values[4]),
+            .seed = Utils::safe_stoi(values[4], -1),
             .levels = lvls,
-            .progress = std::stoi(values[5]),
-            .skips = std::stoi(values[6]),
-            .score = std::stoi(values[7])
+            .progress = Utils::safe_stoi(values[5]),
+            .skips = Utils::safe_stoi(values[6]),
+            .score = Utils::safe_stoi(values[7])
         };
 
         auto rouletteSaves = Mod::get()->getSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", {});

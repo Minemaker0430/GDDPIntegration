@@ -13,6 +13,7 @@
 
 //geode namespace
 using namespace geode::prelude;
+using namespace cocos2d;
 
 void DPListLayer::keyBackClicked() {
 	updateSave();
@@ -194,7 +195,7 @@ void DPListLayer::updateProgressBar() {
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
-	CCClippingNode* clippingNode = m_progressBar->getChildByType<CCClippingNode*>(0);
+	auto clippingNode = typeinfo_cast<CCClippingNode*>(m_progressBar->getChildByID("clipping-node"));
 	auto front = typeinfo_cast<CCSprite*>(m_progressBar->getChildByID("clipping-node")->getChildByID("progress-bar-front"));
 	auto progressText = typeinfo_cast<CCLabelBMFont*>(m_progressBar->getChildByID("progress-text"));
 
@@ -441,6 +442,13 @@ void DPListLayer::loadLevels(int page) {
 
 		for (auto const& level : levelIDs) {
 			m_IDs.push_back(std::to_string(level));
+		}
+	}
+
+	//trim out any placeholders
+	for (auto i = 0; i < m_IDs.size(); i++) {
+		if (m_IDs[i] == "0") {
+			m_IDs.erase(m_IDs.begin() + i);
 		}
 	}
 

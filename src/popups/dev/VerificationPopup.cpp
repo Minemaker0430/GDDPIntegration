@@ -800,7 +800,7 @@ void VerificationPopup::onEdit(CCObject* sender) {
 	else if (tag == -100) {
 		log::info("Editing Level: {}", id);
 
-		loadLevel(std::stoi(id));
+		loadLevel(Utils::safe_stoi(id));
 	}
 	else if (m_skillsetsDev.contains(id)) {
 		log::info("Editing Skillset: {}", id);
@@ -899,6 +899,29 @@ void VerificationPopup::removeObject(std::string type, std::string id, int pos) 
 		std::vector<matjson::Value> packs = m_dataDev[id].as<std::vector<matjson::Value>>().unwrapOrDefault();
 		packs.erase(packs.begin() + pos);
 
+		//if id (index) is main, subtract everything pointing to pos by 1 
+		if (id == "main") {
+			auto levels = m_dataDev["level-data"];
+			auto legacyPacks = m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault();
+
+			for (auto [key, value] : levels) {
+				if (value["difficulty"].as<int>().unwrapOr(0) > pos) {
+					levels[key].set("difficulty", value["difficulty"].as<int>().unwrapOr(0) - 1);
+				}
+			}
+
+			auto packPos = 0;
+			for (auto pack : legacyPacks) {
+				if (pack["mainPack"].as<int>().unwrapOr(0) > pos) {
+					legacyPacks.at(packPos).set("mainPack", pack["mainPack"].as<int>().unwrapOr(0) - 1);
+				}
+				packPos += 1;
+			}
+
+			m_dataDev.set("level-data", levels);
+			m_dataDev.set("legacy", legacyPacks);
+		}
+		
 		m_dataDev.set(id, packs);
 
 		loadMain(0);
@@ -943,7 +966,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 			int reqLevels = 999;
 			int mainPack = 0;
 			int month = 1;
-			int year = 1997;
+			int year = 1987;
 
 			if (m_index == "main" || m_index == "legacy") { 
 				plusSprite = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-plusSprite")->getChildByID("value-menu")->getChildByID("value-input"))->getString(); 
@@ -952,14 +975,14 @@ void VerificationPopup::onSave(CCObject* sender) {
 				saveID = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-saveID")->getChildByID("value-menu")->getChildByID("value-input"))->getString(); 
 			}
 			if (m_index == "main") {
-				reqLevels = std::stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-reqLevels")->getChildByID("value-menu")->getChildByID("value-input"))->getString()); 
+				reqLevels = Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-reqLevels")->getChildByID("value-menu")->getChildByID("value-input"))->getString()); 
 			}
 			if (m_index == "legacy") {
-				mainPack = std::stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-mainPack")->getChildByID("value-menu")->getChildByID("value-input"))->getString()); 
+				mainPack = Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-mainPack")->getChildByID("value-menu")->getChildByID("value-input"))->getString()); 
 			}
 			if (m_index == "monthly") {
-				month = std::stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-month")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
-				year = std::stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-year")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
+				month = Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-month")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
+				year = Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-year")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
 			}
 
 			matjson::Value packData;
@@ -1025,15 +1048,15 @@ void VerificationPopup::onSave(CCObject* sender) {
 
 			auto levelID = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-level-id")->getChildByID("value-menu")->getChildByID("value-input"))->getString();
 			auto idChanged = false;
-			if (std::stoi(levelID) != m_levelID) { idChanged = true; };
+			if (Utils::safe_stoi(levelID) != m_levelID) { idChanged = true; };
 
 			//convert text inputs
 			auto name = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-name")->getChildByID("value-menu")->getChildByID("value-input"))->getString();
-			auto difficulty = std::stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-difficulty")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
+			int difficulty = Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-difficulty")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
 			matjson::Value xp;
 			if (m_list->getChildByIDRecursive("property-xp-chokepoints")) { //we only need to check for one since the rest can't exist without it
 				for (auto skill : XPUtils::skillIDs) {
-					xp.set(skill, std::stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive(fmt::format("property-xp-{}", skill))->getChildByID("value-menu")->getChildByID("value-input"))->getString()));
+					xp.set(skill, Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive(fmt::format("property-xp-{}", skill))->getChildByID("value-menu")->getChildByID("value-input"))->getString()));
 				}
 			}
 
@@ -1052,7 +1075,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 						auto pos = 0;
 						for (auto lvl : lvlList) {
 							if (lvl == m_levelID) {
-								lvlList.at(pos) = std::stoi(levelID);
+								lvlList.at(pos) = Utils::safe_stoi(levelID);
 								data.at(packPos).set("levelIDs", lvlList);
 							}
 							pos += 1;
@@ -1323,6 +1346,13 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 	if (m_practiceToggle) {
 		auto pos = 0;
 		auto levelIDs = data["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0));
+		auto practiceIDs = data["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(levelIDs.size(), 0));
+		
+		if (practiceIDs.empty()) {
+			data.set("practiceIDs", std::vector<int>(levelIDs.size(), 0));
+			practiceIDs = data["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(levelIDs.size(), 0));
+		}
+		
 		for (auto id : data["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(levelIDs.size(), 0))) {
 			auto mainID = levelIDs.at(pos);
 			
@@ -2040,9 +2070,7 @@ void AddLevelPopup::onPaste(CCObject*) {
 
 void AddLevelPopup::onAddLevel(CCObject*) {
 
-	int lvlID = 0;
-
-	if (std::stoi(m_value->getString())) { lvlID = std::stoi(m_value->getString()); }
+	int lvlID = Utils::safe_stoi(m_value->getString());
 
 	VerificationPopup* popup = this->getParent()->getChildByType<VerificationPopup>(0);
 	auto lvlList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
@@ -2331,13 +2359,111 @@ void MovePopup::onConfirm(CCObject*) {
 		auto index = m_ID;
 		auto originalData = popup->m_dataDev[index][m_pos];
 		auto data = popup->m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOrDefault();
-		int newPos = std::stoi(m_value->getString()) - 1;
+		int newPos = Utils::safe_stoi(m_value->getString()) - 1;
+		log::info("old pos: {}", m_pos);
+		log::info("new pos: {}", newPos);
 
 		//remove old pack at position since we have the placement stored now
 		data.erase(data.begin() + m_pos);
 
 		//place the pack at the new position
 		data.insert(data.begin() + newPos, originalData);
+
+		//if index is main, update difficulties and mainPack values in legacy packs
+		if (index == "main") {
+			auto levels = popup->m_dataDev["level-data"];
+			auto legacyPacks = popup->m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault();
+			//m_pos = old position, newPos = new position
+
+			//first set all levels and legacy packs pointing to old pos to -1 temporarily
+			for (auto [key, value] : levels) {
+				if (value["difficulty"].as<int>().unwrapOr(0) == m_pos) {
+					levels[key].set("difficulty", -1);
+				} 
+			}
+
+			auto pos = 0;
+			for (auto pack : legacyPacks) {
+				if (pack["mainPack"].as<int>().unwrapOr(0) == m_pos) {
+					legacyPacks.at(pos).set("mainPack", -1);
+				}
+				pos += 1;
+			}
+
+			/*
+			evaluation time!
+			the range that should be changed is dependent on the difference between new pos and old pos
+			example:
+			1-2-3-4-5-6-7-8-9
+			if 3 is moved to 4...
+			1-2-3->4-5-6-7-8-9
+			4 is the only one affected
+			new pos - old pos = 1
+			positive = shift x values to the right, left (subtract)
+			negative = shift x values to the left, right (add)
+			a) set the original value to -1: 3 -> -1
+			1-2-(-1)-4-5-6-7-8-9
+			b) one value is affected to the right, so shift 4 down by one
+			1-2-3-(-1)-5-6-7-8-9
+			c) set -1 to new pos (4)
+			1-2-3-4-5-6-7-8-9
+			*/
+
+			auto diff = newPos - m_pos;
+			if (diff > 0) {
+				for (auto [key, value] : levels) {
+					auto difficulty = value["difficulty"].as<int>().unwrapOr(0);
+					if (difficulty > m_pos && difficulty <= m_pos + diff) {
+						levels[key].set("difficulty", difficulty - 1);
+					} 
+				}
+		
+				pos = 0;
+				for (auto pack : legacyPacks) {
+					auto mainPack = pack["mainPack"].as<int>().unwrapOr(0);
+					if (mainPack > m_pos && mainPack <= m_pos + diff) {
+						legacyPacks.at(pos).set("mainPack", mainPack - 1);
+					}
+					pos += 1;
+				}
+
+			}
+			else if (diff < 0) {
+				for (auto [key, value] : levels) {
+					auto difficulty = value["difficulty"].as<int>().unwrapOr(0);
+					if (difficulty < m_pos && difficulty >= m_pos + diff) {
+						levels[key].set("difficulty", difficulty + 1);
+					} 
+				}
+		
+				pos = 0;
+				for (auto pack : legacyPacks) {
+					auto mainPack = pack["mainPack"].as<int>().unwrapOr(0);
+					if (mainPack < m_pos && mainPack >= m_pos + diff) {
+						legacyPacks.at(pos).set("mainPack", mainPack + 1);
+					}
+					pos += 1;
+				}
+			}
+
+			//finally, set all values of -1 to newPos
+			for (auto [key, value] : levels) {
+				if (value["difficulty"].as<int>().unwrapOr(0) == -1) {
+					levels[key].set("difficulty", newPos);
+				} 
+			}
+
+			pos = 0;
+			for (auto pack : legacyPacks) {
+				if (pack["mainPack"].as<int>().unwrapOr(0) == -1) {
+					legacyPacks.at(pos).set("mainPack", newPos);
+				}
+				pos += 1;
+			}
+
+			popup->m_dataDev.set("legacy", legacyPacks);
+			popup->m_dataDev.set("level-data", levels);
+		}
 
 		//store data
 		popup->m_dataDev.set(index, data);
@@ -2348,8 +2474,8 @@ void MovePopup::onConfirm(CCObject*) {
 	}
 	else if (m_type == "level") { //level
 		auto levelList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-		int lvlID = std::stoi(m_ID);
-		int newPos = std::stoi(m_value->getString()) - 1;
+		int lvlID = Utils::safe_stoi(m_ID);
+		int newPos = Utils::safe_stoi(m_value->getString()) - 1;
 
 		//remove old level at position since we have the placement stored now
 		levelList.erase(levelList.begin() + m_pos);
@@ -2625,6 +2751,23 @@ void NewPackPopup::onConfirm(CCObject* sender) {
 	if (id == "main-btn") {
 		auto data = popup->m_dataDev["main"].as<std::vector<matjson::Value>>().unwrapOrDefault();
 		data.insert(data.begin(), GDDPMainPackFormat{});
+
+		auto levels = popup->m_dataDev["level-data"];
+		auto legacyPacks = popup->m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault();
+
+		//move every main pack pointer value up by one
+		for (auto [key, value] : levels) {
+			levels[key].set("difficulty", value["difficulty"].as<int>().unwrapOr(0) + 1);
+		}
+
+		auto pos = 0;
+		for (auto pack : legacyPacks) {
+			legacyPacks.at(pos).set("mainPack", pack["mainPack"].as<int>().unwrapOr(0) + 1);
+			pos += 1;
+		}
+
+		popup->m_dataDev.set("level-data", levels);
+		popup->m_dataDev.set("legacy", legacyPacks);
 		popup->m_dataDev.set("main", data);
 	}
 	if (id == "legacy-btn") {

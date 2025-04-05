@@ -1,6 +1,10 @@
 # v1.0.7
 
-* Ported to Mac and iOS
+* Ported to iOS
+* List Layer now trims out placeholder IDs so it doesn't mess with results
+* The game will no longer crash when inputting non-numbers in number inputs
+* You will no longer keep your rank progress but will still keep your rank
+	* Removed this feature because people thought it was a bug
 
 # v1.0.6
 
