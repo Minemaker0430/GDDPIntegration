@@ -1,3 +1,10 @@
+# v1.0.8
+
+* Added Sprites for Pearl Tier
+* Fixed Onyx & Amethyst Sprite Alignment
+* Added "EXTREME" Plus Title
+* Lowered "GRANDMASTER" Title Requirement
+
 # v1.0.7
 
 * Ported to iOS

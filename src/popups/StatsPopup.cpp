@@ -127,7 +127,7 @@ void StatsPopup::loadTab(int id) {
 
 			auto milestone = floor(getScore() / 25);
 			auto milestoneStr = fmt::format("Next Milestone at {}", (milestone + 1) * 25);
-			if (milestone >= 10) {
+			if (milestone >= 14) {
 				milestoneStr = "All Milestones Reached!";
 			}
 
@@ -979,10 +979,10 @@ void StatsPopup::loadTab(int id) {
 			contentLayer->addChild(normalSection);
 			contentLayer->addChild(plusSection);
 
-			contentLayer->setPositionY(350.f);
+			contentLayer->setPositionY(375.f);
 			contentLayer->setContentHeight(1000.f);
-			scrollLayer->m_contentLayer->setPositionY(-385.f);
-			scrollLayer->m_contentLayer->setContentHeight(560.f);
+			scrollLayer->m_contentLayer->setPositionY(-405.f);
+			scrollLayer->m_contentLayer->setContentHeight(580.f);
 
 			scrollLayer->m_contentLayer->addChild(contentLayer);
 			break;

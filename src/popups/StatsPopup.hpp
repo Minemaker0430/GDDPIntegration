@@ -42,7 +42,7 @@ const std::vector<int> NormalTitleRequirements = {
 	8,
 	10,
 	12,
-	13
+	14
 };
 
 const std::vector<ccColor3B> NormalTitleColors = {
@@ -57,7 +57,7 @@ const std::vector<std::string> NormalTitleDescriptions = {
 	"Get the normal ranks from Beginner to Sapphire",
 	"Get the normal ranks from Beginner to Emerald",
 	"Get the normal ranks from Beginner to Diamond",
-	"Get the normal ranks from Beginner to Amethyst",
+	"Get the normal ranks from Beginner to Onyx",
 	"Get the normal ranks from Beginner to Azurite"
 };
 
@@ -69,6 +69,7 @@ const std::vector<std::string> PlusTitles = { //String is the Title Name, int is
 	"EXTRAORDINARY",
 	"EXPERT",
 	"EXCESSIVE",
+	"EXTREME",
 	"EXALTED",
 	"PERFECTION" //ABSOLUTE PERFECTION is a special case, thus it is exempt.
 };
@@ -82,7 +83,8 @@ const std::vector<int> PlusTitleRequirements = {
 	9,
 	10,
 	11,
-	12
+	12,
+	13
 };
 
 const std::vector<ccColor3B> PlusTitleColors = {
@@ -93,6 +95,7 @@ const std::vector<ccColor3B> PlusTitleColors = {
 	{ 63, 122, 255 },
 	{ 118, 92, 255 },
 	{ 98, 36, 255 },
+	{ 115, 0, 255 },
 	{ 181, 67, 255 },
 	{ 255, 90, 255 }
 };
@@ -105,6 +108,7 @@ const std::vector<std::string> PlusTitleDescriptions = {
 	"Achieve every rank from Beginner to Emerald+",
 	"Achieve every rank from Beginner to Ruby+",
 	"Achieve every rank from Beginner to Diamond+",
+	"Achieve every rank from Beginner to Pearl+",
 	"Achieve every rank from Beginner to Onyx+",
 	"Achieve every rank from Beginner to Amethyst+"
 };
