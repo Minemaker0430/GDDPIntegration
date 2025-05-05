@@ -1,3 +1,8 @@
+# v1.0.9
+
+* Ported to MacOS
+* Bumped Geode Version
+
 # v1.0.8
 
 * Added Sprites for Pearl Tier
