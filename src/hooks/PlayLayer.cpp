@@ -23,7 +23,8 @@ class $modify(PlayLayer) {
         if (
             !inRoulette ||
             this->m_level->m_levelID.value() != currentLvlID ||
-            this->m_isPracticeMode
+            this->m_isPracticeMode ||
+            gauntletEnabled
         ) { return; }
 
         const int percentage = this->getCurrentPercentInt();
@@ -61,7 +62,12 @@ class $modify(PlayLayer) {
             this->m_isPracticeMode
         ) { return; }
 
-        Mod::get()->setSavedValue<int>("roulette-progress", 100);
+        if (!gauntletEnabled) {
+            Mod::get()->setSavedValue<int>("roulette-progress", 100);
+        }
+        else {
+            Mod::get()->setSavedValue<int>("roulette-progress", rouletteGoal);
+        }
 
         return;
     }

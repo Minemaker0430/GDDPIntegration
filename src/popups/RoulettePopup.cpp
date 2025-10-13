@@ -711,7 +711,7 @@ void RoulettePopup::loadRouletteSave(int id) {
 	m_saveID = id;
 	m_settings = RouletteUtils::fromFlags(settings);
 
-	if (save.progress == 100)
+	if (save.progress == 100 || (m_settings[5] && score + skips >= levels.size()) )
 	{
 		loadWinScreen(id);
 		return;

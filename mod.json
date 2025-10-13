@@ -1,12 +1,12 @@
 {
-		"geode": "4.4.0",
+		"geode": "4.9.0",
 		"gd": {
 			"win": "2.2074",
 			"android": "2.2074",
 			"ios": "2.2074",
 			"mac": "2.2074"
 		},
-		"version": "v1.0.9",
+		"version": "v1.0.10",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "ItsMochaTheOtter",
@@ -33,7 +33,11 @@
 				"PlusDifficultySmallText": [ "resources/DP_PlusDifficultySmallText/*.png" ],
 				"SkillBadge": [ "resources/DP_SkillBadge/*.png" ],
 				"Effects": [ "resources/DP_Effects/*.png" ]
-			}
+			},
+			"files": [
+				"resources/DP_Fonts/*.png",
+				"resources/DP_Fonts/*.fnt"
+			]
 		},
 
 		"tags": [
@@ -47,12 +51,17 @@
 		"dependencies": [
 			{
 				"id": "geode.node-ids",
-				"version": ">=1.20.0",
+				"version": ">=1.21.1",
 				"importance": "required"
 			}
 		],
 
 	"settings": {
+		"refresh-stats": {
+			"name": "Refresh Stats",
+			"description": "Clears your completed levels in the mod's save data. Should only be used for accidental completions or bugs.\n\n<cr>This will NOT affect ranks.</c>",
+			"type": "custom:refresh-stats"
+		},
 		"bypass-section": {
 			"name": "Progression Bypass",
 			"description": "Options that let you bypass the lock system in the GDDP Menus.",
@@ -204,6 +213,78 @@
 			"name": "Cosmetic",
 			"description": "Options that relate to cosmetics in menus.",
 			"type": "title"
+		},
+		"custom-pack-text": {
+			"name": "Fancy Pack Text",
+			"description": "Adds fancy text to pack names.",
+			"type": "bool",
+			"default": true
+		},
+		"custom-demon-labels": {
+			"name": "Fancy Demon Labels",
+			"description": "Adds fancy text to demon tiers.",
+			"type": "bool",
+			"default": true
+		},
+		"reduce-demon-label-effects": {
+			"name": "Reduce Demon Label Effects",
+			"description": "Disables most Demon Label Effects to prevent eyestrain from pixelation on lower resolutions.",
+			"type": "bool",
+			"default": false
+		},
+		"custom-level-name": {
+			"name": "Fancy Level Name",
+			"description": "Adds fancy text to level names.",
+			"type": "bool",
+			"default": true
+		},
+		"override-gold-text": {
+			"name": "Override Completed Text",
+			"description": "Fancy text overrides gold text on completed packs.",
+			"type": "bool",
+			"default": true
+		},
+		"disable-crystals": {
+			"name": "Disable Crystal Effect",
+			"description": "Disables the crystal effect that appears over text.",
+			"type": "bool",
+			"default": false
+		},
+		"disable-stars": {
+			"name": "Disable Stars Effect",
+			"description": "Disables the stars effect that appears over text.",
+			"type": "bool",
+			"default": false
+		},
+		"disable-bevel": {
+			"name": "Disable Bevel Effect",
+			"description": "Disables the bevel effect that appears over text.",
+			"type": "bool",
+			"default": false
+		},
+		"disable-text-gradient": {
+			"name": "Disable Fancy Text Gradient",
+			"description": "Disables the gradient that appears over text. <cr>(Not recommended, it makes the text look boring)</c>",
+			"type": "bool",
+			"default": false
+		},
+		"disable-fancy-bonus-text": {
+			"name": "Disable Fancy Bonus Pack Text",
+			"description": "Disables the text effects on bonus packs.",
+			"type": "bool",
+			"default": false
+		},
+		"custom-banners": {
+			"name": "Enable Banners [NYI]",
+			"description": "Adds a custom banner for each tier.",
+			"type": "bool",
+			"default": true
+		},
+		"custom-backgrounds": {
+			"name": "Enable Tier Backgrounds [NYI]",
+			"description": "Adds a custom background for each tier.",
+			"type": "bool",
+			"default": true
 		},
 		"restore-bg-color": {
 			"name": "Vanilla Background Color",

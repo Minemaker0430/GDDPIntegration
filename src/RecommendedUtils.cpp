@@ -83,7 +83,7 @@ void RecommendedUtils::validateLevels() {
 		}
 
 		//check if a level was moved to legacy
-		for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+		for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 			auto levelIDs = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 			auto mainList = data["main"][data["legacy"][i]["mainPack"].as<int>().unwrapOr(0)]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 			auto stop = false;
@@ -146,7 +146,7 @@ void RecommendedUtils::generateRecommendations() {
 
 	//Get Highest Rank
 	auto highest = 0; //Defaults to Beginner
-	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 		//Check For Non-Plus Rank
 		if (StatsPopup::getPercentToRank(i, false) >= 1.f) {
 			highest = i;
@@ -154,7 +154,7 @@ void RecommendedUtils::generateRecommendations() {
 
 		//Check For Plus Rank
 		if (StatsPopup::getPercentToRank(i, true) >= 1.f) {
-			highest = std::min(i + 1, static_cast<int>(data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size() - 1));
+			highest = std::min(i + 1, static_cast<int>(data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - 1));
 		}
 
 	}
@@ -162,7 +162,7 @@ void RecommendedUtils::generateRecommendations() {
 
 	//Get Highest Partial Rank
 	auto highestPartial = -1;
-	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 		if (hasPartial(i)) {
 			highestPartial = i;
 		}
@@ -190,7 +190,7 @@ void RecommendedUtils::generateRecommendations() {
 
 		stop = false;
 
-		auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size();
+		auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
 
 		for (int j = std::min(highest + 1, static_cast<int>(numOfPacks - 1)); j < numOfPacks; j++) { //search the tier above your highest, it'll move on to the next tier if it can't find anything
 			//log::info("current tier: {}", data["main"][j]["name"].as_string());

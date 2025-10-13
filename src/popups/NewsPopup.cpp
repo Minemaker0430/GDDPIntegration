@@ -111,9 +111,9 @@ bool NewsPopup::setup() {
 }
 
 void NewsPopup::loadPage(int page) {
-	m_right->setVisible(m_page < m_news["news"].as<std::vector<matjson::Value>>().unwrapOrDefault().size() - 1);
+	m_right->setVisible(m_page < m_news["news"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - 1);
 	m_left->setVisible(m_page > 0);
-	m_last->setVisible(m_page < m_news["news"].as<std::vector<matjson::Value>>().unwrapOrDefault().size() - 1);
+	m_last->setVisible(m_page < m_news["news"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - 1);
 	m_first->setVisible(m_page > 0);
 
 	typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("header"))->setCString(m_news["news"][page]["date"].asString().unwrapOr("0").c_str());
@@ -145,7 +145,7 @@ void NewsPopup::firstPage(CCObject*) {
 }
 
 void NewsPopup::lastPage(CCObject*) {
-	m_page = m_news["news"].as<std::vector<matjson::Value>>().unwrapOrDefault().size() - 1;
+	m_page = m_news["news"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - 1;
 
 	loadPage(m_page);
 

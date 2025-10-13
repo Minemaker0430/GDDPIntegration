@@ -7,6 +7,7 @@
 //#include "../ListManager.hpp"
 #include "../popups/XPPopup.hpp"
 #include "../RecommendedUtils.hpp"
+#include "../CustomText.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -86,7 +87,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 				//check monthly, if check returns with nothing, skip the rest
 				auto isMonthly = false;
-				for (int i = 0; i < data["monthly"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+				for (int i = 0; i < data["monthly"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 					auto monthlyPack = data["monthly"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 					if (std::find(monthlyPack.begin(), monthlyPack.end(), this->m_level->m_levelID.value()) != monthlyPack.end()) {
 						isMonthly = true;
@@ -98,7 +99,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					auto uniqueMonthly = true; //false = level is in main/legacy/bonus, so don't return if false
 
 					//check main
-					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 						if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 							uniqueMonthly = false;
@@ -108,7 +109,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 					//check legacy
 					if (uniqueMonthly) {
-						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueMonthly = false;
@@ -119,7 +120,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 					//check bonus
 					if (uniqueMonthly) {
-						for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+						for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 							auto pack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueMonthly = false;
@@ -137,7 +138,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 				//check bonus, if check returns with nothing, skip the rest
 				auto isBonus = false;
-				for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+				for (int i = 0; i < data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 					auto bonusPack = data["bonus"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 					if (std::find(bonusPack.begin(), bonusPack.end(), this->m_level->m_levelID.value()) != bonusPack.end()) {
 						isBonus = true;
@@ -149,7 +150,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					auto uniqueBonus = true; //false = level is in main/legacy, so don't return if false
 
 					//check main
-					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+					for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 						auto pack = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 						if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 							uniqueBonus = false;
@@ -159,7 +160,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 					//check legacy
 					if (uniqueBonus) {
-						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++) {
+						for (int i = 0; i < data["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 							auto pack = data["legacy"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 							if (std::find(pack.begin(), pack.end(), this->m_level->m_levelID.value()) != pack.end()) {
 								uniqueBonus = false;
@@ -307,6 +308,24 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				if (Mod::get()->getSettingValue<bool>("show-xp")) { this->addChild(xpMenu); }
 			}
 
+			//title label
+			if (Mod::get()->getSettingValue<bool>("custom-level-name") && this->getChildByID("title-label")) {
+				auto lvlName = typeinfo_cast<CCLabelBMFont*>(this->getChildByID("title-label"));
+
+				auto customLvlName = CustomText::create(lvlName->getString());
+				customLvlName->addEffectsFromProperties(DPTextEffects[data["main"][gddpDiff]["saveID"].asString().unwrapOr("none")].as<matjson::Value>().unwrapOrDefault());
+				customLvlName->setPosition(lvlName->getPosition());
+				customLvlName->setAnchorPoint(lvlName->getAnchorPoint());
+				customLvlName->setScale(lvlName->getScale());
+				customLvlName->setZOrder(5);
+				customLvlName->setID("custom-level-title"_spr);
+
+				lvlName->setOpacity(0);
+				lvlName->setVisible(false);
+				
+				this->addChild(customLvlName);
+			}
+
 			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
 				diffSpr->setOpacity(0);
 			}
@@ -330,8 +349,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 				plusSprite = "DP_Unknown";
 			}
 
-			std::string fullSpr = fmt::format("{}Text.png", sprite);
-			std::string fullPlusSpr = fmt::format("{}Text.png", plusSprite);
+			std::string fullSpr = fmt::format("{}.png", sprite);
+			std::string fullPlusSpr = fmt::format("{}.png", plusSprite);
 
 			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces") && sprite != "DP_Invisible") {
 				auto customSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fullSpr).data());
@@ -352,11 +371,54 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 				this->addChild(customSpr);
 
+				//label
+				auto demonLabelName = CCLabelBMFont::create(data["main"][gddpDiff]["name"].asString().unwrapOr("???").c_str(), "bigFont.fnt");
+				auto customDemonLabelName = CustomText::create(data["main"][gddpDiff]["name"].asString().unwrapOr("???"));
+				auto demonLabel = CCLabelBMFont::create("Demon", "bigFont.fnt");
+				auto customDemonLabel = CustomText::create("Demon");
+
+				demonLabelName->setID("demon-label"_spr);
+				demonLabelName->setAnchorPoint({ 0.5f, 0.5f });
+				demonLabelName->setPosition({ diffSpr->getPositionX(), diffSpr->getPositionY() - 16.f });
+				demonLabelName->setScale(0.35f);
+				demonLabelName->setZOrder(5);
+
+				customDemonLabelName->setID("custom-demon-label"_spr);
+				customDemonLabelName->setAnchorPoint({ 0.5f, 0.5f });
+				customDemonLabelName->setPosition({ diffSpr->getPositionX(), diffSpr->getPositionY() - 16.f });
+				customDemonLabelName->setScale(0.35f);
+				customDemonLabelName->setZOrder(5);
+
+				demonLabel->setID("demon-label-bottom"_spr);
+				demonLabel->setAnchorPoint({ 0.5f, 0.5f });
+				demonLabel->setPosition({ diffSpr->getPositionX(), diffSpr->getPositionY() - 26.f });
+				demonLabel->setScale(0.35f);
+				demonLabel->setZOrder(5);
+
+				customDemonLabel->setID("custom-demon-label-bottom"_spr);
+				customDemonLabel->setAnchorPoint({ 0.5f, 0.5f });
+				customDemonLabel->setPosition({ diffSpr->getPositionX(), diffSpr->getPositionY() - 26.f });
+				customDemonLabel->setScale(0.35f);
+				customDemonLabel->setZOrder(5);
+
+				customDemonLabelName->addEffectsFromProperties(DPTextEffects[data["main"][gddpDiff]["saveID"].asString().unwrapOr("none")].as<matjson::Value>().unwrapOrDefault());
+				customDemonLabel->addEffectsFromProperties(DPTextEffects[data["main"][gddpDiff]["saveID"].asString().unwrapOr("none")].as<matjson::Value>().unwrapOrDefault());
+
+				if (Mod::get()->getSettingValue<bool>("custom-demon-labels")) {
+					this->addChild(customDemonLabelName);
+					this->addChild(customDemonLabel);
+				} 
+				else {
+					this->addChild(demonLabelName);
+					this->addChild(demonLabel);
+				}
+
 				//check if the level is recommended and the effect is enabled
 				auto recommendations = Mod::get()->getSavedValue<std::vector<int>>("recommended-levels");
 				if ((!Mod::get()->getSettingValue<bool>("disable-recommended-effect")) && Mod::get()->getSettingValue<bool>("enable-recommendations") && std::find(recommendations.begin(), recommendations.end(), this->m_level->m_levelID.value()) != recommendations.end()) {
 					auto recommendedSpr = CCSprite::createWithSpriteFrameName("DP_RecommendGlow.png"_spr);
-					recommendedSpr->setPosition({ 37.f, 37.f });
+					//recommendedSpr->setPosition({ 37.f, 37.f });
+					recommendedSpr->setAnchorPoint({0.f, 0.f});
 					if (gddpDiff >= 11) { recommendedSpr->setPosition({ 37.f, 40.f }); }
 					recommendedSpr->setZOrder(6);
 					customSpr->addChild(recommendedSpr);

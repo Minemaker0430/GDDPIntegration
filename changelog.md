@@ -1,3 +1,19 @@
+# v1.0.10
+
+* Titles have been renamed to Medals
+* Added Fancy Text for Pack Names, Level Names, and Demon Labels
+* Medals now have extra info on their progress
+* Demon Labels are now text-based instead of sprite-based
+	* This means all sprites with Small Text and Large Text will be unused, though will stay in the mod for compatibility reasons
+* Added an option to soft reset your completed levels in the mod under "Refresh Stats"
+	* This will not mess with ranks and is only here for accidental completions/bugs. If you want to reset ranks, you will need to delete the mod's save data and reinstall.
+
+* Minor Bug Fixes
+	* Fixed levels in the Roulette advancing at the wrong percentage in "Gauntlet" mode
+	* Fixed having a level of -1 on a skill with no XP
+	* Practice Packs will now ACTUALLY trim placeholder IDs, as it wasn't previously for some reason 
+
+
 # v1.0.9
 
 * Ported to MacOS

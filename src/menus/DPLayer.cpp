@@ -21,6 +21,7 @@
 #include "../Utils.hpp"
 #include "../XPUtils.hpp"
 #include "../RecommendedUtils.hpp"
+#include "../CustomText.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -569,7 +570,7 @@ bool DPLayer::init() {
 		this->addChild(devMenu);
 	}
 	else {
-		log::info("Client ID File not found, don't add mod button.");
+		//log::info("Client ID File not found, don't add mod button.");
 	}
 
 	// download data
@@ -671,7 +672,7 @@ void DPLayer::reloadList(int type) {
 
 	if (!m_data.contains(dataIdx)) { return; }
 
-	auto packs = m_data[dataIdx].as<std::vector<matjson::Value>>().unwrapOrDefault();
+	auto packs = m_data[dataIdx].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 
 	auto versionTxt = fmt::format("Database Version: {}", std::to_string(m_data["database-version"].as<int>().unwrapOr(0)));
 	m_databaseVer->setCString(versionTxt.c_str());
@@ -802,7 +803,7 @@ void DPLayer::reloadList(int type) {
 		}
 
 		CCNode* cell = ListCell::create();
-
+		
 		CCLabelBMFont* packText = CCLabelBMFont::create(fullTitle.c_str(), "bigFont.fnt");
 		packText->setScale(0.65f);
 		if (fullTitle.length() > 18) { packText->setScale(0.50f); }
@@ -811,11 +812,40 @@ void DPLayer::reloadList(int type) {
 		packText->setPosition({ 53, 49 });
 		packText->setID("pack-text");
 
+		//log::info("{}", DPTextEffects.dump());
+
+		//custom pack text
+		auto customPackText = CustomText::create(fullTitle);
+		if (Mod::get()->getSettingValue<bool>("custom-pack-text") && DPTextEffects.contains(saveID)) {
+			customPackText->addEffectsFromProperties(DPTextEffects[saveID].as<matjson::Value>().unwrapOrDefault());
+			customPackText->setScale(0.65f);
+			if (fullTitle.length() > 18) { customPackText->setScale(0.50f); }
+			if (fullTitle.length() > 25) { customPackText->setScale(0.425f); }
+			customPackText->setAnchorPoint({ 0, 1 });
+			customPackText->setPosition({ 53, 49 });
+			customPackText->setID("custom-pack-text");
+
+			packText->setVisible(false);
+		}
+		else {
+			customPackText->setVisible(false);
+		}
+
+		if (type == static_cast<int>(DPListType::Bonus) && Mod::get()->getSettingValue<bool>("disable-fancy-bonus-text")) {
+			packText->setVisible(true);
+			customPackText->setVisible(false);	
+		}
+
 		if (listSave.completed) {
 			packText->setFntFile("goldFont.fnt");
 			packText->setScale(0.85f);
 			if (fullTitle.length() > 18) { packText->setScale(0.65f); }
 			if (fullTitle.length() > 25) { packText->setScale(0.55f); }
+
+			if (!Mod::get()->getSettingValue<bool>("override-gold-text")) {
+				customPackText->setVisible(false);
+				packText->setVisible(true);
+			}
 		}
 
 		CCNode* packSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
@@ -1110,6 +1140,7 @@ void DPLayer::reloadList(int type) {
 					else {
 						cell->addChild(cellMenu);
 						cell->addChild(packText);
+						cell->addChild(customPackText);
 						cell->addChild(packSpr);
 						cell->addChild(packPlusSpr);
 						cell->addChild(packProgressBack);
@@ -1118,11 +1149,12 @@ void DPLayer::reloadList(int type) {
 				}
 				else {
 					cell->addChild(cellMenu);
-						cell->addChild(packText);
-						cell->addChild(packSpr);
-						cell->addChild(packPlusSpr);
-						cell->addChild(packProgressBack);
-						cell->addChild(progText);
+					cell->addChild(packText);
+					cell->addChild(customPackText);
+					cell->addChild(packSpr);
+					cell->addChild(packPlusSpr);
+					cell->addChild(packProgressBack);
+					cell->addChild(progText);
 				}
 				break;
 			}
@@ -1167,6 +1199,7 @@ void DPLayer::reloadList(int type) {
 					else {
 						cell->addChild(cellMenu);
 						cell->addChild(packText);
+						cell->addChild(customPackText);
 						cell->addChild(packSpr);
 						cell->addChild(packPlusSpr);
 						cell->addChild(packProgressBack);
@@ -1176,6 +1209,7 @@ void DPLayer::reloadList(int type) {
 				else {
 					cell->addChild(cellMenu);
 					cell->addChild(packText);
+					cell->addChild(customPackText);
 					cell->addChild(packSpr);
 					cell->addChild(packPlusSpr);
 					cell->addChild(packProgressBack);
@@ -1187,6 +1221,7 @@ void DPLayer::reloadList(int type) {
 			{
 				cell->addChild(cellMenu);
 				cell->addChild(packText);
+				cell->addChild(customPackText);
 				cell->addChild(packSpr);
 				cell->addChild(packPlusSpr);
 				cell->addChild(packProgressBack);

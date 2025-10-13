@@ -17,7 +17,7 @@ public:
 	int getScore();
 	static float getPercentToRank(int, bool);
 
-	void titleInfoCallback(CCObject*); //on title info
+	void medalInfoCallback(CCObject*); //on medal info
 	void rankInfoCallback(CCObject*); //on rank info
 	void onScoreInfo(CCObject*); //on score info
 	void onMonthlyInfo(CCObject*); //on monthly info
@@ -26,10 +26,10 @@ public:
 enum class StatsTab {
 	Main,
 	Ranks,
-	Titles,
+	Medals,
 };
 
-const std::vector<std::string> NormalTitles = { //String is the Title Name, int is the Rank Requirement
+const std::vector<std::string> NormalMedals = { //String is the Medal Name, int is the Rank Requirement
 	"ADEPT",
 	"PROFESSIONAL",
 	"MASTER",
@@ -37,7 +37,7 @@ const std::vector<std::string> NormalTitles = { //String is the Title Name, int 
 	"GODMASTER"
 };
 
-const std::vector<int> NormalTitleRequirements = {
+const std::vector<int> NormalMedalRequirements = {
 	6,
 	8,
 	10,
@@ -45,7 +45,7 @@ const std::vector<int> NormalTitleRequirements = {
 	14
 };
 
-const std::vector<ccColor3B> NormalTitleColors = {
+const std::vector<ccColor3B> NormalMedalColors = {
 	{ 107, 130, 255 },
 	{ 158, 97, 255 },
 	{ 255, 137, 107 },
@@ -53,7 +53,7 @@ const std::vector<ccColor3B> NormalTitleColors = {
 	{ 0, 255, 255 }
 };
 
-const std::vector<std::string> NormalTitleDescriptions = {
+const std::vector<std::string> NormalMedalDescriptions = {
 	"Get the normal ranks from Beginner to Sapphire",
 	"Get the normal ranks from Beginner to Emerald",
 	"Get the normal ranks from Beginner to Diamond",
@@ -61,7 +61,7 @@ const std::vector<std::string> NormalTitleDescriptions = {
 	"Get the normal ranks from Beginner to Azurite"
 };
 
-const std::vector<std::string> PlusTitles = { //String is the Title Name, int is the Rank Requirement
+const std::vector<std::string> PlusMedals = { //String is the Medal Name, int is the Rank Requirement
 	"EXPERIENCED",
 	"EXEMPLARY",
 	"EXCELLENT",
@@ -74,7 +74,7 @@ const std::vector<std::string> PlusTitles = { //String is the Title Name, int is
 	"PERFECTION" //ABSOLUTE PERFECTION is a special case, thus it is exempt.
 };
 
-const std::vector<int> PlusTitleRequirements = {
+const std::vector<int> PlusMedalRequirements = {
 	4,
 	5,
 	6,
@@ -87,7 +87,7 @@ const std::vector<int> PlusTitleRequirements = {
 	13
 };
 
-const std::vector<ccColor3B> PlusTitleColors = {
+const std::vector<ccColor3B> PlusMedalColors = {
 	{ 158, 255, 96 },
 	{ 116, 255, 156 },
 	{ 89, 236, 255 },
@@ -100,7 +100,7 @@ const std::vector<ccColor3B> PlusTitleColors = {
 	{ 255, 90, 255 }
 };
 
-const std::vector<std::string> PlusTitleDescriptions = {
+const std::vector<std::string> PlusMedalDescriptions = {
 	"Achieve every rank from Beginner to Amber+",
 	"Achieve every rank from Beginner to Platinum+",
 	"Achieve every rank from Beginner to Sapphire+",

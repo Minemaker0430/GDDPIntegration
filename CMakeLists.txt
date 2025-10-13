@@ -36,6 +36,8 @@ add_library(${PROJECT_NAME} SHARED
     src/popups/dev/VerificationPopup.cpp
     src/popups/dev/SaveContentsPopup.cpp
     src/base64.cpp
+    src/CustomText.cpp
+    src/RefreshStats.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

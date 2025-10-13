@@ -107,7 +107,7 @@ void XPUtils::getLevels() {
             next = (xpRequirements[level + 1] - xp[i]) / (xpRequirements[level + 1] - xpRequirements[level]);
         }
 
-        skills[i] = level;
+        skills[i] = std::max(level, 1);
         percent[i] = next;
 		
 		/*auto level = -1;
@@ -141,7 +141,7 @@ float XPUtils::getTotalWeightedSum(std::string skillID) {
 
 	auto sum = 0.f;
 	
-	auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size();
+	auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
 	auto lvlData = data["level-data"];
 
 	for (int i = 0; i < numOfPacks; i++) {
@@ -177,7 +177,7 @@ float XPUtils::getCompletedWeightedSum(std::string skillID) {
 
 	auto sum = 0.f;
 	
-	auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOrDefault().size();
+	auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
 	auto lvlData = data["level-data"];
 
 	for (int i = 0; i < numOfPacks; i++) {

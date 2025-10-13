@@ -614,7 +614,7 @@ void VerificationPopup::loadMain(int tab)
 				cells->addObject(header);
 
 				//packs
-				for (int i = 0; i < data[index].as<std::vector<matjson::Value>>().unwrapOrDefault().size(); i++)
+				for (int i = 0; i < data[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++)
 				{
 					auto packNode = CCNode::create();
 					packNode->setID(fmt::format("{}-pack-{}", index, i));
@@ -896,13 +896,13 @@ void VerificationPopup::onDelete(CCObject* sender) {
 void VerificationPopup::removeObject(std::string type, std::string id, int pos) {
 	
 	if (type == "pack") {
-		std::vector<matjson::Value> packs = m_dataDev[id].as<std::vector<matjson::Value>>().unwrapOrDefault();
+		std::vector<matjson::Value> packs = m_dataDev[id].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 		packs.erase(packs.begin() + pos);
 
 		//if id (index) is main, subtract everything pointing to pos by 1 
 		if (id == "main") {
 			auto levels = m_dataDev["level-data"];
-			auto legacyPacks = m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault();
+			auto legacyPacks = m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 
 			for (auto [key, value] : levels) {
 				if (value["difficulty"].as<int>().unwrapOr(0) > pos) {
@@ -1032,7 +1032,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 			}
 
 			//save pack in index
-			auto data = m_dataDev[m_index].as<std::vector<matjson::Value>>().unwrapOrDefault();
+			auto data = m_dataDev[m_index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 			data.at(m_packID) = packData;
 
 			m_dataDev.set(m_index, data);
@@ -1066,7 +1066,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 
 				std::vector<std::string> packIndexes = {"main", "legacy", "bonus", "monthly"};
 				for (auto index : packIndexes) {
-					auto data = m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOrDefault();
+					auto data = m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 
 					auto packPos = 0;
 					for (auto pack : data) {
@@ -2307,7 +2307,7 @@ void MovePopup::onDown(CCObject*) {
 
 	if (m_type == "pack") { //pack
 		auto index = m_ID;
-		auto data = popup->m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOrDefault();
+		auto data = popup->m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 
 		m_newPos = std::min(m_newPos, int(data.size() - 1));
 		
@@ -2335,7 +2335,7 @@ void MovePopup::onBottom(CCObject*) {
 
 	if (m_type == "pack") { //pack
 		auto index = m_ID;
-		auto data = popup->m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOrDefault();
+		auto data = popup->m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 
 		m_value->setString(std::to_string(data.size()).c_str());
 		m_newPos = data.size() - 1;
@@ -2358,7 +2358,7 @@ void MovePopup::onConfirm(CCObject*) {
 	if (m_type == "pack") { //pack
 		auto index = m_ID;
 		auto originalData = popup->m_dataDev[index][m_pos];
-		auto data = popup->m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOrDefault();
+		auto data = popup->m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 		int newPos = Utils::safe_stoi(m_value->getString()) - 1;
 		log::info("old pos: {}", m_pos);
 		log::info("new pos: {}", newPos);
@@ -2372,7 +2372,7 @@ void MovePopup::onConfirm(CCObject*) {
 		//if index is main, update difficulties and mainPack values in legacy packs
 		if (index == "main") {
 			auto levels = popup->m_dataDev["level-data"];
-			auto legacyPacks = popup->m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault();
+			auto legacyPacks = popup->m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 			//m_pos = old position, newPos = new position
 
 			//first set all levels and legacy packs pointing to old pos to -1 temporarily
@@ -2488,10 +2488,12 @@ void MovePopup::onConfirm(CCObject*) {
 
 		if ((popup->m_index == "main" || popup->m_index == "legacy") && popup->m_currentData.contains("practiceIDs")) {
 			auto practiceList = popup->m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOrDefault();
-			int practiceID = practiceList.at(m_pos);
-			practiceList.erase(practiceList.begin() + m_pos);
-			practiceList.insert(practiceList.begin() + newPos, practiceID);
-			popup->m_currentData.set("practiceIDs", practiceList);
+			if (!practiceList.empty()) {
+				int practiceID = practiceList.at(m_pos);
+				practiceList.erase(practiceList.begin() + m_pos);
+				practiceList.insert(practiceList.begin() + newPos, practiceID);
+				popup->m_currentData.set("practiceIDs", practiceList);
+			}
 		}
 
 		log::info("Level successfully moved.");
@@ -2749,11 +2751,11 @@ void NewPackPopup::onConfirm(CCObject* sender) {
 
 	//modify data based on id
 	if (id == "main-btn") {
-		auto data = popup->m_dataDev["main"].as<std::vector<matjson::Value>>().unwrapOrDefault();
+		auto data = popup->m_dataDev["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 		data.insert(data.begin(), GDDPMainPackFormat{});
 
 		auto levels = popup->m_dataDev["level-data"];
-		auto legacyPacks = popup->m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault();
+		auto legacyPacks = popup->m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 
 		//move every main pack pointer value up by one
 		for (auto [key, value] : levels) {
@@ -2771,17 +2773,17 @@ void NewPackPopup::onConfirm(CCObject* sender) {
 		popup->m_dataDev.set("main", data);
 	}
 	if (id == "legacy-btn") {
-		auto data = popup->m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOrDefault();
+		auto data = popup->m_dataDev["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 		data.insert(data.begin(), GDDPLegacyPackFormat{});
 		popup->m_dataDev.set("legacy", data);
 	}
 	if (id == "bonus-btn") {
-		auto data = popup->m_dataDev["bonus"].as<std::vector<matjson::Value>>().unwrapOrDefault();
+		auto data = popup->m_dataDev["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 		data.insert(data.begin(), GDDPBonusPackFormat{});
 		popup->m_dataDev.set("bonus", data);
 	}
 	if (id == "monthly-btn") {
-		auto data = popup->m_dataDev["monthly"].as<std::vector<matjson::Value>>().unwrapOrDefault();
+		auto data = popup->m_dataDev["monthly"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 		data.insert(data.begin(), GDDPMonthlyPackFormat{});
 		popup->m_dataDev.set("monthly", data);
 	}

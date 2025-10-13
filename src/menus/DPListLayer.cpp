@@ -10,6 +10,7 @@
 #include "DPListLayer.hpp"
 #include "../Utils.hpp"
 #include "../RecommendedUtils.hpp"
+#include "../CustomText.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -430,7 +431,7 @@ void DPListLayer::loadLevels(int page) {
 
 			for (auto const& level : practiceIDs)
 			{
-				m_IDs.push_back(std::to_string(level));
+				if (level > 0) { m_IDs.push_back(std::to_string(level)); } //a level with an id of 0 is just a placeholder and should be skipped
 			}
 		}
 		else {
@@ -442,13 +443,6 @@ void DPListLayer::loadLevels(int page) {
 
 		for (auto const& level : levelIDs) {
 			m_IDs.push_back(std::to_string(level));
-		}
-	}
-
-	//trim out any placeholders
-	for (auto i = 0; i < m_IDs.size(); i++) {
-		if (m_IDs[i] == "0") {
-			m_IDs.erase(m_IDs.begin() + i);
 		}
 	}
 
@@ -519,6 +513,25 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 		m_list->setZOrder(2);
 		m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
 		this->addChild(m_list);
+	}
+
+	//custom pack label
+	if ((Mod::get()->getSettingValue<bool>("custom-pack-text") && DPTextEffects.contains(data[m_type][m_id]["saveID"].asString().unwrapOr("null")))
+	&& !(m_type == "bonus" && Mod::get()->getSettingValue<bool>("disable-fancy-bonus-text"))) {
+		auto label = typeinfo_cast<CCLabelBMFont*>(m_list->getChildByID("title"));
+
+		auto customText = CustomText::create(label->getString());
+		customText->addEffectsFromProperties(DPTextEffects[data[m_type][m_id]["saveID"].asString().unwrapOr("null")].as<matjson::Value>().unwrapOrDefault());
+		customText->setPosition(label->getPosition());
+		customText->setAnchorPoint(label->getAnchorPoint());
+		customText->setScale(label->getScale());
+		customText->setZOrder(12);
+		customText->setID("custom-pack-title"_spr);
+
+		label->setOpacity(0);
+		label->setVisible(false);
+				
+		m_list->addChild(customText);
 	}
 
 	//add sprite

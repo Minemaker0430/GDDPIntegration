@@ -294,7 +294,7 @@ void SaveContentsPopup::compareChanges() {
     std::vector<std::string> usedLevels = {};
     std::vector<std::string> indexes = {"main", "legacy", "bonus", "monthly"};
     for (auto index : indexes) {
-        for (auto pack : m_dataNew[index].as<std::vector<matjson::Value>>().unwrapOrDefault()) {
+        for (auto pack : m_dataNew[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
             for (auto lvl : pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault()) {
                 usedLevels.push_back(std::to_string(lvl));
             }
@@ -307,7 +307,7 @@ void SaveContentsPopup::compareChanges() {
 
         if (!m_dataNew["level-data"][lvl].contains("xp")) { continue; }
         
-        for (auto pack : m_dataNew["main"].as<std::vector<matjson::Value>>().unwrapOrDefault()) {
+        for (auto pack : m_dataNew["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
             for (auto id : pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault()) {
                 if (std::to_string(id) == lvl) {
                     isMain = true;
@@ -353,7 +353,7 @@ void SaveContentsPopup::compareChanges() {
         //check indexes first
         std::vector<std::string> indexes = {"main", "legacy", "bonus", "monthly"};
         for (auto index : indexes) {
-            int sizeDiff = (m_dataOld[index].as<std::vector<matjson::Value>>().unwrapOrDefault().size() - m_dataNew[index].as<std::vector<matjson::Value>>().unwrapOrDefault().size());
+            int sizeDiff = (m_dataOld[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - m_dataNew[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size());
 
             if (m_dataOld[index] != m_dataNew[index]) {
                 changesList.push_back(fmt::format("{} List:", index));
@@ -366,7 +366,7 @@ void SaveContentsPopup::compareChanges() {
                 }
 
                 int packID = 0;
-                for (auto pack : m_dataOld[index].as<std::vector<matjson::Value>>().unwrapOrDefault()) {
+                for (auto pack : m_dataOld[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
                     auto newPack = m_dataNew[index][packID].as<matjson::Value>().unwrapOrDefault();
                     
                     if (pack != newPack) {

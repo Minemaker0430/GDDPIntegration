@@ -16,8 +16,8 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 
 # Update Roadmap
 
-* Fancy Level Info Layer
 * Pack Banners
+* Achievement Popups
 
 # Credits
 
