@@ -26,7 +26,7 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 * ElohmroW - GDDP Co-Owner & Website Programmer, helped with a lot of Data related things
 * GDDP Website - Source of the custom Demon Icons
 * Patrick61804 - For helping me get higher quality textures
-* hiimjustin000 - Made the code that I borrowed for a Custom List framework
+* hiimjasmine000 - Made the code that I borrowed for a Custom List framework
 * Firee - For helping me start modding back in the old 2.1 DLL days :)
 * The Geode Discord Server - For helping me figure out a few things
 
@@ -34,4 +34,5 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 
 * Colon - For helping me with Server Response stuff for lists
 * oatmealine - API Framework for "Rate All Demons"
+
 * wint0r - Created the "Rate All Demons" Option & its Sprite Framework
