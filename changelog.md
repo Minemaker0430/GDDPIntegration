@@ -1,3 +1,7 @@
+# v1.0.12
+
+* Fixed a crash involving **square.png** AGAIN, this time in the Bonus Tab
+
 # v1.0.11
 
 * Fixed a crash involving **square.png** that crashed people who didn't have Texture Loader/Texture Packs loaded

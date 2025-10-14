@@ -216,9 +216,9 @@ void CustomText::addSpecial(std::string id) {
         m_outline->setOpacity(255 / 2);
     }
     else if (id == "rgb") {
-        auto red = CCSprite::createWithSpriteFrameName("square.png");
-        auto green = CCSprite::createWithSpriteFrameName("square.png");
-        auto blue = CCSprite::createWithSpriteFrameName("square.png");
+        auto red = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
+        auto green = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
+        auto blue = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
 
         red->setColor({255, 0, 0});
         green->setColor({0, 255, 0});
@@ -240,8 +240,8 @@ void CustomText::addSpecial(std::string id) {
         m_effects->addChild(blue);
     }
     else if (id == "sonic-wave") {
-        auto mid = CCSprite::createWithSpriteFrameName("square.png");
-        auto last = CCSprite::createWithSpriteFrameName("square.png");
+        auto mid = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
+        auto last = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
 
         mid->setColor({ 0, 99, 192 });
         last->setColor({ 0, 132, 255 });
@@ -262,9 +262,9 @@ void CustomText::addSpecial(std::string id) {
         m_effects->addChild(last);
     }
     else if (id == "nine-circles") {
-        auto first = CCSprite::createWithSpriteFrameName("square.png");
-        auto mid = CCSprite::createWithSpriteFrameName("square.png");
-        auto last = CCSprite::createWithSpriteFrameName("square.png");
+        auto first = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
+        auto mid = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
+        auto last = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
 
         first->setColor({ 200, 0, 0 });
         mid->setColor({ 200, 80, 0 });
