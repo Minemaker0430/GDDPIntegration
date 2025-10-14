@@ -102,7 +102,7 @@ void CustomText::addGradient(ccColor3B color, float opacity, bool rotated) {
     }
 
     //add a buffer for tall characters
-    auto buffer = CCSprite::createWithSpriteFrameName("square.png");
+    auto buffer = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
     buffer->setColor(color);
     buffer->setOpacity(255 * opacity);
     buffer->setAnchorPoint({0.f, 0.f});

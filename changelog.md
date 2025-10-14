@@ -1,3 +1,8 @@
+# v1.0.11
+
+* Fixed a crash involving **square.png** that crashed people who didn't have Texture Loader/Texture Packs loaded
+(How does this even happen???)
+
 # v1.0.10
 
 * Titles have been renamed to Medals
