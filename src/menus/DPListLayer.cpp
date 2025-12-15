@@ -442,7 +442,7 @@ void DPListLayer::loadLevels(int page) {
 		m_IDs.clear();
 
 		for (auto const& level : levelIDs) {
-			m_IDs.push_back(std::to_string(level));
+			if (level > 0) m_IDs.push_back(std::to_string(level));
 		}
 	}
 

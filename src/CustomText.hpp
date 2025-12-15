@@ -319,6 +319,11 @@ const matjson::Value DPTextEffects = matjson::parse(R"(
             "crystal": true,
             "stars": true
         },
+        "12doc-2025": {
+            "textColor": [255, 0, 0],
+            "gradientColor": [0, 255, 0],
+            "gradient": true
+        },
         "12doc-2024": {
             "textColor": [255, 0, 0],
             "gradientColor": [0, 255, 0],

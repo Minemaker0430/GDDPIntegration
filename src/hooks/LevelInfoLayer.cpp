@@ -8,6 +8,7 @@
 #include "../popups/XPPopup.hpp"
 #include "../RecommendedUtils.hpp"
 #include "../CustomText.hpp"
+#include "../popups/OpenStartposPopup.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -40,6 +41,14 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			skillsetData[skillID]["description"].asString().unwrapOr("erm that\'s awkward").c_str(),
 			"OK"
 		)->show();
+
+		return;
+	}
+
+	void openStartposCopy(CCObject* target) {
+		auto popup = OpenStartposPopup::create(target->getTag());
+		popup->setZOrder(100);
+		this->addChild(popup);
 
 		return;
 	}
@@ -290,23 +299,39 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 			}
 
-			//xp button
+			auto xpMenu = CCMenu::create();
+			xpMenu->setAnchorPoint({ 0.f, 0.f });
+			xpMenu->setScale(0.65f);
+			auto xpLayout = AxisLayout::create();
+			xpLayout->setAxis(Axis::Column);
+			xpLayout->setAxisReverse(true);
+			xpMenu->setLayout(xpLayout, true);
+			xpMenu->setPosition({ diffSpr->getPositionX() - 34.f, diffSpr->getPositionY() + 7.f });
+			xpMenu->setID("xp-menu"_spr);
+			if (Mod::get()->getSettingValue<bool>("lower-xp")) { xpMenu->setPosition({ diffSpr->getPositionX() - 37.f, diffSpr->getPositionY() - 24.f }); }
+
+			//xp button & startpos button
 			if (data["level-data"][levelID]["xp"]["chokepoints"].isNumber()) { //just use chokepoints, all demons with xp will have this value so it's fine
 				auto xpText = CCLabelBMFont::create("XP", "bigFont.fnt");
 				auto xpSpr = CircleButtonSprite::create(xpText, CircleBaseColor::Green, CircleBaseSize::Small);
 				typeinfo_cast<CCLabelBMFont*>(xpSpr->getChildren()->objectAtIndex(0))->setPosition({ 20.375f, 21.5f });
 				auto xpBtn = CCMenuItemSpriteExtra::create(xpSpr, this, menu_selector(DemonProgression::openXPPopup));
 				xpBtn->setID("xp-btn");
-
-				auto xpMenu = CCMenu::create();
-				xpMenu->setAnchorPoint({ 0.f, 0.f });
-				xpMenu->setScale(0.65f);
-				xpMenu->setPosition({ diffSpr->getPositionX() - 34.f, diffSpr->getPositionY() + 7.f });
-				if (Mod::get()->getSettingValue<bool>("lower-xp")) { xpMenu->setPosition({ diffSpr->getPositionX() - 37.f, diffSpr->getPositionY() - 24.f }); }
-				xpMenu->addChild(xpBtn);
-				xpMenu->setID("gddp-xp-menu");
-				if (Mod::get()->getSettingValue<bool>("show-xp")) { this->addChild(xpMenu); }
+				if (Mod::get()->getSettingValue<bool>("show-xp")) xpMenu->addChild(xpBtn);
 			}
+			//check for a startpos copy
+			if (data["level-data"][levelID]["startpos-copy"].as<int>().unwrapOr(0) > 0 && Mod::get()->getSettingValue<bool>("enable-practice")) {
+				auto startposSpr = CCSprite::createWithSpriteFrameName("GJ_practiceBtn_001.png");
+				startposSpr->setScale(0.6f);
+				auto startposBtn = CCMenuItemSpriteExtra::create(startposSpr, this, menu_selector(DemonProgression::openStartposCopy));
+				startposBtn->setID("startpos-btn");
+				startposBtn->setTag(data["level-data"][levelID]["startpos-copy"].as<int>().unwrapOr(0));
+					
+				xpMenu->setAnchorPoint({ 0.5f, 0.5f });
+				xpMenu->addChild(startposBtn);
+				xpMenu->updateLayout(false);
+			}
+			this->addChild(xpMenu);
 
 			//title label
 			if (Mod::get()->getSettingValue<bool>("custom-level-name") && this->getChildByID("title-label")) {
@@ -419,7 +444,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					auto recommendedSpr = CCSprite::createWithSpriteFrameName("DP_RecommendGlow.png"_spr);
 					//recommendedSpr->setPosition({ 37.f, 37.f });
 					recommendedSpr->setAnchorPoint({0.f, 0.f});
-					if (gddpDiff >= 11) { recommendedSpr->setPosition({ 37.f, 40.f }); }
+					if (gddpDiff >= 11) { recommendedSpr->setPositionY(3.f); }
 					recommendedSpr->setZOrder(6);
 					customSpr->addChild(recommendedSpr);
 				}

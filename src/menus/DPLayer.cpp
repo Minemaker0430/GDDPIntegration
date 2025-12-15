@@ -714,7 +714,7 @@ void DPLayer::reloadList(int type) {
 		//listID = m_data[dataIdx][i]["listID"].as_int(); //only used to obtain old saves
 		if (type != static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["saveID"].isNull()) { saveID = m_data[dataIdx][i]["saveID"].asString().unwrapOr("null"); }
 		if (!m_data[dataIdx][i]["levelIDs"].isNull()) { levelIDs = m_data[dataIdx][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); }
-		if ((type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) && !m_data[dataIdx][i]["practiceIDs"].isNull()) { practiceIDs = m_data[dataIdx][i]["practiceIDs"].as<std::vector<int>>().unwrapOrDefault(); }
+		//if ((type == static_cast<int>(DPListType::Main) || type == static_cast<int>(DPListType::Legacy)) && !m_data[dataIdx][i]["practiceIDs"].isNull()) { practiceIDs = m_data[dataIdx][i]["practiceIDs"].as<std::vector<int>>().unwrapOrDefault(); }
 		if (type == static_cast<int>(DPListType::Main) && !m_data[dataIdx][i]["reqLevels"].isNull()) { reqLevels = m_data[dataIdx][i]["reqLevels"].as<int>().unwrapOr(999); }
 		if (type == static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["month"].isNull()) { month = m_data[dataIdx][i]["month"].as<int>().unwrapOr(1); }
 		if (type == static_cast<int>(DPListType::Monthly) && !m_data[dataIdx][i]["year"].isNull()) { year = m_data[dataIdx][i]["year"].as<int>().unwrapOr(1987); }

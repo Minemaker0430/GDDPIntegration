@@ -1,12 +1,12 @@
 {
-		"geode": "4.9.0",
+		"geode": "4.10.0",
 		"gd": {
 			"win": "2.2074",
 			"android": "2.2074",
 			"ios": "2.2074",
 			"mac": "2.2074"
 		},
-		"version": "v1.0.12",
+		"version": "v1.0.13",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "ItsMochaTheOtter",
@@ -123,7 +123,7 @@
 		},
 		"enable-practice": {
 			"name": "Enable Practice",
-			"description": "Enables StartPos Lists to be accessed.",
+			"description": "Enables StartPos Copies to be accessed.",
 			"type": "bool",
 			"default": true
 		},

@@ -323,6 +323,28 @@ void SaveContentsPopup::compareChanges() {
         }
     }
 
+    //transfer startpos list to new system
+    /*for (auto pack : m_dataNew["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+        for (int i = 0; i < pack["levelIDs"].asArray().unwrap().size(); i++) {
+            if (pack["practiceIDs"].as<std::vector<int>>().unwrapOrDefault().empty()) break;
+
+            auto mainID = pack["levelIDs"][i].as<int>().unwrapOr(0);
+            auto practiceID = pack["practiceIDs"][i].as<int>().unwrapOr(0);
+
+            m_dataNew["level-data"][std::to_string(mainID)].set("startpos-copy", practiceID);
+        }
+    }
+    for (auto pack : m_dataNew["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+        for (int i = 0; i < pack["levelIDs"].asArray().unwrap().size(); i++) {
+            if (pack["practiceIDs"].as<std::vector<int>>().unwrapOrDefault().empty()) break;
+
+            auto mainID = pack["levelIDs"][i].as<int>().unwrapOr(0);
+            auto practiceID = pack["practiceIDs"][i].as<int>().unwrapOr(0);
+
+            m_dataNew["level-data"][std::to_string(mainID)].set("startpos-copy", practiceID);
+        }
+    }*/
+
     for (auto [key, value] : m_dataNew["level-data"]) {
         auto exists = false;
         for (auto lvl : usedLevels) {

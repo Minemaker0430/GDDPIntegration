@@ -1,3 +1,10 @@
+# v1.0.13
+
+* Moved Practice copies to their respective levels instead of one big menu
+* Fixed a bug with the Roulette and added an autosave to it
+* Added Text Effects and Sprites for the 12 Demons of Christmas (2025)
+* Updated Bonus Packs section in the Stats menu so it doesn't overflow
+
 # v1.0.12
 
 * Fixed a crash involving **square.png** AGAIN, this time in the Bonus Tab

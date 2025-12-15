@@ -788,7 +788,7 @@ void VerificationPopup::onEdit(CCObject* sender) {
 	auto id = btn->getID();
 
 	if (id == "edit-practice-id") {
-		log::info("Editing Startpos ID at pos: {}", tag);
+		log::info("Editing Startpos ID at: {}", tag);
 
 		auto popup = AddLevelPopup::create();
 		popup->m_practiceIndex = tag;
@@ -1344,35 +1344,26 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 	cells = CCArray::create();
 
 	if (m_practiceToggle) {
-		auto pos = 0;
-		auto levelIDs = data["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0));
-		auto practiceIDs = data["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(levelIDs.size(), 0));
-		
-		if (practiceIDs.empty()) {
-			data.set("practiceIDs", std::vector<int>(levelIDs.size(), 0));
-			practiceIDs = data["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(levelIDs.size(), 0));
-		}
-		
-		for (auto id : data["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(levelIDs.size(), 0))) {
-			auto mainID = levelIDs.at(pos);
+		for (auto id : data["levelIDs"].as<std::vector<int>>().unwrapOrDefault()) {
+			auto practiceID = m_dataDev["level-data"][std::to_string(id)]["startpos-copy"].as<int>().unwrapOr(0);
 			
 			auto idNode = CCNode::create();
 			idNode->setID(fmt::format("level-sp-{}", id));
 			idNode->setScale(0.75f);
 
 			std::string levelName = "???";
-			if (m_dataDev["level-data"].contains(std::to_string(mainID))) {
-				levelName = m_dataDev["level-data"][std::to_string(mainID)]["name"].asString().unwrapOr("???");
+			if (m_dataDev["level-data"].contains(std::to_string(id))) {
+				levelName = m_dataDev["level-data"][std::to_string(id)]["name"].asString().unwrapOr("???");
 			}
 
 			// label
-			auto label = CCLabelBMFont::create(fmt::format("{}\n({}) [SP]", levelName, id).c_str(), "bigFont.fnt");
+			auto label = CCLabelBMFont::create(fmt::format("{}\n({}) [SP]", levelName, practiceID).c_str(), "bigFont.fnt");
 			label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
 			label->setID("label");
 			label->setScale(0.5f);
 			label->setAnchorPoint({0.f, 0.5f});
 			label->setPosition({5.f, 17.5f});
-			if (id == 0) { label->setColor({ 255, 0, 0 }); }
+			if (practiceID == 0) { label->setColor({ 255, 0, 0 }); }
 
 			// edit menu
 			auto editMenu = CCMenu::create();
@@ -1384,7 +1375,7 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 			editSpr->setScale(0.5f);
 			auto editBtn = CCMenuItemSpriteExtra::create(editSpr, this, menu_selector(VerificationPopup::onEdit));
 			editBtn->setID("edit-practice-id");
-			editBtn->setTag(pos);
+			editBtn->setTag(id);
 			editMenu->addChild(editBtn);
 
 			// add children
@@ -1392,7 +1383,6 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 			idNode->addChild(editMenu);
 
 			cells->addObject(idNode);
-			pos += 1;
 		}
 	} else {
 		auto pos = 0;
@@ -1559,7 +1549,8 @@ void VerificationPopup::loadLevel(int id) {
 		editMenu->setPosition({205.f, -25.f});
 		editMenu->setID("value-menu");
 
-		if (key == "xp") {
+		if (key == "startpos-copy") continue;
+		else if (key == "xp") {
 			if (m_index != "main" && !value["chokepoints"].isNumber()) { continue; }
 
 			// add children
@@ -2075,9 +2066,7 @@ void AddLevelPopup::onAddLevel(CCObject*) {
 	VerificationPopup* popup = this->getParent()->getChildByType<VerificationPopup>(0);
 	auto lvlList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 	if (m_practiceIndex > -1) {
-		auto practiceList = popup->m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(lvlList.size(), 0));
-		practiceList.at(m_practiceIndex) = lvlID;
-		popup->m_currentData.set("practiceIDs", practiceList);
+		popup->m_dataDev["level-data"][std::to_string(m_practiceIndex)].set("startpos-copy", lvlID);
 		popup->loadPack(popup->m_index, popup->m_packID, true);
 	}
 	else {

@@ -13,13 +13,12 @@
 // geode namespace
 using namespace geode::prelude;
 
-bool RoulettePopup::setup()
-{
+bool RoulettePopup::setup() {
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Roulette");
 
-	auto layer = typeinfo_cast<CCLayer *>(this->getChildren()->objectAtIndex(0));
+	auto layer = typeinfo_cast<CCLayer*>(this->getChildren()->objectAtIndex(0));
 
 	// create main layer
 	auto mainLayer = CCLayer::create();
@@ -35,8 +34,7 @@ bool RoulettePopup::setup()
 	return true;
 }
 
-void RoulettePopup::onClose(CCObject *sender)
-{
+void RoulettePopup::onClose(CCObject *sender) {
 
 	// log::info("roulette closed");
 	m_loadingCancelled = true;
@@ -1321,7 +1319,7 @@ void RoulettePopup::onNext(CCObject *sender) {
 
 	// check if the player is able to move on
 	bool canProceed = false;
-	if (gauntletEnabled && rouletteProgress == 100) {
+	if (gauntletEnabled && rouletteProgress == rouletteGoal) {
 		canProceed = true;
 	}
 	else if (perfectEnabled && rouletteProgress == rouletteGoal) {
@@ -1332,7 +1330,6 @@ void RoulettePopup::onNext(CCObject *sender) {
 	}
 
 	if (canProceed) {
-		saveProgress(false);
 		rouletteSaves = Mod::get()->getSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", {});
 		save = rouletteSaves[m_saveID];
 
@@ -1360,6 +1357,8 @@ void RoulettePopup::onNext(CCObject *sender) {
 			log::info("GG");
 			loadWinScreen(m_saveID);
 		}
+
+		saveProgress(false);
 	}
 	else {
 		if (gauntletEnabled) { rouletteGoal = 100; }
@@ -1449,6 +1448,8 @@ void RoulettePopup::saveProgress(bool skip) {
 
 	rouletteSaves[m_saveID] = save;
 	Mod::get()->setSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", rouletteSaves);
+
+	Mod::get()->saveData();
 
 	return;
 }

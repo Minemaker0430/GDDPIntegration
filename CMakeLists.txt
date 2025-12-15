@@ -38,6 +38,7 @@ add_library(${PROJECT_NAME} SHARED
     src/base64.cpp
     src/CustomText.cpp
     src/RefreshStats.cpp
+    src/popups/OpenStartposPopup.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

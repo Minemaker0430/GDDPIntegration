@@ -644,14 +644,14 @@ void StatsPopup::loadTab(int id) {
 			bonusRanksHeader->setID("header");
 
 			auto bonusRanksBG = CCScale9Sprite::create("square02_001.png");
-			bonusRanksBG->setPositionY(-32.f);
-			bonusRanksBG->setContentSize({ 400.f, 135.f });
+			bonusRanksBG->setPositionY(-(bonusRanksHeader->getPositionY() - bonusRanksHeader->getContentHeight()) - 35.f);
+			bonusRanksBG->setContentSize({ 400.f, (floor(data["bonus"].asArray().unwrap().size() / 9.f) * 60.f) });
 			bonusRanksBG->setOpacity(128);
 			bonusRanksBG->setID("bg");
 
 			auto bonusRanksContainer = CCMenu::create();
-			bonusRanksContainer->setPosition({ 0.f, -32.f });
-			bonusRanksContainer->setContentSize({ 400.f, 142.25f });
+			bonusRanksContainer->setPosition({ 0.f, bonusRanksBG->getPositionY()});
+			bonusRanksContainer->setContentSize({ 400.f, bonusRanksBG->getContentHeight() });
 			bonusRanksContainer->setID("container");
 
 			bonusRanksContainer->setLayout(containerLayout, true);
@@ -707,9 +707,9 @@ void StatsPopup::loadTab(int id) {
 			contentLayer->addChild(legacyRanksSection);
 			contentLayer->addChild(bonusRanksSection);
 
-			contentLayer->setPositionY(200.f);
-			scrollLayer->m_contentLayer->setPositionY(-225.f);
-			scrollLayer->m_contentLayer->setContentHeight(400.f);
+			contentLayer->setPositionY(250.f);
+			scrollLayer->m_contentLayer->setPositionY(-250.f);
+			scrollLayer->m_contentLayer->setContentHeight(450.f);
 
 			scrollLayer->m_contentLayer->addChild(contentLayer);
 			break;
