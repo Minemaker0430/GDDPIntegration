@@ -2140,7 +2140,7 @@ void EditDescriptionPopup::onPaste(CCObject*) {
 void EditDescriptionPopup::onConfirm(CCObject*) {
 
 	auto popup = this->getParent()->getChildByType<VerificationPopup*>(0);
-	popup->m_currentData.set("description", m_value->getString());
+	popup->m_currentData.set("description", m_value->getString().c_str());
 
 	this->removeMeAndCleanup();
 
