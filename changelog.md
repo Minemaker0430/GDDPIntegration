@@ -1,3 +1,13 @@
+# v1.0.14
+
+* Updated for Geode v5 & GD v2.2081
+* Any GDDP Level can have a startpos now
+* Attempted to fix a weird crash involving top levels
+* Hopefully finally fixed Gauntlet Mode on the Roulette 
+
+Known Issues:
+* Monthly Timer Desyncs
+
 # v1.0.13
 
 * Moved Practice copies to their respective levels instead of one big menu

@@ -9,9 +9,9 @@
 //geode namespace
 using namespace geode::prelude;
 
-class SaveContentsPopup : public Popup<> {
+class SaveContentsPopup : public Popup {
     protected:
-        bool setup() override;
+        bool init() override;
         void onClose(CCObject*) override;
         virtual ~SaveContentsPopup();
     
@@ -28,14 +28,23 @@ class SaveContentsPopup : public Popup<> {
         const std::string SKILLSET_LIST = "https://api.github.com/repos/Minemaker0430/gddp-mod-database/contents/skill-badges.json";
         const std::string DEV_SKILLSET_LIST = "https://api.github.com/repos/Minemaker0430/gddp-mod-dev-data/contents/skillsets.json";
 
-        EventListener<web::WebTask> m_listener;
-        EventListener<web::WebTask> m_listener2;
-        EventListener<web::WebTask> m_listener3;
-        EventListener<web::WebTask> m_listener4;
+        async::TaskHolder<web::WebResponse> m_listener;
+        async::TaskHolder<web::WebResponse> m_listener2;
+        async::TaskHolder<web::WebResponse> m_listener3;
+        async::TaskHolder<web::WebResponse> m_listener4;
     
         void parseResponse(std::string res);
         void setContents();
         void compareChanges();
+
+        void fetchMainList(web::WebResponse& value);
+        void fetchDevList(web::WebResponse& value);
+        void fetchMainSkills(web::WebResponse& value);
+        void fetchDevSkills(web::WebResponse& value);
+
+        void setMainList(web::WebResponse& value);
+        void setDevList(web::WebResponse& value);
+        void finalizePush(web::WebResponse& value);
 
         void onConfirm(CCObject*);
     public:

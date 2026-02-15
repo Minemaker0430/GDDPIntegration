@@ -1,12 +1,12 @@
 {
-		"geode": "4.10.0",
+		"geode": "5.0.0-beta.1",
 		"gd": {
-			"win": "2.2074",
-			"android": "2.2074",
-			"ios": "2.2074",
-			"mac": "2.2074"
+			"win": "2.2081",
+			"android": "2.2081",
+			"ios": "2.2081",
+			"mac": "2.2081"
 		},
-		"version": "v1.0.13",
+		"version": "v1.0.14",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "ItsMochaTheOtter",
@@ -48,13 +48,12 @@
 			"content"
 		],
 
-		"dependencies": [
-			{
-				"id": "geode.node-ids",
-				"version": ">=1.21.1",
+		"dependencies": {
+			"geode.node-ids": {
+				"version": ">=1.22.0",
 				"importance": "required"
 			}
-		],
+		},
 
 	"settings": {
 		"refresh-stats": {

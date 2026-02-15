@@ -1,10 +1,12 @@
 #include <Geode/Geode.hpp>
 #include <Geode/utils/web.hpp>
 #include <Geode/loader/Event.hpp>
+#include <Geode/utils/async.hpp>
 #include <ctime>
 
 //geode namespace
 using namespace geode::prelude;
+using namespace geode::utils::web;
 
 class DPLayer : public CCLayer {
 protected:
@@ -30,9 +32,9 @@ protected:
 	int m_currentYear = 87;
 
 	//listeners
-	EventListener<web::WebTask> m_listListener;
-	EventListener<web::WebTask> m_skillListener;
-	EventListener<web::WebTask> m_listener; //default
+	async::TaskHolder<WebResponse> m_listListener;
+	async::TaskHolder<WebResponse> m_skillListener;
+	async::TaskHolder<WebResponse> m_listener; //default
 
 	virtual ~DPLayer();
 public:
@@ -92,4 +94,14 @@ enum class DPListType {
     Legacy,
     Bonus,
 	Monthly,
+};
+
+struct ListParameters : public CCObject {
+    std::string m_type;
+	int m_index;
+
+    ListParameters(std::string type, int index) : m_type(type), m_index(index) {
+        // Always remember to call autorelease on your classes!
+        this->autorelease();
+    }
 };

@@ -5,7 +5,7 @@
 #include <random>
 
 #include "RouletteUtils.hpp"
-#include "Utils.hpp"
+#include "DPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -123,7 +123,7 @@ void RouletteUtils::exportSettings(std::string settings, int seed) {
 
 std::vector<std::string> RouletteUtils::importSettings(std::string str) {
     auto decodedStr = ZipUtils::base64URLDecode(str);
-    auto values = Utils::substring(decodedStr, ";");
+    auto values = DPUtils::substring(decodedStr, ";");
 
     //verify settings string
     if (values[0] != "GDDPSettingsFormat" || values.size() != 4 || values[3] != "END") { 
@@ -208,7 +208,7 @@ void RouletteUtils::importSave(std::string saveStr, bool fromFile) {
         log::info("TODO: Import save from file.");
     } else {
         auto decodedStr = ZipUtils::base64URLDecode(saveStr);
-        auto values = Utils::substring(decodedStr, ";");
+        auto values = DPUtils::substring(decodedStr, ";");
 
         //verify save string
         if (values[0] != "GDDPSaveFormat" || values.size() != 9 || values[8] != "END") { 
@@ -256,7 +256,7 @@ void RouletteUtils::importSave(std::string saveStr, bool fromFile) {
 
         std::vector<int> lvls = setupLevels(packs, values[2], Utils::safe_stoi(values[3]));*/
         std::vector<int> lvls = {};
-        auto lvlStrings = Utils::substring(values[3], ",");
+        auto lvlStrings = DPUtils::substring(values[3], ",");
 
         if (lvlStrings[0] != "LVLS") { 
             FLAlertLayer::create(
@@ -269,18 +269,18 @@ void RouletteUtils::importSave(std::string saveStr, bool fromFile) {
 
         for (std::string str : lvlStrings) {
             if (str != "LVLS") {
-                lvls.push_back(Utils::safe_stoi(str));
+                lvls.push_back(DPUtils::safe_stoi(str));
             }
         }
 
         auto save = RouletteSaveFormat{
             .name = values[1],
             .settings = values[2],
-            .seed = Utils::safe_stoi(values[4], -1),
+            .seed = DPUtils::safe_stoi(values[4], -1),
             .levels = lvls,
-            .progress = Utils::safe_stoi(values[5]),
-            .skips = Utils::safe_stoi(values[6]),
-            .score = Utils::safe_stoi(values[7])
+            .progress = DPUtils::safe_stoi(values[5]),
+            .skips = DPUtils::safe_stoi(values[6]),
+            .score = DPUtils::safe_stoi(values[7])
         };
 
         auto rouletteSaves = Mod::get()->getSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", {});

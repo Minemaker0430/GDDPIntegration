@@ -51,3 +51,6 @@
 
 # clangd
 .cache/
+
+# CMake
+CMakeSettings.json

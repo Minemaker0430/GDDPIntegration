@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "iOS" OR IOS)
     set(CMAKE_OSX_ARCHITECTURES "arm64")
@@ -19,12 +19,12 @@ add_library(${PROJECT_NAME} SHARED
     src/hooks/LevelCell.cpp
     src/hooks/PlayLayer.cpp
     src/popups/StatsPopup.cpp
-    src/Utils.cpp
+    src/DPUtils.cpp
     src/menus/DPListLayer.cpp
     src/menus/DPLayer.cpp
+    src/menus/DPPackCell.cpp
     src/menus/RecommendedLayer.cpp
     src/popups/SupportPopup.cpp
-    src/popups/NewsPopup.cpp
     src/XPUtils.cpp
     src/popups/XPPopup.cpp
     src/RecommendedUtils.cpp

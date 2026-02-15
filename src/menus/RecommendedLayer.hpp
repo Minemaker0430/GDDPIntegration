@@ -11,7 +11,7 @@ protected:
 	void backButton(CCObject*); //when you press back
 	virtual void keyBackClicked(); //when you press escape
 
-	EventListener<web::WebTask> m_listener;
+	async::TaskHolder<web::WebResponse> m_listener;
 
 	GJListLayer* m_list;
 	LoadingCircle* m_loadCircle;

@@ -11,7 +11,8 @@
 //geode namespace
 using namespace geode::prelude;
 
-bool SupportPopup::setup() {
+bool SupportPopup::init() {
+	if (!Popup::init(420.f, 250.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Support Me!");
@@ -67,7 +68,7 @@ void SupportPopup::getSupporters(CCObject*) {
 
 SupportPopup* SupportPopup::create() {
 	auto ret = new SupportPopup();
-	if (ret && ret->initAnchored(420.f, 250.f)) {
+	if (ret && ret->init()) {
 		ret->autorelease();
 		return ret;
 	}
@@ -81,7 +82,8 @@ SupportPopup::~SupportPopup() {
 
 //SUPPORTER LIST
 
-bool SupporterList::setup() {
+bool SupporterList::init() {
+	if (!Popup::init(420.f, 250.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Supporters");
@@ -101,7 +103,7 @@ bool SupporterList::setup() {
 	m_loadCircle->show();
 
 	//Get Data
-	m_listener.bind([&](web::WebTask::Event* e) {
+	/*m_listener.bind([&](web::WebTask::Event* e) {
 		if (auto res = e->getValue()) {
 			if (res->ok() && res->json().isOk()) {
 				auto list = res->json().unwrapOrDefault();
@@ -112,7 +114,7 @@ bool SupporterList::setup() {
 					fullList->addChild(CCLabelBMFont::create(supporter.asString().unwrapOr("???").c_str(), "chatFont.fnt"));
 				}
 
-				/*listText->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
+				listText->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
 				listText->setPositionX(205.f);
 				listText->setAnchorPoint({ 0.5f, 1.f });
 				auto listScroll = ScrollLayer::create({ 410.f, 200.f }, true, true);
@@ -120,7 +122,7 @@ bool SupporterList::setup() {
 				listScroll->m_contentLayer->setContentHeight(std::max(listScroll->getContentHeight(), fullList->getContentHeight()));
 				listText->setPositionY(listScroll->m_contentLayer->getContentHeight());
 				listScroll->m_contentLayer->addChild(listText);
-				listScroll->scrollToTop();*/
+				listScroll->scrollToTop();
 
 				//m_mainLayer->addChild(listScroll);
 
@@ -140,14 +142,14 @@ bool SupporterList::setup() {
 	});
 
 	auto listReq = web::WebRequest();
-	m_listener.setFilter(listReq.get("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/kofi-supporters.json"));
+	m_listener.setFilter(listReq.get("https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/kofi-supporters.json"));*/
 
 	return true;
 }
 
 SupporterList* SupporterList::create() {
 	auto ret = new SupporterList();
-	if (ret && ret->initAnchored(420.f, 250.f)) {
+	if (ret && ret->init()) {
 		ret->autorelease();
 		return ret;
 	}

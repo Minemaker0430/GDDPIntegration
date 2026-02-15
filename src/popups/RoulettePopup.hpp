@@ -4,9 +4,9 @@
 //geode namespace
 using namespace geode::prelude;
 
-class RoulettePopup : public Popup<>, LevelManagerDelegate {
+class RoulettePopup : public Popup, LevelManagerDelegate {
 protected:
-	bool setup() override;
+	bool init() override;
 	void onClose(CCObject*) override;
 	virtual ~RoulettePopup();
 
@@ -31,7 +31,7 @@ protected:
 	int m_saveID = 0;
 	GJGameLevel* m_currentLevel;
 
-	EventListener<web::WebTask> m_listener;
+	async::TaskHolder<web::WebResponse> m_listener;
 
 	void loadRouletteSave(int id);
 	void loadWinScreen(int id);
@@ -78,9 +78,9 @@ public:
 	}
 };
 
-class RouletteRenamePopup : public Popup<> {
+class RouletteRenamePopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	virtual ~RouletteRenamePopup();
 
 	CCLayer* m_mainLayer;
@@ -94,9 +94,9 @@ public:
 	static RouletteRenamePopup* create(int id);
 };
 
-class RouletteNewPopup : public Popup<> {
+class RouletteNewPopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	virtual ~RouletteNewPopup();
 
 	CCLayer* m_mainLayer;
@@ -107,9 +107,9 @@ public:
 	static RouletteNewPopup* create();
 };
 
-class RouletteImportPopup : public Popup<> {
+class RouletteImportPopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	virtual ~RouletteImportPopup();
 
 	CCLayer* m_mainLayer;
@@ -123,9 +123,9 @@ public:
 	static RouletteImportPopup* create(bool isSettings = false);
 };
 
-class RouletteSettingsPopup : public Popup<> {
+class RouletteSettingsPopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	void onClose(CCObject*) override;
 	virtual ~RouletteSettingsPopup();
 

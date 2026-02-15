@@ -1,7 +1,7 @@
 // geode header
 #include <Geode/Geode.hpp>
 
-#include "../../Utils.hpp"
+#include "../../DPUtils.hpp"
 #include "../../base64.h"
 #include "../../XPUtils.hpp"
 #include "SaveContentsPopup.hpp"
@@ -15,8 +15,9 @@
 // geode namespace
 using namespace geode::prelude;
 
-bool SaveContentsPopup::setup()
+bool SaveContentsPopup::init()
 {
+    if (!Popup::init(420.f, 250.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("");
@@ -50,210 +51,7 @@ void SaveContentsPopup::getContents()
 {
 	log::info("Getting Database Contents...");
 
-	m_listener.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok() && res->json().isOk() && !res->json().isErr()) {
-                auto list = res->json().unwrapOrDefault();
-
-                if (m_uploadType == (int)UploadType::Dev) { //gets dev list
-                    if (list.contains("content")) {
-                        m_dataOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                    }
-    
-                    if (list.contains("sha")) {
-                        m_dataSha = list["sha"].asString().unwrapOr("");
-                    }
-    
-                    m_loadText->setCString("Getting Dev Skillsets... (2/2)");
-    
-                    auto req = web::WebRequest();
-                    req.userAgent("GDDP Mod Database");
-                    req.header("Accept", "application/vnd.github+json");
-                    req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-                    req.header("X-GitHub-Api-Version", "2022-11-28");
-                    m_listener2.setFilter(req.get(DEV_SKILLSET_LIST));
-                }
-                else { // gets main list
-                    if (m_uploadType == (int)UploadType::Main) {
-                        if (list.contains("content")) {
-                            m_dataOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                        }
-        
-                        if (list.contains("sha")) {
-                            m_dataSha = list["sha"].asString().unwrapOr("");
-                        }
-                    }
-                    else if (m_uploadType == (int)UploadType::Revert) {
-                        if (list.contains("content")) {
-                            m_dataNew = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                        }
-        
-                        if (list.contains("sha")) {
-                            m_dataSha = list["sha"].asString().unwrapOr("");
-                        }
-                    }
-    
-                    m_loadText->setCString("Getting Main Skillsets... (2/4)");
-    
-                    auto req = web::WebRequest();
-                    req.userAgent("GDDP Mod Database");
-                    req.header("Accept", "application/vnd.github+json");
-                    req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-                    req.header("X-GitHub-Api-Version", "2022-11-28");
-                    m_listener2.setFilter(req.get(SKILLSET_LIST));
-                }
-				
-            }
-            else {
-				FLAlertLayer::create(
-					"ERROR",
-					fmt::format("Something went wrong...\nCode: {}", res->code()).c_str(),
-					"OK"
-				)->show();
-
-				this->removeMeAndCleanup();
-            }
-		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
-
-	m_listener2.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok() && res->json().isOk() && !res->json().isErr()) {
-                auto list = res->json().unwrapOrDefault();
-
-				if (m_uploadType == (int)UploadType::Dev) { //gets dev skillsets
-                    if (list.contains("content")) {
-                        m_skillsetsOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                    }
-    
-                    if (list.contains("sha")) {
-                        m_skillsetsSha = list["sha"].asString().unwrapOr("");
-                    }
-
-                    compareChanges();
-    
-                    //stops here since all other data is defined by user
-                }
-                else { // gets main skillsets
-                    if (m_uploadType == (int)UploadType::Main) {
-                        if (list.contains("content")) {
-                            m_skillsetsOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                        }
-        
-                        if (list.contains("sha")) {
-                            m_skillsetsSha = list["sha"].asString().unwrapOr("");
-                        }
-                    }
-                    else if (m_uploadType == (int)UploadType::Revert) {
-                        if (list.contains("content")) {
-                            m_skillsetsNew = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                        }
-                    }
-    
-                    m_loadText->setCString("Getting Dev List... (3/4)");
-    
-                    auto req = web::WebRequest();
-                    req.userAgent("GDDP Mod Database");
-                    req.header("Accept", "application/vnd.github+json");
-                    req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-                    req.header("X-GitHub-Api-Version", "2022-11-28");
-                    m_listener3.setFilter(req.get(DEV_LIST));
-                }
-            }
-            else {
-				FLAlertLayer::create(
-					"ERROR",
-					fmt::format("Something went wrong...\nCode: {}", res->code()).c_str(),
-					"OK"
-				)->show();
-
-				this->removeMeAndCleanup();
-            }
-		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
-
-	m_listener3.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok() && res->json().isOk() && !res->json().isErr()) {
-                auto list = res->json().unwrapOrDefault();
-
-				if (m_uploadType == (int)UploadType::Main) {
-                    if (list.contains("content")) {
-                        m_dataNew = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                    }
-                }
-                else if (m_uploadType == (int)UploadType::Revert) {
-                    if (list.contains("content")) {
-                        m_dataOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                    }
-
-                    if (list.contains("sha")) {
-                        m_dataSha = list["sha"].asString().unwrapOr("");
-                    }
-                }
-
-				m_loadText->setCString("Getting Dev Skillsets... (4/4)");
-
-				auto req = web::WebRequest();
-				req.userAgent("GDDP Mod Database");
-				req.header("Accept", "application/vnd.github+json");
-				req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-				req.header("X-GitHub-Api-Version", "2022-11-28");
-				m_listener4.setFilter(req.get(DEV_SKILLSET_LIST));
-            }
-            else {
-				FLAlertLayer::create(
-					"ERROR",
-					fmt::format("Something went wrong...\nCode: {}", res->code()).c_str(),
-					"OK"
-				)->show();
-
-				this->removeMeAndCleanup();
-            }
-		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
-
-	m_listener4.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok() && res->json().isOk() && !res->json().isErr()) {
-                auto list = res->json().unwrapOrDefault();
-
-				if (m_uploadType == (int)UploadType::Main) {
-                    if (list.contains("content")) {
-                        m_skillsetsNew = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                    }
-                }
-                else if (m_uploadType == (int)UploadType::Revert) {
-                    if (list.contains("content")) {
-                        m_skillsetsOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                    }
-
-                    if (list.contains("sha")) {
-                        m_skillsetsSha = list["sha"].asString().unwrapOr("");
-                    }
-                }
-
-                compareChanges();
-            }
-            else {
-				FLAlertLayer::create(
-					"ERROR",
-					fmt::format("Something went wrong...\nCode: {}", res->code()).c_str(),
-					"OK"
-				)->show();
-
-				this->removeMeAndCleanup();
-            }
-		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
+    // god help me this is agony
 
     //initialize listeners based on upload type
     if (m_uploadType == (int)UploadType::Dev) {
@@ -264,7 +62,7 @@ void SaveContentsPopup::getContents()
 	    req.header("Accept", "application/vnd.github+json");
 	    req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
 	    req.header("X-GitHub-Api-Version", "2022-11-28");
-	    m_listener.setFilter(req.get(DEV_LIST));
+	    m_listener.spawn(req.get(DEV_LIST), [&](web::WebResponse value){fetchDevList(value);});
     }
     else if (m_uploadType == (int)UploadType::Main || m_uploadType == (int)UploadType::Revert) {
         m_loadText->setCString("Getting Main List... (1/4)");
@@ -274,10 +72,155 @@ void SaveContentsPopup::getContents()
 	    req.header("Accept", "application/vnd.github+json");
 	    req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
 	    req.header("X-GitHub-Api-Version", "2022-11-28");
-	    m_listener.setFilter(req.get(MAIN_LIST));
+	    m_listener.spawn(req.get(MAIN_LIST), [&](web::WebResponse value){fetchMainList(value);});
     }
 
 	return;
+}
+
+void SaveContentsPopup::fetchMainList(web::WebResponse& value) {
+    if (value.ok() && value.json().isOk() && !value.json().isErr()) {
+        auto list = value.json().unwrapOrDefault();
+        
+        if (list.contains("content")) {
+            if (m_uploadType == (int)UploadType::Revert) {
+                m_dataNew = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+            } 
+            else {
+                m_dataOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+                m_dataSha = list["sha"].asString().unwrapOr("");
+            }
+        }
+
+        m_loadText->setCString("Getting Main Skillsets... (2/4)");
+    
+        auto req = web::WebRequest();
+        req.userAgent("GDDP Mod Database");
+        req.header("Accept", "application/vnd.github+json");
+        req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
+        req.header("X-GitHub-Api-Version", "2022-11-28");
+        m_listener2.spawn(req.get(SKILLSET_LIST), [&](web::WebResponse value){fetchMainSkills(value);});
+				
+    }
+    else {
+		FLAlertLayer::create(
+			"ERROR",
+			fmt::format("Something went wrong...\nAt: Get Main List\nCode: {}", value.code()).c_str(),
+			"OK"
+		)->show();
+
+		this->removeMeAndCleanup();
+    }
+    
+    return;
+}
+
+void SaveContentsPopup::fetchDevList(web::WebResponse& value) {
+    if (value.ok() && value.json().isOk() && !value.json().isErr()) {
+        auto list = value.json().unwrapOrDefault();
+        
+        if (list.contains("content")) {
+            if (m_uploadType == (int)UploadType::Main) {
+                m_dataNew = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+            }
+            else {
+                m_dataOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+                m_dataSha = list["sha"].asString().unwrapOr("");
+            }
+        }
+    
+        if (m_uploadType == (int)UploadType::Dev) {
+            m_loadText->setCString("Getting Dev Skillsets... (2/2)");
+        }
+        else {
+            m_loadText->setCString("Getting Dev Skillsets... (4/4)");
+        }
+    
+        auto req = web::WebRequest();
+        req.userAgent("GDDP Mod Database");
+        req.header("Accept", "application/vnd.github+json");
+        req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
+        req.header("X-GitHub-Api-Version", "2022-11-28");
+        m_listener2.spawn(req.get(DEV_SKILLSET_LIST), [&](web::WebResponse value){fetchDevSkills(value);});
+    }
+    else {
+		FLAlertLayer::create(
+			"ERROR",
+			fmt::format("Something went wrong...\nAt: Get Dev List\nCode: {}", value.code()).c_str(),
+			"OK"
+		)->show();
+
+		this->removeMeAndCleanup();
+    }
+    
+    return;
+}
+
+void SaveContentsPopup::fetchMainSkills(web::WebResponse& value) {
+    if (value.ok() && value.json().isOk() && !value.json().isErr()) {
+        auto list = value.json().unwrapOrDefault();
+        
+        if (list.contains("content")) {
+            if (m_uploadType == (int)UploadType::Revert) {
+                m_skillsetsNew = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+            }
+            else {
+                m_skillsetsOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+                m_skillsetsSha = list["sha"].asString().unwrapOr("");
+            }
+        }
+            
+        m_loadText->setCString("Getting Dev List... (3/4)");
+            
+        auto req = web::WebRequest();
+        req.userAgent("GDDP Mod Database");
+        req.header("Accept", "application/vnd.github+json");
+        req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
+        req.header("X-GitHub-Api-Version", "2022-11-28");
+        m_listener3.spawn(req.get(DEV_LIST), [&](web::WebResponse value){fetchDevList(value);});
+    }
+    else {
+		FLAlertLayer::create(
+			"ERROR",
+			fmt::format("Something went wrong...\nAt: Get Main Skills\nCode: {}", value.code()).c_str(),
+			"OK"
+		)->show();
+
+		this->removeMeAndCleanup();
+    }
+    
+    return;
+}
+
+void SaveContentsPopup::fetchDevSkills(web::WebResponse& value) {
+    if (value.ok() && value.json().isOk() && !value.json().isErr()) {
+        auto list = value.json().unwrapOrDefault();
+                        
+        if (list.contains("content")) {
+            if (m_uploadType == (int)UploadType::Main) {
+                m_skillsetsNew = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+            } 
+            else {
+                m_skillsetsOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+                m_skillsetsSha = list["sha"].asString().unwrapOr("");
+            }
+        }
+
+        compareChanges();
+            
+        //stops here since all other data is defined by user
+    }
+    else {
+		FLAlertLayer::create(
+			"ERROR",
+			fmt::format("Something went wrong...\nAt: Get Dev Skills\nCode: {}", value.code()).c_str(),
+			"OK"
+		)->show();
+
+		this->removeMeAndCleanup();
+    }
+    
+    return;
 }
 
 void SaveContentsPopup::compareChanges() {
@@ -323,28 +266,6 @@ void SaveContentsPopup::compareChanges() {
         }
     }
 
-    //transfer startpos list to new system
-    /*for (auto pack : m_dataNew["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
-        for (int i = 0; i < pack["levelIDs"].asArray().unwrap().size(); i++) {
-            if (pack["practiceIDs"].as<std::vector<int>>().unwrapOrDefault().empty()) break;
-
-            auto mainID = pack["levelIDs"][i].as<int>().unwrapOr(0);
-            auto practiceID = pack["practiceIDs"][i].as<int>().unwrapOr(0);
-
-            m_dataNew["level-data"][std::to_string(mainID)].set("startpos-copy", practiceID);
-        }
-    }
-    for (auto pack : m_dataNew["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
-        for (int i = 0; i < pack["levelIDs"].asArray().unwrap().size(); i++) {
-            if (pack["practiceIDs"].as<std::vector<int>>().unwrapOrDefault().empty()) break;
-
-            auto mainID = pack["levelIDs"][i].as<int>().unwrapOr(0);
-            auto practiceID = pack["practiceIDs"][i].as<int>().unwrapOr(0);
-
-            m_dataNew["level-data"][std::to_string(mainID)].set("startpos-copy", practiceID);
-        }
-    }*/
-
     for (auto [key, value] : m_dataNew["level-data"]) {
         auto exists = false;
         for (auto lvl : usedLevels) {
@@ -358,6 +279,9 @@ void SaveContentsPopup::compareChanges() {
             m_dataNew["level-data"].erase(key);
         }
     }
+
+    // erase level data for id 0 since that's an issue now apparently
+    if (m_dataNew["level-data"].contains("0")) m_dataNew["level-data"].erase("0");
 
     m_loadText->setCString("Comparing Changes...");
 
@@ -404,7 +328,7 @@ void SaveContentsPopup::compareChanges() {
                                     auto newValue = newPack[key].as<int>().unwrapOr(-999);
                                     changesList.push_back(fmt::format("   {} Changed: {} -> {}", key, value.as<int>().unwrapOr(-999), newValue));
                                 }
-                                else if ((key == "levelIDs" || key == "practiceIDs") || (!pack.contains("practiceIDs") && newPack.contains("practiceIDs"))) {
+                                else if (key == "levelIDs") {
                                     auto newValue = newPack[key].as<std::vector<int>>().unwrapOrDefault();
                                     auto oldValue = value.as<std::vector<int>>().unwrapOrDefault();
                                     changesList.push_back(fmt::format("   {} Changed:", key));
@@ -582,95 +506,6 @@ void SaveContentsPopup::onConfirm(CCObject* sender) {
 
 void SaveContentsPopup::setContents() {
     log::info("Pushing Changes...");
-
-	m_listener.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok()) {
-
-                if (m_uploadType == (int)UploadType::Dev || m_uploadType == (int)UploadType::Revert) { //sets dev list
-                    m_loadText->setCString("Setting Dev Skillsets... (2/2)");
-    
-                    auto contents = base64_encode(m_skillsetsNew.dump());
-
-                    auto req = web::WebRequest();
-                    req.userAgent("GDDP Mod Database");
-                    req.header("Accept", "application/vnd.github+json");
-                    req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-                    req.header("X-GitHub-Api-Version", "2022-11-28");
-                    
-                    auto body = matjson::makeObject({
-                        {"message", fmt::format("Database Update: {} - {}", m_dataNew["database-version"].as<int>().unwrapOr(-1), GameManager::sharedState()->m_playerName)},
-                        {"content", contents},
-                        {"sha", m_skillsetsSha}
-                    });
-                    req.bodyJSON(body);
-
-                    m_listener2.setFilter(req.put(DEV_SKILLSET_LIST));
-                }
-                else { // sets main list
-                    m_loadText->setCString("Setting Main Skillsets... (2/2)");
-    
-                    auto contents = base64_encode(m_skillsetsNew.dump());
-
-                    auto req = web::WebRequest();
-                    req.userAgent("GDDP Mod Database");
-                    req.header("Accept", "application/vnd.github+json");
-                    req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-                    req.header("X-GitHub-Api-Version", "2022-11-28");
-                    
-                    auto body = matjson::makeObject({
-                        {"message", fmt::format("Database Update: {} - {}", m_dataNew["database-version"].as<int>().unwrapOr(-1), GameManager::sharedState()->m_playerName)},
-                        {"content", contents},
-                        {"sha", m_skillsetsSha}
-                    });
-                    req.bodyJSON(body);
-
-                    m_listener2.setFilter(req.put(SKILLSET_LIST));
-                }
-				
-            }
-            else {
-				FLAlertLayer::create(
-					"ERROR",
-					fmt::format("Something went wrong...\nCode: {}", res->code()).c_str(),
-					"OK"
-				)->show();
-
-				this->removeMeAndCleanup();
-            }
-		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
-
-	m_listener2.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok()) {
-
-                VerificationPopup* popup = this->getParent()->getChildByType<VerificationPopup>(0);
-
-                FLAlertLayer::create(
-					"Success!",
-					fmt::format("Your changes have been pushed successfully!", res->code()).c_str(),
-					"OK"
-				)->show();
-
-                popup->removeMeAndCleanup();
-				this->removeMeAndCleanup();
-            }
-            else {
-				FLAlertLayer::create(
-					"ERROR",
-					fmt::format("Something went wrong...\nCode: {}", res->code()).c_str(),
-					"OK"
-				)->show();
-
-				this->removeMeAndCleanup();
-            }
-		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
     
     //initialize listeners based on upload type
     if (m_uploadType == (int)UploadType::Dev || m_uploadType == (int)UploadType::Revert) {
@@ -691,7 +526,7 @@ void SaveContentsPopup::setContents() {
         });
         req.bodyJSON(body);
 
-	    m_listener.setFilter(req.put(DEV_LIST));
+	    m_listener.spawn(req.put(DEV_LIST), [&](web::WebResponse value){setDevList(value);});
     }
     else if (m_uploadType == (int)UploadType::Main) {
         m_loadText->setCString("Pushing Main List... (1/2)");
@@ -711,18 +546,114 @@ void SaveContentsPopup::setContents() {
         });
         req.bodyJSON(body);
 
-	    m_listener.setFilter(req.put(MAIN_LIST));
+	    m_listener.spawn(req.put(MAIN_LIST), [&](web::WebResponse value){setMainList(value);});
     }
 
 	return;
 }
 
+void SaveContentsPopup::setMainList(web::WebResponse& value) {
+    if (value.ok()) {
+        m_loadText->setCString("Setting Main Skillsets... (2/2)");
+        
+        auto contents = base64_encode(m_skillsetsNew.dump());
+
+        auto req = web::WebRequest();
+        req.userAgent("GDDP Mod Database");
+        req.header("Accept", "application/vnd.github+json");
+        req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
+        req.header("X-GitHub-Api-Version", "2022-11-28");
+                        
+        auto body = matjson::makeObject({
+            {"message", fmt::format("Database Update: {} - {}", m_dataNew["database-version"].as<int>().unwrapOr(-1), GameManager::sharedState()->m_playerName)},
+            {"content", contents},
+            {"sha", m_skillsetsSha}
+        });
+        req.bodyJSON(body);
+
+        m_listener2.spawn(req.put(SKILLSET_LIST), [&](web::WebResponse value){finalizePush(value);});
+    }
+    else {
+		FLAlertLayer::create(
+			"ERROR",
+			fmt::format("Something went wrong...\nAt: Push Main List\nCode: {}", value.code()).c_str(),
+			"OK"
+		)->show();
+
+		this->removeMeAndCleanup();
+    }
+
+    return;
+}
+
+void SaveContentsPopup::setDevList(web::WebResponse& value) {
+    if (value.ok()) {
+
+        m_loadText->setCString("Setting Dev Skillsets... (2/2)");
+    
+        auto contents = base64_encode(m_skillsetsNew.dump());
+
+        auto req = web::WebRequest();
+        req.userAgent("GDDP Mod Database");
+        req.header("Accept", "application/vnd.github+json");
+        req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
+        req.header("X-GitHub-Api-Version", "2022-11-28");
+                    
+        auto body = matjson::makeObject({
+            {"message", fmt::format("Database Update: {} - {}", m_dataNew["database-version"].as<int>().unwrapOr(-1), GameManager::sharedState()->m_playerName)},
+            {"content", contents},
+            {"sha", m_skillsetsSha}
+        });
+        req.bodyJSON(body);
+
+        m_listener2.spawn(req.put(DEV_SKILLSET_LIST), [&](web::WebResponse value){finalizePush(value);});
+    }
+    else {
+		FLAlertLayer::create(
+			"ERROR",
+			fmt::format("Something went wrong...\nAt: Push Dev List\nCode: {}", value.code()).c_str(),
+			"OK"
+		)->show();
+
+		this->removeMeAndCleanup();
+    }
+
+    return;
+}
+
+void SaveContentsPopup::finalizePush(web::WebResponse& value) {
+    if (value.ok()) {
+
+        VerificationPopup* popup = this->getParent()->getChildByType<VerificationPopup>(0);
+
+        FLAlertLayer::create(
+			"Success!",
+			"Your changes have been pushed successfully!",
+			"OK"
+		)->show();
+
+        popup->removeMeAndCleanup();
+		this->removeMeAndCleanup();
+    }
+    else {
+		FLAlertLayer::create(
+			"ERROR",
+			fmt::format("Something went wrong...\nAt: Finalizing\nCode: {}", value.code()).c_str(),
+			"OK"
+		)->show();
+
+		this->removeMeAndCleanup();
+    }
+    
+    return;
+}
+
 void SaveContentsPopup::onClose(CCObject *sender)
 {
-	m_listener.getFilter().cancel();
-	m_listener2.getFilter().cancel();
-	m_listener3.getFilter().cancel();
-	m_listener4.getFilter().cancel();
+	m_listener.cancel();
+	m_listener2.cancel();
+	m_listener3.cancel();
+	m_listener4.cancel();
 
 	// normal closing stuff
 	// CloseEvent(this).post();
@@ -741,7 +672,7 @@ void SaveContentsPopup::onClose(CCObject *sender)
 
 SaveContentsPopup* SaveContentsPopup::create() {
 	auto ret = new SaveContentsPopup();
-	if (ret && ret->initAnchored(420.f, 250.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;

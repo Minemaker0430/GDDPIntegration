@@ -190,8 +190,9 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			log::info("{}", Mod::get()->getSavedValue<bool>("in-gddp"));
 
 			if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
-				auto bg = typeinfo_cast<CCSprite*>(this->getChildByID("background"));
-				bg->setColor({ 18, 18, 86 });
+				if (auto bg = typeinfo_cast<CCSprite*>(this->getChildByID("background"))) {
+					bg->setColor({ 18, 18, 86 });
+				}
 			}
 
 			auto type = Mod::get()->getSavedValue<std::string>("current-pack-type", "main");
@@ -204,7 +205,10 @@ class $modify(DemonProgression, LevelInfoLayer) {
 
 			auto hasRank = Mod::get()->getSavedValue<ListSaveFormat>(saveID).hasRank;
 
-			auto diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
+			GJDifficultySprite* diffSpr;
+			if (this->getChildByID("difficulty-sprite")) {
+				diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
+			}
 			
 			auto skillsetData = Mod::get()->getSavedValue<matjson::Value>("skillset-info", matjson::makeObject({
 				{"unknown", matjson::makeObject({
@@ -274,7 +278,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					auto desc = skillsetData[skillID]["description"].asString().unwrapOr("erm that\'s awkward");
 					auto spriteName = fmt::format("{}.png", skillsetData[skillID]["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
 
-					CCSprite* sprite;
+					CCSprite* sprite = CCSprite::createWithSpriteFrameName("DP_Skill_Unknown.png"_spr);
 					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr) {
 						if (skillsetData[skillID]["type"].asString().unwrapOr("none") == "special") {
 							spriteName = fmt::format("{}.png", skillsetData["unknown"]["sprite"].asString().unwrapOr("DP_Skill_Special"));

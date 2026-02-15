@@ -8,7 +8,7 @@
 
 #include "DPLayer.hpp"
 #include "DPSearchLayer.hpp"
-#include "../Utils.hpp"
+#include "../DPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -534,7 +534,8 @@ DPSearchLayer::~DPSearchLayer() {
 	this->removeAllChildrenWithCleanup(true);
 }
 
-bool PagePopup::setup() {
+bool PagePopup::init() {
+	if (!Popup::init(220.f, 150.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Go to Page");
@@ -593,7 +594,7 @@ bool PagePopup::setup() {
 void PagePopup::confirmPage(CCObject* sender) {
 
 	DPSearchLayer* searchLayer = this->getParent()->getChildByType<DPSearchLayer>(0);
-	int page = Utils::safe_stoi(m_value->getString());
+	int page = DPUtils::safe_stoi(m_value->getString());
 	searchLayer->loadLevelsAtPage(page - 1);
 
 	this->removeMeAndCleanup();
@@ -608,7 +609,7 @@ void PagePopup::resetPage(CCObject* sender) {
 }
 
 void PagePopup::pageLeft(CCObject* sender) {
-	int value = Utils::safe_stoi(m_value->getString());
+	int value = DPUtils::safe_stoi(m_value->getString());
 
 	value -= 1;
 	value = std::max(value, 1);
@@ -618,7 +619,7 @@ void PagePopup::pageLeft(CCObject* sender) {
 }
 
 void PagePopup::pageRight(CCObject* sender) {
-	int value = Utils::safe_stoi(m_value->getString());
+	int value = DPUtils::safe_stoi(m_value->getString());
 
 	value += 1;
 	value = std::min(value, 999);
@@ -630,7 +631,7 @@ void PagePopup::pageRight(CCObject* sender) {
 PagePopup* PagePopup::create(int page) {
 	auto ret = new PagePopup();
 	ret->m_page = page;
-	if (ret && ret->initAnchored(220.f, 150.f)) {
+	if (ret && ret->init()) {
 		ret->autorelease();
 		return ret;
 	}

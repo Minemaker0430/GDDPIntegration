@@ -13,8 +13,8 @@
 //geode namespace
 using namespace geode::prelude;
 
-bool SearchPopup::setup() {
-
+bool SearchPopup::init() {
+	if (!Popup::init(420.f, 250.f)) return false;
 	this->setTitle("Search");
 
 	auto layer = typeinfo_cast<CCLayer*>(this->getChildren()->objectAtIndex(0));
@@ -1104,7 +1104,7 @@ void SearchPopup::uncheckAll(CCObject* sender) {
 
 SearchPopup* SearchPopup::create() {
 	auto ret = new SearchPopup();
-	if (ret && ret->initAnchored(420.f, 250.f)) {
+	if (ret && ret->init()) {
 		ret->autorelease();
 		return ret;
 	}

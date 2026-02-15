@@ -13,7 +13,7 @@ protected:
 
 	matjson::Value m_data;
 
-	EventListener<web::WebTask> m_listener;
+	async::TaskHolder<web::WebResponse> m_listener;
 
 	GJListLayer* m_list;
 	LoadingCircle* m_loadCircle;
@@ -111,9 +111,9 @@ struct CompareName
     }
 };
 
-class PagePopup : public Popup<> {
+class PagePopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	CCLayer* m_mainLayer;
 	virtual ~PagePopup();
 

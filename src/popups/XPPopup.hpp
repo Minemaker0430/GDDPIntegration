@@ -4,18 +4,18 @@
 //geode namespace
 using namespace geode::prelude;
 
-class XPPopup : public Popup<> {
+class XPPopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	CCLayer* m_mainLayer;
 	virtual ~XPPopup();
 public:
 	static XPPopup* create();
 };
 
-class DemonXPPopup : public Popup<> {
+class DemonXPPopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	CCLayer* m_mainLayer;
 	virtual ~DemonXPPopup();
 public:

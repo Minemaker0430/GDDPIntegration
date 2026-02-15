@@ -4,9 +4,9 @@
 //geode namespace
 using namespace geode::prelude;
 
-class StatsPopup : public Popup<> {
+class StatsPopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	CCMenu* m_tabs;
 	CCLayer* m_mainLayer;
 	virtual ~StatsPopup();

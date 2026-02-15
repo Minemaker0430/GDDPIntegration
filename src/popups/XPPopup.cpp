@@ -11,7 +11,8 @@
 //geode namespace
 using namespace geode::prelude;
 
-bool XPPopup::setup() {
+bool XPPopup::init() {
+	if (!Popup::init(420.f, 250.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Experience");
@@ -106,7 +107,7 @@ bool XPPopup::setup() {
 		levelLabel->setID("level-label");
 		progressBack->addChild(levelLabel);
 
-		auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clamp(floor(percent * 100), 0, 100)).c_str(), "bigFont.fnt");
+		auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clampf(floor(percent * 100), 0, 100)).c_str(), "bigFont.fnt");
 		progressLabel->setPosition({ 330.f, 11.5f });
 		progressLabel->setAnchorPoint({ 1.f, 0.5f });
 		progressLabel->setScale(0.65f);
@@ -171,7 +172,7 @@ bool XPPopup::setup() {
 
 XPPopup* XPPopup::create() {
 	auto ret = new XPPopup();
-	if (ret && ret->initAnchored(420.f, 250.f)) {
+	if (ret && ret->init()) {
 		ret->autorelease();
 		return ret;
 	}
@@ -185,7 +186,8 @@ XPPopup::~XPPopup() {
 
 //DEMON XP
 
-bool DemonXPPopup::setup() {
+bool DemonXPPopup::init() {
+	if (!Popup::init(420.f, 250.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Demon XP");
@@ -284,7 +286,7 @@ bool DemonXPPopup::setup() {
 DemonXPPopup* DemonXPPopup::create(int levelID) {
 	auto ret = new DemonXPPopup();
 	ret->m_levelID = levelID;
-	if (ret && ret->initAnchored(420.f, 250.f)) {
+	if (ret && ret->init()) {
 		ret->autorelease();
 		return ret;
 	}

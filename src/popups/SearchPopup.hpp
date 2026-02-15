@@ -4,9 +4,9 @@
 //geode namespace
 using namespace geode::prelude;
 
-class SearchPopup : public Popup<> {
+class SearchPopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	virtual ~SearchPopup();
 
 	CCMenu* m_tabs;

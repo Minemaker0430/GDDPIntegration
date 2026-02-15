@@ -9,9 +9,9 @@
 //geode namespace
 using namespace geode::prelude;
 
-class VerificationPopup : public Popup<> {
+class VerificationPopup : public Popup {
     protected:
-        bool setup() override;
+        bool init() override;
         void onClose(CCObject*) override;
         virtual ~VerificationPopup();
     
@@ -41,10 +41,12 @@ class VerificationPopup : public Popup<> {
         std::string m_skillsetsMainSha;
         std::string m_skillsetsDevSha;
 
-        EventListener<web::WebTask> m_listener;
-        EventListener<web::WebTask> m_listener2;
-        EventListener<web::WebTask> m_listener3;
-        EventListener<web::WebTask> m_listener4;
+        async::TaskHolder<web::WebResponse> m_listener;
+        async::TaskHolder<web::WebResponse> m_listener2;
+        async::TaskHolder<web::WebResponse> m_listener3;
+        async::TaskHolder<web::WebResponse> m_listener4;
+
+        float m_scroll = 0.f;
     
         void parseResponse(std::string res);
 
@@ -93,9 +95,9 @@ class VerificationPopup : public Popup<> {
 //  AddLevelPopup
 //===================
 
-class AddLevelPopup : public Popup<> {
+class AddLevelPopup : public Popup {
     protected:
-        bool setup() override;
+        bool init() override;
         virtual ~AddLevelPopup();
 
         TextInput* m_value;
@@ -112,9 +114,9 @@ class AddLevelPopup : public Popup<> {
 //  EditDescriptionPopup
 //===================
 
-class EditDescriptionPopup : public Popup<> {
+class EditDescriptionPopup : public Popup {
     protected:
-        bool setup() override;
+        bool init() override;
         virtual ~EditDescriptionPopup();
 
         TextInput* m_value;
@@ -130,9 +132,9 @@ class EditDescriptionPopup : public Popup<> {
 //  SkillsetSelectionPopup
 //===================
 
-class SkillsetSelectionPopup : public Popup<> {
+class SkillsetSelectionPopup : public Popup {
     protected:
-        bool setup() override;
+        bool init() override;
         virtual ~SkillsetSelectionPopup();
 
         ListView* m_list;
@@ -150,9 +152,9 @@ class SkillsetSelectionPopup : public Popup<> {
 //  NewPackPopup
 //===================
 
-class NewPackPopup : public Popup<> {
+class NewPackPopup : public Popup {
     protected:
-        bool setup() override;
+        bool init() override;
         virtual ~NewPackPopup();
 
         void onConfirm(CCObject*);
@@ -164,9 +166,9 @@ class NewPackPopup : public Popup<> {
 //  MovePopup
 //===================
 
-class MovePopup : public Popup<> {
+class MovePopup : public Popup {
     protected:
-        bool setup() override;
+        bool init() override;
         virtual ~MovePopup();
 
         std::string m_type;
@@ -198,7 +200,6 @@ class MovePopup : public Popup<> {
         std::string plusSprite = "DP_Unknown";
         std::string saveID = "null";
         std::vector<int> levelIDs = {0};
-        std::vector<int> practiceIDs = {0};
         int reqLevels = 999;
     };
 
@@ -214,7 +215,6 @@ class MovePopup : public Popup<> {
                 .plusSprite = value["plusSprite"].as<std::string>().unwrapOr("DP_Unknown"),
                 .saveID = value["saveID"].as<std::string>().unwrapOr("null"),
                 .levelIDs = value["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
-                .practiceIDs = value["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
                 .reqLevels = value["reqLevels"].as<int>().unwrapOr(999)};
 
             return Ok(f);
@@ -228,7 +228,6 @@ class MovePopup : public Popup<> {
                                             {"plusSprite", value.plusSprite},
                                             {"saveID", value.saveID},
                                             {"levelIDs", value.levelIDs},
-                                            {"practiceIDs", value.practiceIDs},
                                             {"reqLevels", value.reqLevels}});
             return obj;
         }
@@ -246,7 +245,6 @@ struct GDDPLegacyPackFormat
     std::string plusSprite = "DP_Unknown";
     std::string saveID = "null";
     std::vector<int> levelIDs = {0};
-    std::vector<int> practiceIDs = {0};
     int mainPack = 0;
 };
 
@@ -262,7 +260,6 @@ struct matjson::Serialize<GDDPLegacyPackFormat>
             .plusSprite = value["plusSprite"].as<std::string>().unwrapOr("DP_Unknown"),
             .saveID = value["saveID"].as<std::string>().unwrapOr("null"),
             .levelIDs = value["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
-            .practiceIDs = value["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
             .mainPack = value["mainPack"].as<int>().unwrapOr(0)};
 
         return Ok(f);
@@ -276,7 +273,6 @@ struct matjson::Serialize<GDDPLegacyPackFormat>
                                         {"plusSprite", value.plusSprite},
                                         {"saveID", value.saveID},
                                         {"levelIDs", value.levelIDs},
-                                        {"practiceIDs", value.practiceIDs},
                                         {"mainPack", value.mainPack}});
         return obj;
     }

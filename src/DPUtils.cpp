@@ -4,12 +4,12 @@
 #include <Geode/loader/Event.hpp>
 #include <Geode/utils/web.hpp>
 
-#include "Utils.hpp"
+#include "DPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
 
-std::vector<std::string> Utils::substring(std::string s, std::string d) {
+std::vector<std::string> DPUtils::substring(std::string s, std::string d) {
 	std::vector<std::string> res;
 	std::string delim = d;
 	std::string token = "";
@@ -33,7 +33,7 @@ std::vector<std::string> Utils::substring(std::string s, std::string d) {
 	return res;
 };
 
-int Utils::safe_stoi(std::string input, int fallback) {
+int DPUtils::safe_stoi(std::string input, int fallback) {
 	std::string result = "";
 	std::string allowedChars = "0123456789";
 

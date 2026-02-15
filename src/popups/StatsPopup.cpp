@@ -10,7 +10,8 @@
 //geode namespace
 using namespace geode::prelude;
 
-bool StatsPopup::setup() {
+bool StatsPopup::init() {
+	if (!Popup::init(420.f, 250.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Stats");
@@ -777,7 +778,7 @@ void StatsPopup::loadTab(int id) {
 				packProgressBack->setScaleX(0.6f);
 				packProgressBack->setScaleY(0.65f);
 
-				auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clamp(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
+				auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clampf(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
 				progressLabel->setPosition({ 170.f, 12.f });
 				progressLabel->setScale(0.65f);
 				progressLabel->setZOrder(2);
@@ -860,7 +861,7 @@ void StatsPopup::loadTab(int id) {
 				packProgressBack->setScaleX(0.6f);
 				packProgressBack->setScaleY(0.65f);
 
-				auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clamp(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
+				auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clampf(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
 				progressLabel->setPosition({ 170.f, 12.f });
 				progressLabel->setScale(0.65f);
 				progressLabel->setZOrder(2);
@@ -947,7 +948,7 @@ void StatsPopup::loadTab(int id) {
 			packProgressBack->setScaleX(0.6f);
 			packProgressBack->setScaleY(0.65f);
 
-			auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clamp(floor(totalPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
+			auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clampf(floor(totalPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
 			progressLabel->setPosition({ 170.f, 12.f });
 			progressLabel->setScale(0.65f);
 			progressLabel->setZOrder(2);
@@ -1063,7 +1064,7 @@ void StatsPopup::medalInfoCallback(CCObject* sender) {
 			}
 
 			if (progress >= totalLevels) {
-				progress = clamp(progress, 0, totalLevels);
+				progress = clampf(progress, 0, totalLevels);
 				FLAlertLayer::create("Medal Info", fmt::format("{}\n\n<cy>{}/{} to Medal</c>", PlusMedalDescriptions[medalID], progress, totalLevels), "OK")->show();
 			}
 			else {
@@ -1092,7 +1093,7 @@ void StatsPopup::medalInfoCallback(CCObject* sender) {
 			}
 
 			if (progress >= totalLevels) {
-				progress = clamp(progress, 0, totalLevels);
+				progress = clampf(progress, 0, totalLevels);
 				FLAlertLayer::create("Medal Info", fmt::format("{}\n\n<cy>{}/{} to Medal</c>", NormalMedalDescriptions[medalID], progress, totalLevels), "OK")->show();
 			}
 			else {
@@ -1123,15 +1124,15 @@ void StatsPopup::rankInfoCallback(CCObject* sender) {
 	{
 		if (listSave.hasRank && !listSave.completed)
 		{
-			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n<cy>{}/{} to Rank</c>\n{}/{} to Plus Rank", data["main"][id]["name"].asString().unwrapOr("null"), clamp(listSave.progress, 0, data["main"][id]["reqLevels"].asInt().unwrapOr(999)), data["main"][id]["reqLevels"].asInt().unwrapOr(999), listSave.progress, data["main"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
+			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n<cy>{}/{} to Rank</c>\n{}/{} to Plus Rank", data["main"][id]["name"].asString().unwrapOr("null"), clampf(listSave.progress, 0, data["main"][id]["reqLevels"].asInt().unwrapOr(999)), data["main"][id]["reqLevels"].asInt().unwrapOr(999), listSave.progress, data["main"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
 		}
 		else if (listSave.completed)
 		{
-			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n<cy>{}/{} to Rank</c>\n<cy>{}/{} to Plus Rank</c>", data["main"][id]["name"].asString().unwrapOr("null"), clamp(listSave.progress, 0, data["main"][id]["reqLevels"].asInt().unwrapOr(999)), data["main"][id]["reqLevels"].asInt().unwrapOr(999), listSave.progress, data["main"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
+			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n<cy>{}/{} to Rank</c>\n<cy>{}/{} to Plus Rank</c>", data["main"][id]["name"].asString().unwrapOr("null"), clampf(listSave.progress, 0, data["main"][id]["reqLevels"].asInt().unwrapOr(999)), data["main"][id]["reqLevels"].asInt().unwrapOr(999), listSave.progress, data["main"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
 		}
 		else
 		{
-			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Rank\n{}/{} to Plus Rank", data["main"][id]["name"].asString().unwrapOr("null"), clamp(listSave.progress, 0, data["main"][id]["reqLevels"].asInt().unwrapOr(999)), data["main"][id]["reqLevels"].asInt().unwrapOr(999), listSave.progress, data["main"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
+			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Rank\n{}/{} to Plus Rank", data["main"][id]["name"].asString().unwrapOr("null"), clampf(listSave.progress, 0, data["main"][id]["reqLevels"].asInt().unwrapOr(999)), data["main"][id]["reqLevels"].asInt().unwrapOr(999), listSave.progress, data["main"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
 		}
 	}
 	else if (type == "legacy")
@@ -1267,7 +1268,7 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 				progress += reqLevels;
 			}
 			else {
-				progress += clamp(listSave.progress, 0, reqLevels);
+				progress += clampf(listSave.progress, 0, reqLevels);
 			}
 			totalLvls += reqLevels;
 		}
@@ -1288,7 +1289,7 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 					progress += reqLevels;
 				}
 				else {
-					progress += clamp(listSave.progress, 0, reqLevels);
+					progress += clampf(listSave.progress, 0, reqLevels);
 				}
 				totalLvls += reqLevels;
 			}
@@ -1302,7 +1303,7 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 
 StatsPopup* StatsPopup::create() {
 	auto ret = new StatsPopup();
-	if (ret && ret->initAnchored(420.f, 250.f)) {
+	if (ret && ret->init()) {
 		ret->autorelease();
 		return ret;
 	}

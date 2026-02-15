@@ -4,9 +4,9 @@
 //geode namespace
 using namespace geode::prelude;
 
-class NewsPopup : public Popup<> {
+class NewsPopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	CCLayer* m_mainLayer;
 	LoadingCircle* m_loadCircle;
 	
@@ -21,7 +21,7 @@ protected:
 
 	virtual ~NewsPopup();
 
-	EventListener<web::WebTask> m_listener;
+	async::TaskHolder<web::WebResponse> m_listener;
 public:
 	static NewsPopup* create();
 

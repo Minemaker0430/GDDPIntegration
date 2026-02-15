@@ -8,12 +8,13 @@
 #include "RoulettePopup.hpp"
 #include "../RouletteUtils.hpp"
 #include "../menus/RouletteSafeLayer.hpp"
-#include "../Utils.hpp"
+#include "../DPUtils.hpp"
 
 // geode namespace
 using namespace geode::prelude;
 
-bool RoulettePopup::setup() {
+bool RoulettePopup::init() {
+	if (!Popup::init(420.f, 250.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Roulette");
@@ -1319,7 +1320,7 @@ void RoulettePopup::onNext(CCObject *sender) {
 
 	// check if the player is able to move on
 	bool canProceed = false;
-	if (gauntletEnabled && rouletteProgress == rouletteGoal) {
+	if (gauntletEnabled && rouletteProgress >= rouletteGoal) {
 		canProceed = true;
 	}
 	else if (perfectEnabled && rouletteProgress == rouletteGoal) {
@@ -1449,7 +1450,7 @@ void RoulettePopup::saveProgress(bool skip) {
 	rouletteSaves[m_saveID] = save;
 	Mod::get()->setSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", rouletteSaves);
 
-	Mod::get()->saveData();
+	if (!Mod::get()->saveData().isOk()) log::info("Failed to save roulette progress: {}", Mod::get()->saveData().unwrapErr());
 
 	return;
 }
@@ -1561,7 +1562,7 @@ void RoulettePopup::onRename(CCObject *sender)
 RoulettePopup *RoulettePopup::create()
 {
 	auto ret = new RoulettePopup();
-	if (ret && ret->initAnchored(420.f, 250.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;
@@ -1581,8 +1582,9 @@ RouletteRenamePopup
 ===========================
 */
 
-bool RouletteRenamePopup::setup()
+bool RouletteRenamePopup::init()
 {
+	if (!Popup::init(260.f, 200.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Edit Save");
@@ -1677,7 +1679,7 @@ RouletteRenamePopup *RouletteRenamePopup::create(int id)
 {
 	auto ret = new RouletteRenamePopup();
 	ret->m_saveID = id;
-	if (ret && ret->initAnchored(260.f, 200.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;
@@ -1697,8 +1699,9 @@ RouletteNewPopup
 ===========================
 */
 
-bool RouletteNewPopup::setup()
+bool RouletteNewPopup::init()
 {
+	if (!Popup::init(260.f, 150.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("New Save");
@@ -1757,7 +1760,7 @@ void RouletteNewPopup::onImport(CCObject*) {
 RouletteNewPopup *RouletteNewPopup::create()
 {
 	auto ret = new RouletteNewPopup();
-	if (ret && ret->initAnchored(260.f, 150.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;
@@ -1777,8 +1780,9 @@ RouletteImportPopup
 ===========================
 */
 
-bool RouletteImportPopup::setup()
+bool RouletteImportPopup::init()
 {
+	if (!Popup::init(420.f, 125.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Enter Save Text");
@@ -1843,7 +1847,7 @@ void RouletteImportPopup::onConfirm(CCObject*) {
 
 	if (m_isSettings) {
 		auto result = RouletteUtils::importSettings(m_value->getString());
-		auto seed = Utils::safe_stoi(result[1], -1);
+		auto seed = DPUtils::safe_stoi(result[1], -1);
 		auto settings = result[0];
 
 		RoulettePopup* popup = this->getParent()->getChildByType<RoulettePopup>(0);
@@ -1866,7 +1870,7 @@ void RouletteImportPopup::onConfirm(CCObject*) {
 RouletteImportPopup* RouletteImportPopup::create(bool isSettings) {
 	auto ret = new RouletteImportPopup();
 	ret->m_isSettings = isSettings;
-	if (ret && ret->initAnchored(420.f, 125.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;
@@ -1885,7 +1889,8 @@ RouletteSettingsPopup
 ===========================
 */
 
-bool RouletteSettingsPopup::setup() {
+bool RouletteSettingsPopup::init() {
+	if (!Popup::init(420.f, 250.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Roulette Settings");
@@ -2006,7 +2011,7 @@ void RouletteSettingsPopup::onClose(CCObject *sender) {
 		m_seed = -1;
 	}
 	else {
-		m_seed = abs(Utils::safe_stoi(m_value->getString()));
+		m_seed = abs(DPUtils::safe_stoi(m_value->getString()));
 	}
 
 	RoulettePopup *popup = this->getParent()->getChildByType<RoulettePopup>(0);
@@ -2043,7 +2048,7 @@ RouletteSettingsPopup *RouletteSettingsPopup::create(int seed, std::vector<bool>
 	auto ret = new RouletteSettingsPopup();
 	ret->m_seed = seed;
 	ret->m_settings = settings;
-	if (ret && ret->initAnchored(420.f, 250.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;

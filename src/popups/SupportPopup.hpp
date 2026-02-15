@@ -4,9 +4,9 @@
 //geode namespace
 using namespace geode::prelude;
 
-class SupportPopup : public Popup<> {
+class SupportPopup : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	CCLayer* m_mainLayer;
 	virtual ~SupportPopup();
 public:
@@ -16,14 +16,14 @@ public:
 	void getSupporters(CCObject*);
 };
 
-class SupporterList : public Popup<> {
+class SupporterList : public Popup {
 protected:
-	bool setup() override;
+	bool init() override;
 	CCLayer* m_mainLayer;
 	LoadingCircle* m_loadCircle;
 	virtual ~SupporterList();
 
-	EventListener<web::WebTask> m_listener;
+	async::TaskHolder<web::WebResponse> m_listener;
 public:
 	static SupporterList* create();
 };

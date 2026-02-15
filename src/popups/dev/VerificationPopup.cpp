@@ -2,7 +2,7 @@
 #include <Geode/Geode.hpp>
 
 #include "VerificationPopup.hpp"
-#include "../../Utils.hpp"
+#include "../../DPUtils.hpp"
 #include "../../base64.h"
 #include "../../XPUtils.hpp"
 #include "SaveContentsPopup.hpp"
@@ -15,8 +15,9 @@
 // geode namespace
 using namespace geode::prelude;
 
-bool VerificationPopup::setup()
+bool VerificationPopup::init()
 {
+	if (!Popup::init(420.f, 250.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("");
@@ -104,16 +105,18 @@ bool VerificationPopup::setup()
 
 void VerificationPopup::reqCode()
 {
-	m_listener.bind([&, this](web::WebTask::Event *e)
-					{
-		if (auto res = e->getValue()) {
-			if (res->ok() && res->string().isOk() && !res->string().isErr()) {
-                log::info("Got data: {}", res->string().unwrapOr(""));
+	auto req = web::WebRequest();
+
+	m_listener.spawn(
+		req.post(fmt::format("https://github.com/login/device/code?client_id={}", m_clientID)),
+		[&](web::WebResponse value) {
+			if (value.ok() && value.string().isOk() && !value.string().isErr()) {
+				log::info("Got data: {}", value.string().unwrapOr(""));
 				m_loadcircle->fadeAndRemove();
 				m_loadText->setVisible(false);
 
 				//parse response
-				parseResponse(res->string().unwrapOr(""));
+				parseResponse(value.string().unwrapOr(""));
 
 				//setup device code
 				m_verificationCode = m_responseValues["user_code"].asString().unwrapOr("uhhhh");
@@ -138,24 +141,19 @@ void VerificationPopup::reqCode()
 				//setup polling
 				m_deviceCode = m_responseValues["device_code"].asString().unwrapOr("uhhhh");
 				this->schedule(schedule_selector(VerificationPopup::poll), 10.f);
-            }
-            else {
-                log::info("Something went wrong... {}", res->code());
+			}
+			else {
+				log::info("Something went wrong... {}", value.code());
 				FLAlertLayer::create(
 					"ERROR",
-					fmt::format("Something went wrong...\nCode: {}", res->code()).c_str(),
+					fmt::format("Something went wrong...\nCode: {}", value.code()).c_str(),
 					"OK"
 				)->show();
 
-				m_listener.getFilter().cancel();
-            }
+				m_listener.cancel();
+			}
 		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
-
-	auto req = web::WebRequest();
-	m_listener.setFilter(req.post(fmt::format("https://github.com/login/device/code?client_id={}", m_clientID)));
+	);
 
 	return;
 }
@@ -164,13 +162,18 @@ void VerificationPopup::poll(float dt)
 {
 	log::info("Checking for code...");
 
-	m_listener.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok() && res->string().isOk() && !res->string().isErr()) {
-                log::info("Got data: {}", res->string().unwrapOr(""));
+	auto req = web::WebRequest();
+
+	m_listener.spawn(
+		req.post(fmt::format(
+		"https://github.com/login/oauth/access_token?client_id={}&device_code={}&grant_type=urn:ietf:params:oauth:grant-type:device_code",
+		m_clientID, m_deviceCode)),
+		[&](web::WebResponse value) {
+			if (value.ok() && value.string().isOk() && !value.string().isErr()) {
+                log::info("Got data: {}", value.string().unwrapOr(""));
 
 				//parse response
-				parseResponse(res->string().unwrapOr(""));
+				parseResponse(value.string().unwrapOr(""));
 
 				//interpret response
 				if (m_responseValues.contains("error")) { //if the response contains an error, it wasn't successful.
@@ -230,14 +233,14 @@ void VerificationPopup::poll(float dt)
 
 						m_mainLayer->removeAllChildrenWithCleanup(true);
 						this->unschedule(schedule_selector(VerificationPopup::poll));
-						m_listener.getFilter().cancel();
+						m_listener.cancel();
 
 						this->removeMeAndCleanup();
 					}
 				}
 				else if (m_responseValues.contains("access_token")) {
 					log::info("Successfully obtained token!");
-					file::writeString(m_accessCodePath, m_responseValues["access_token"].asString().unwrapOr(""));
+					file::writeStringSafe(m_accessCodePath, m_responseValues["access_token"].asString().unwrapOr(""));
 
 					FLAlertLayer::create(
 						"Success!",
@@ -247,7 +250,7 @@ void VerificationPopup::poll(float dt)
 
 					m_mainLayer->removeAllChildrenWithCleanup(true);
 					this->unschedule(schedule_selector(VerificationPopup::poll));
-					m_listener.getFilter().cancel();
+					m_listener.cancel();
 
 					this->removeMeAndCleanup();
 				}
@@ -260,34 +263,27 @@ void VerificationPopup::poll(float dt)
 
 					m_mainLayer->removeAllChildrenWithCleanup(true);
 					this->unschedule(schedule_selector(VerificationPopup::poll));
-					m_listener.getFilter().cancel();
+					m_listener.cancel();
 
 					this->removeMeAndCleanup();
 				}
             }
             else {
-                log::info("Something went wrong... {}", res->code());
+                log::info("Something went wrong... {}", value.code());
 				FLAlertLayer::create(
 					"ERROR",
-					fmt::format("Something went wrong...\nCode: {}", res->code()).c_str(),
+					fmt::format("Something went wrong...\nCode: {}", value.code()).c_str(),
 					"OK"
 				)->show();
 
 				m_mainLayer->removeAllChildrenWithCleanup(true);
 				this->unschedule(schedule_selector(VerificationPopup::poll));
-				m_listener.getFilter().cancel();
+				m_listener.cancel();
 
 				this->removeMeAndCleanup();
             }
 		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
-
-	auto req = web::WebRequest();
-	m_listener.setFilter(req.post(fmt::format(
-		"https://github.com/login/oauth/access_token?client_id={}&device_code={}&grant_type=urn:ietf:params:oauth:grant-type:device_code",
-		m_clientID, m_deviceCode)));
+	);
 
 	return;
 }
@@ -296,12 +292,12 @@ void VerificationPopup::parseResponse(std::string res)
 {
 	m_responseValues.clear();
 
-	auto params = Utils::substring(res, "&");
+	auto params = DPUtils::substring(res, "&");
 	std::vector<std::string> keys;
 	std::vector<std::string> values;
 	for (auto key : params)
 	{
-		auto result = Utils::substring(key, "=");
+		auto result = DPUtils::substring(key, "=");
 		keys.push_back(result[0]);
 		values.push_back(result[1]);
 	}
@@ -316,10 +312,20 @@ void VerificationPopup::getContents()
 {
 	log::info("Getting Database Contents...");
 
-	m_listener.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok() && res->json().isOk() && !res->json().isErr()) {
-                auto list = res->json().unwrapOrDefault();
+	// with geode v5 this is about to be nesting HELL 
+
+	m_loadText->setCString("Getting Main List... (1/4)");
+
+	auto req = web::WebRequest();
+	req.userAgent("GDDP Mod Database");
+	req.header("Accept", "application/vnd.github+json");
+	req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
+	req.header("X-GitHub-Api-Version", "2022-11-28");
+	m_listener.spawn(
+		req.get("https://api.github.com/repos/Minemaker0430/gddp-mod-database/contents/main-list.json"),
+		[&](web::WebResponse value) {
+			if (value.ok() && value.json().isOk() && !value.json().isErr()) {
+                auto list = value.json().unwrapOrDefault();
 
 				if (list.contains("content")) {
 					m_dataMain = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
@@ -338,144 +344,124 @@ void VerificationPopup::getContents()
 				req.header("Accept", "application/vnd.github+json");
 				req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
 				req.header("X-GitHub-Api-Version", "2022-11-28");
-				m_listener2.setFilter(req.get("https://api.github.com/repos/Minemaker0430/gddp-mod-database/contents/skill-badges.json"));
-            }
-            else {
-                log::info("Something went wrong... {}", res->code());
+				m_listener2.spawn(
+					req.get("https://api.github.com/repos/Minemaker0430/gddp-mod-database/contents/skill-badges.json"),
+					[&](web::WebResponse value) {
+						if (value.ok() && value.json().isOk() && !value.json().isErr()) {
+							auto list = value.json().unwrapOrDefault();
+
+							if (list.contains("content")) {
+								m_skillsetsMain = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+							}
+
+							if (list.contains("sha")) {
+								m_skillsetsMainSha = list["sha"].asString().unwrapOr("");
+							}
+
+							m_loadText->setCString("Getting Dev List... (3/4)");
+
+							log::info("Successfully got Main Skillsets, getting Dev List...");
+
+							auto req = web::WebRequest();
+							req.userAgent("GDDP Mod Database");
+							req.header("Accept", "application/vnd.github+json");
+							req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
+							req.header("X-GitHub-Api-Version", "2022-11-28");
+							m_listener3.spawn(
+								req.get("https://api.github.com/repos/Minemaker0430/gddp-mod-dev-data/contents/list.json"),
+								[&](web::WebResponse value) {
+									if (value.ok() && value.json().isOk() && !value.json().isErr()) {
+										auto list = value.json().unwrapOrDefault();
+
+										if (list.contains("content")) {
+											m_dataDev = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+										}
+
+										if (list.contains("sha")) {
+											m_dataDevSha = list["sha"].asString().unwrapOr("");
+										}
+
+										m_loadText->setCString("Getting Dev Skillsets... (4/4)");
+
+										log::info("Successfully got Dev List, getting Dev Skillsets...");
+
+										auto req = web::WebRequest();
+										req.userAgent("GDDP Mod Database");
+										req.header("Accept", "application/vnd.github+json");
+										req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
+										req.header("X-GitHub-Api-Version", "2022-11-28");
+										m_listener4.spawn(
+											req.get("https://api.github.com/repos/Minemaker0430/gddp-mod-dev-data/contents/skillsets.json"),
+											[&](web::WebResponse value) {
+												if (value.ok() && value.json().isOk() && !value.json().isErr()) {
+													auto list = value.json().unwrapOrDefault();
+
+													if (list.contains("content")) {
+														m_skillsetsDev = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
+													}
+
+													if (list.contains("sha")) {
+														m_skillsetsDevSha = list["sha"].asString().unwrapOr("");
+													}
+
+													m_loadText->setVisible(false);
+													m_loadcircle->fadeAndRemove();
+
+													log::info("All Data Loaded Successfully!");
+
+													loadMain(0);
+												}
+												else {
+													log::info("Something went wrong... {}", value.code());
+													FLAlertLayer::create(
+														"ERROR",
+														fmt::format("Something went wrong getting the Dev Skillsets...\nCode: {}", value.code()).c_str(),
+														"OK"
+													)->show();
+
+													this->removeMeAndCleanup();
+												}
+											}
+										);
+									}
+									else {
+										log::info("Something went wrong... {}", value.code());
+										FLAlertLayer::create(
+											"ERROR",
+											fmt::format("Something went wrong getting the Dev List...\nCode: {}", value.code()).c_str(),
+											"OK"
+										)->show();
+
+										this->removeMeAndCleanup();
+									}
+								}
+							);
+						}
+						else {
+							log::info("Something went wrong... {}", value.code());
+							FLAlertLayer::create(
+								"ERROR",
+								fmt::format("Something went wrong getting the Main Skillsets...\nCode: {}", value.code()).c_str(),
+								"OK"
+							)->show();
+
+							this->removeMeAndCleanup();
+						}
+					}
+				);
+			}
+			else {
+				log::info("Something went wrong... {}", value.code());
 				FLAlertLayer::create(
 					"ERROR",
-					fmt::format("Something went wrong getting the Main List...\nCode: {}", res->code()).c_str(),
+					fmt::format("Something went wrong getting the Main List...\nCode: {}", value.code()).c_str(),
 					"OK"
 				)->show();
 
 				this->removeMeAndCleanup();
-            }
+			}
 		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
-
-	m_listener2.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok() && res->json().isOk() && !res->json().isErr()) {
-                auto list = res->json().unwrapOrDefault();
-
-				if (list.contains("content")) {
-					m_skillsetsMain = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-				}
-
-				if (list.contains("sha")) {
-					m_skillsetsMainSha = list["sha"].asString().unwrapOr("");
-				}
-
-				m_loadText->setCString("Getting Dev List... (3/4)");
-
-				log::info("Successfully got Main Skillsets, getting Dev List...");
-
-				auto req = web::WebRequest();
-				req.userAgent("GDDP Mod Database");
-				req.header("Accept", "application/vnd.github+json");
-				req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-				req.header("X-GitHub-Api-Version", "2022-11-28");
-				m_listener3.setFilter(req.get("https://api.github.com/repos/Minemaker0430/gddp-mod-dev-data/contents/list.json"));
-            }
-            else {
-                log::info("Something went wrong... {}", res->code());
-				FLAlertLayer::create(
-					"ERROR",
-					fmt::format("Something went wrong getting the Main Skillsets...\nCode: {}", res->code()).c_str(),
-					"OK"
-				)->show();
-
-				this->removeMeAndCleanup();
-            }
-		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
-
-	m_listener3.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok() && res->json().isOk() && !res->json().isErr()) {
-                auto list = res->json().unwrapOrDefault();
-
-				if (list.contains("content")) {
-					m_dataDev = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-				}
-
-				if (list.contains("sha")) {
-					m_dataDevSha = list["sha"].asString().unwrapOr("");
-				}
-
-				m_loadText->setCString("Getting Dev Skillsets... (4/4)");
-
-				log::info("Successfully got Dev List, getting Dev Skillsets...");
-
-				auto req = web::WebRequest();
-				req.userAgent("GDDP Mod Database");
-				req.header("Accept", "application/vnd.github+json");
-				req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-				req.header("X-GitHub-Api-Version", "2022-11-28");
-				m_listener4.setFilter(req.get("https://api.github.com/repos/Minemaker0430/gddp-mod-dev-data/contents/skillsets.json"));
-            }
-            else {
-                log::info("Something went wrong... {}", res->code());
-				FLAlertLayer::create(
-					"ERROR",
-					fmt::format("Something went wrong getting the Dev List...\nCode: {}", res->code()).c_str(),
-					"OK"
-				)->show();
-
-				this->removeMeAndCleanup();
-            }
-		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
-
-	m_listener4.bind([&, this](web::WebTask::Event *e) {
-		if (auto res = e->getValue()) {
-			if (res->ok() && res->json().isOk() && !res->json().isErr()) {
-                auto list = res->json().unwrapOrDefault();
-
-				if (list.contains("content")) {
-					m_skillsetsDev = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-				}
-
-				if (list.contains("sha")) {
-					m_skillsetsDevSha = list["sha"].asString().unwrapOr("");
-				}
-
-				m_loadText->setVisible(false);
-				m_loadcircle->fadeAndRemove();
-
-				log::info("All Data Loaded Successfully!");
-
-				loadMain(0);
-            }
-            else {
-                log::info("Something went wrong... {}", res->code());
-				FLAlertLayer::create(
-					"ERROR",
-					fmt::format("Something went wrong getting the Dev Skillsets...\nCode: {}", res->code()).c_str(),
-					"OK"
-				)->show();
-
-				this->removeMeAndCleanup();
-            }
-		}
-		else if (e->isCancelled()) {
-			log::info("Cancelled request.");
-		} });
-
-	m_loadText->setCString("Getting Main List... (1/4)");
-
-	auto req = web::WebRequest();
-	req.userAgent("GDDP Mod Database");
-	req.header("Accept", "application/vnd.github+json");
-	req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-	req.header("X-GitHub-Api-Version", "2022-11-28");
-	m_listener.setFilter(req.get("https://api.github.com/repos/Minemaker0430/gddp-mod-database/contents/main-list.json"));
+	);
 
 	return;
 }
@@ -800,7 +786,7 @@ void VerificationPopup::onEdit(CCObject* sender) {
 	else if (tag == -100) {
 		log::info("Editing Level: {}", id);
 
-		loadLevel(Utils::safe_stoi(id));
+		loadLevel(DPUtils::safe_stoi(id));
 	}
 	else if (m_skillsetsDev.contains(id)) {
 		log::info("Editing Skillset: {}", id);
@@ -936,13 +922,6 @@ void VerificationPopup::removeObject(std::string type, std::string id, int pos) 
 		lvlList.erase(lvlList.begin() + pos);
 		m_currentData.set("levelIDs", lvlList);
 
-		if ((m_index == "main" || m_index == "legacy") && m_currentData.contains("practiceIDs")) {
-			std::vector<int> practiceList = m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOrDefault();
-
-			practiceList.erase(practiceList.begin() + pos);
-			m_currentData.set("practiceIDs", practiceList);
-		}
-
 		loadPack(m_index, m_packID, true);
 	}
 	
@@ -975,14 +954,14 @@ void VerificationPopup::onSave(CCObject* sender) {
 				saveID = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-saveID")->getChildByID("value-menu")->getChildByID("value-input"))->getString(); 
 			}
 			if (m_index == "main") {
-				reqLevels = Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-reqLevels")->getChildByID("value-menu")->getChildByID("value-input"))->getString()); 
+				reqLevels = DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-reqLevels")->getChildByID("value-menu")->getChildByID("value-input"))->getString()); 
 			}
 			if (m_index == "legacy") {
-				mainPack = Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-mainPack")->getChildByID("value-menu")->getChildByID("value-input"))->getString()); 
+				mainPack = DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-mainPack")->getChildByID("value-menu")->getChildByID("value-input"))->getString()); 
 			}
 			if (m_index == "monthly") {
-				month = Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-month")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
-				year = Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-year")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
+				month = DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-month")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
+				year = DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-year")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
 			}
 
 			matjson::Value packData;
@@ -995,7 +974,6 @@ void VerificationPopup::onSave(CCObject* sender) {
 					.plusSprite = plusSprite,
 					.saveID = saveID,
 					.levelIDs = m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault(),
-					.practiceIDs = m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOrDefault(),
 					.reqLevels = reqLevels
 				};
 			}
@@ -1007,7 +985,6 @@ void VerificationPopup::onSave(CCObject* sender) {
 					.plusSprite = plusSprite,
 					.saveID = saveID,
 					.levelIDs = m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault(),
-					.practiceIDs = m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOrDefault(),
 					.mainPack = mainPack
 				};
 			}
@@ -1038,6 +1015,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 			m_dataDev.set(m_index, data);
 
 			log::info("Pack {}-{} saved!", m_index, m_packID);
+			m_scroll = 0.f;
 			loadMain(0);
 
 			break;
@@ -1048,15 +1026,15 @@ void VerificationPopup::onSave(CCObject* sender) {
 
 			auto levelID = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-level-id")->getChildByID("value-menu")->getChildByID("value-input"))->getString();
 			auto idChanged = false;
-			if (Utils::safe_stoi(levelID) != m_levelID) { idChanged = true; };
+			if (DPUtils::safe_stoi(levelID) != m_levelID) { idChanged = true; };
 
 			//convert text inputs
 			auto name = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-name")->getChildByID("value-menu")->getChildByID("value-input"))->getString();
-			int difficulty = Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-difficulty")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
+			int difficulty = DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-difficulty")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
 			matjson::Value xp;
 			if (m_list->getChildByIDRecursive("property-xp-chokepoints")) { //we only need to check for one since the rest can't exist without it
 				for (auto skill : XPUtils::skillIDs) {
-					xp.set(skill, Utils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive(fmt::format("property-xp-{}", skill))->getChildByID("value-menu")->getChildByID("value-input"))->getString()));
+					xp.set(skill, DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive(fmt::format("property-xp-{}", skill))->getChildByID("value-menu")->getChildByID("value-input"))->getString()));
 				}
 			}
 
@@ -1075,7 +1053,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 						auto pos = 0;
 						for (auto lvl : lvlList) {
 							if (lvl == m_levelID) {
-								lvlList.at(pos) = Utils::safe_stoi(levelID);
+								lvlList.at(pos) = DPUtils::safe_stoi(levelID);
 								data.at(packPos).set("levelIDs", lvlList);
 							}
 							pos += 1;
@@ -1230,9 +1208,7 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 	toggleBtn->setID("startpos-toggle");
 	toggleBtn->toggle(m_practiceToggle);
 	toggleMenu->addChild(toggleBtn);
-	if (index == "main" || index == "legacy") {
-		m_mainLayer->addChild(toggleMenu);
-	}
+	m_mainLayer->addChild(toggleMenu);
 
 	//set up data
 	m_index = index;
@@ -1261,7 +1237,7 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 	auto cells = CCArray::create();
 
 	for (auto [key, value] : data) {
-		if (key != "levelIDs" && key != "description" && key != "practiceIDs") {
+		if (key != "levelIDs" && key != "description") {
 			auto propertyNode = CCNode::create();
 			propertyNode->setID(fmt::format("property-{}", key));
 			propertyNode->setScale(0.75f);
@@ -1395,7 +1371,8 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 			if (m_dataDev["level-data"].contains(std::to_string(id))) {
 				levelName = m_dataDev["level-data"][std::to_string(id)]["name"].asString().unwrapOr("???");
 			}
-			else if (id == 0) {
+			
+			if (id == 0) {
 				levelName = "PLACEHOLDER";
 			}
 
@@ -1406,8 +1383,8 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 			label->setScale(0.5f);
 			label->setAnchorPoint({0.f, 0.5f});
 			label->setPosition({5.f, 17.5f});
-			if (levelName == "???") { label->setColor({ 255, 0, 0 }); }
-			if (levelName == "PLACEHOLDER") { label->setColor({ 0, 255, 0 }); }
+			if (levelName == "???") label->setColor({ 255, 0, 0 });
+			if (levelName == "PLACEHOLDER") label->setColor({ 0, 255, 0 });
 
 			// edit menu
 			auto editMenu = CCMenu::create();
@@ -1919,10 +1896,10 @@ void VerificationPopup::onClose(CCObject *sender)
 			if (btn2)
 			{
 				this->unschedule(schedule_selector(VerificationPopup::poll));
-				m_listener.getFilter().cancel();
-				m_listener2.getFilter().cancel();
-				m_listener3.getFilter().cancel();
-				m_listener4.getFilter().cancel();
+				m_listener.cancel();
+				m_listener2.cancel();
+				m_listener3.cancel();
+				m_listener4.cancel();
 
 				// normal closing stuff
 				// CloseEvent(this).post();
@@ -1981,7 +1958,7 @@ void VerificationPopup::onBack(CCObject* sender) {
 VerificationPopup *VerificationPopup::create()
 {
 	auto ret = new VerificationPopup();
-	if (ret && ret->initAnchored(420.f, 250.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;
@@ -1999,8 +1976,9 @@ VerificationPopup::~VerificationPopup()
 //  AddLevelPopup
 //===================
 
-bool AddLevelPopup::setup()
+bool AddLevelPopup::init()
 {
+	if (!Popup::init(420.f, 125.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Enter Level ID");
@@ -2061,7 +2039,7 @@ void AddLevelPopup::onPaste(CCObject*) {
 
 void AddLevelPopup::onAddLevel(CCObject*) {
 
-	int lvlID = Utils::safe_stoi(m_value->getString());
+	int lvlID = DPUtils::safe_stoi(m_value->getString());
 
 	VerificationPopup* popup = this->getParent()->getChildByType<VerificationPopup>(0);
 	auto lvlList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
@@ -2072,13 +2050,6 @@ void AddLevelPopup::onAddLevel(CCObject*) {
 	else {
 		lvlList.insert(lvlList.begin(), lvlID);
 		popup->m_currentData.set("levelIDs", lvlList);
-
-		if ((popup->m_index == "main" || popup->m_index == "legacy") && popup->m_currentData.contains("practiceIDs")) {
-			auto practiceList = popup->m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(lvlList.size(), 0));
-			practiceList.insert(practiceList.begin(), 0);
-			popup->m_currentData.set("practiceIDs", practiceList);
-		}
-
 		popup->loadPack(popup->m_index, popup->m_packID, true);
 	}
 
@@ -2089,7 +2060,7 @@ void AddLevelPopup::onAddLevel(CCObject*) {
 
 AddLevelPopup* AddLevelPopup::create() {
 	auto ret = new AddLevelPopup();
-	if (ret && ret->initAnchored(420.f, 125.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;
@@ -2106,8 +2077,9 @@ AddLevelPopup::~AddLevelPopup() {
 //  EditDescriptionPopup
 //===================
 
-bool EditDescriptionPopup::setup()
+bool EditDescriptionPopup::init()
 {
+	if (!Popup::init(540.f, 125.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Set Description");
@@ -2178,7 +2150,7 @@ void EditDescriptionPopup::onConfirm(CCObject*) {
 EditDescriptionPopup* EditDescriptionPopup::create(std::string description) {
 	auto ret = new EditDescriptionPopup();
 	ret->m_description = description;
-	if (ret && ret->initAnchored(540.f, 125.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;
@@ -2195,8 +2167,9 @@ EditDescriptionPopup::~EditDescriptionPopup() {
 //  MovePopup
 //===================
 
-bool MovePopup::setup()
+bool MovePopup::init()
 {
+	if (!Popup::init(220.f, 150.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	if (m_type == "pack") { //pack
@@ -2348,7 +2321,7 @@ void MovePopup::onConfirm(CCObject*) {
 		auto index = m_ID;
 		auto originalData = popup->m_dataDev[index][m_pos];
 		auto data = popup->m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
-		int newPos = Utils::safe_stoi(m_value->getString()) - 1;
+		int newPos = DPUtils::safe_stoi(m_value->getString()) - 1;
 		log::info("old pos: {}", m_pos);
 		log::info("new pos: {}", newPos);
 
@@ -2463,8 +2436,8 @@ void MovePopup::onConfirm(CCObject*) {
 	}
 	else if (m_type == "level") { //level
 		auto levelList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-		int lvlID = Utils::safe_stoi(m_ID);
-		int newPos = Utils::safe_stoi(m_value->getString()) - 1;
+		int lvlID = DPUtils::safe_stoi(m_ID);
+		int newPos = DPUtils::safe_stoi(m_value->getString()) - 1;
 
 		//remove old level at position since we have the placement stored now
 		levelList.erase(levelList.begin() + m_pos);
@@ -2474,16 +2447,6 @@ void MovePopup::onConfirm(CCObject*) {
 
 		//store data
 		popup->m_currentData.set("levelIDs", levelList);
-
-		if ((popup->m_index == "main" || popup->m_index == "legacy") && popup->m_currentData.contains("practiceIDs")) {
-			auto practiceList = popup->m_currentData["practiceIDs"].as<std::vector<int>>().unwrapOrDefault();
-			if (!practiceList.empty()) {
-				int practiceID = practiceList.at(m_pos);
-				practiceList.erase(practiceList.begin() + m_pos);
-				practiceList.insert(practiceList.begin() + newPos, practiceID);
-				popup->m_currentData.set("practiceIDs", practiceList);
-			}
-		}
 
 		log::info("Level successfully moved.");
 
@@ -2500,7 +2463,7 @@ MovePopup* MovePopup::create(std::string type, std::string id, int pos) {
 	ret->m_type = type;
 	ret->m_ID = id;
 	ret->m_pos = pos;
-	if (ret && ret->initAnchored(220.f, 150.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;
@@ -2517,8 +2480,9 @@ MovePopup::~MovePopup() {
 //  SkillsetSelectionPopup
 //===================
 
-bool SkillsetSelectionPopup::setup()
+bool SkillsetSelectionPopup::init()
 {
+	if (!Popup::init(420.f, 250.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Add Skillset");
@@ -2667,7 +2631,7 @@ SkillsetSelectionPopup* SkillsetSelectionPopup::create(int placeAt, matjson::Val
 	ret->m_index = placeAt;
 	ret->m_data = data;
 	ret->m_isNew = isNew;
-	if (ret && ret->initAnchored(420.f, 250.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;
@@ -2684,8 +2648,9 @@ SkillsetSelectionPopup::~SkillsetSelectionPopup() {
 //  NewPackPopup
 //===================
 
-bool NewPackPopup::setup()
+bool NewPackPopup::init()
 {
+	if (!Popup::init(220.f, 150.f)) return false;
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("New Pack");
@@ -2786,7 +2751,7 @@ void NewPackPopup::onConfirm(CCObject* sender) {
 
 NewPackPopup* NewPackPopup::create() {
 	auto ret = new NewPackPopup();
-	if (ret && ret->initAnchored(220.f, 150.f))
+	if (ret && ret->init())
 	{
 		ret->autorelease();
 		return ret;

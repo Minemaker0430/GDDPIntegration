@@ -8,7 +8,7 @@
 
 #include "DPLayer.hpp"
 #include "DPListLayer.hpp"
-#include "../Utils.hpp"
+#include "../DPUtils.hpp"
 #include "../RecommendedUtils.hpp"
 #include "../CustomText.hpp"
 
@@ -32,12 +32,11 @@ void DPListLayer::backButton(CCObject* sender) {
 	return;
 };
 
-bool DPListLayer::init(const char* type, int id, bool isPractice) {
+bool DPListLayer::init(const char* type, int id) {
 	if (!CCLayer::init()) return false;
 
 	m_type = type;
 	m_id = id;
-	m_isPractice = isPractice;
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
@@ -188,7 +187,6 @@ bool DPListLayer::init(const char* type, int id, bool isPractice) {
 }
 
 void DPListLayer::updateProgressBar() {
-	if (m_isPractice) { return; }
 
 	m_progressBar->setVisible(true);
 
@@ -200,22 +198,11 @@ void DPListLayer::updateProgressBar() {
 	auto front = typeinfo_cast<CCSprite*>(m_progressBar->getChildByID("clipping-node")->getChildByID("progress-bar-front"));
 	auto progressText = typeinfo_cast<CCLabelBMFont*>(m_progressBar->getChildByID("progress-text"));
 
-	std::string saveID = "null";
-	int month = 0;
-	int year = 0;
-	std::vector<int> levelIDs = {};
-	int reqLevels = 0;
-
-	if (m_type == "monthly" && !data[m_type][m_id]["month"].isNull()) { month = data[m_type][m_id]["month"].as<int>().unwrapOr(11); }
-	if (m_type == "monthly" && !data[m_type][m_id]["year"].isNull()) { year = data[m_type][m_id]["year"].as<int>().unwrapOr(1987); }
-	if (m_type == "monthly") {
-		saveID = fmt::format("{}-{}", month, year);
-	}
-	else {
-		if (!data[m_type][m_id]["saveID"].isNull()) { saveID = data[m_type][m_id]["saveID"].asString().unwrapOr("null"); }
-	}
-	if (!data[m_type][m_id]["levelIDs"].isNull()) { levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); }
-	if (m_type == "main" && !data[m_type][m_id]["reqLevels"].isNull()) { reqLevels = data[m_type][m_id]["reqLevels"].as<int>().unwrapOr(999); }
+	int month = data[m_type][m_id]["month"].as<int>().unwrapOr(11);
+	int year = data[m_type][m_id]["year"].as<int>().unwrapOr(1987);
+	std::vector<int> levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+	int reqLevels = data[m_type][m_id]["reqLevels"].as<int>().unwrapOr(-1);
+	std::string saveID = (m_type == "monthly") ? fmt::format("{}-{}", month, year) : data[m_type][m_id]["saveID"].asString().unwrapOr("null");
 
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
@@ -231,56 +218,20 @@ void DPListLayer::updateProgressBar() {
 	}
 
 	//calculate percent
-	auto progressPercent = 0.0f;
-
-	if (m_type == "monthly") {
-		if (listSave.progress >= 5) {
-			progressPercent = static_cast<float>(listSave.progress) / 6.f;
-		}
-		else {
-			progressPercent = static_cast<float>(listSave.progress) / 5.f;
-		}
-	}
-	else if (listSave.hasRank || m_type != "main") {
-		progressPercent = static_cast<float>(listSave.progress) / static_cast<float>(levelIDs.size());
-	}
-	else {
-		progressPercent = static_cast<float>(listSave.progress) / static_cast<float>(reqLevels);
-	}
+	auto progressPercent = (float)listSave.progress / ((m_type == "monthly") ? ((listSave.progress >= 5) ? 6.f : 5.f) : ((listSave.hasRank || m_type != "main") ? (float)levelIDs.size() : (float)reqLevels));
 
 	//update bar
 	auto stencil = CCScale9Sprite::create("square02_001.png");
 	stencil->setAnchorPoint({ 0, 0.5f });
 	stencil->setContentWidth(front->getScaledContentSize().width);
 	stencil->setScaleX(progressPercent);
-	stencil->setContentHeight(100);
+	stencil->setContentHeight(100.f);
 	clippingNode->setStencil(stencil);
 
 	//update label
 	if (progressText->getParent() == m_progressBar) { progressText->removeFromParentAndCleanup(true); }
-
-	if (listSave.completed) { 
-		progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, levelIDs.size()).c_str(), "goldFont.fnt");
-		progressText->setScale(0.85f);
-	}
-	else {
-		if (m_type == "monthly") {
-			if (listSave.progress >= 5) {
-				progressText = CCLabelBMFont::create(fmt::format("{}/6", listSave.progress).c_str(), "bigFont.fnt");
-			}
-			else {
-				progressText = CCLabelBMFont::create(fmt::format("{}/5", listSave.progress).c_str(), "bigFont.fnt");
-			}
-		}
-		else if (listSave.hasRank || m_type != "main") {
-			progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, levelIDs.size()).c_str(), "bigFont.fnt");
-		}
-		else {
-			progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, reqLevels).c_str(), "bigFont.fnt");
-		}
-		
-		progressText->setScale(0.65f);
-	}
+	progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, (m_type == "monthly") ? ((listSave.progress >= 5) ? 6 : 5) : ((listSave.hasRank || m_type != "main") ? levelIDs.size() : reqLevels)).c_str(), (listSave.completed) ? "goldFont.fnt" : "bigFont.fnt");
+	progressText->setScale((listSave.completed) ? 0.85f : 0.65f);
 	progressText->setPosition({ m_progressBar->getContentWidth() / 2, (m_progressBar->getContentHeight() / 2) + 1.5f });
 	progressText->setZOrder(5);
 	progressText->setID("progress-text");
@@ -291,26 +242,13 @@ void DPListLayer::updateProgressBar() {
 
 void DPListLayer::updateSave() {
 
-	if (m_isPractice) { return; }
-
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	
-	std::string saveID = "null";
-	int month = 0;
-	int year = 0;
-	std::vector<int> levelIDs = {};
-	int reqLevels = 0;
-
-	if (m_type == "monthly" && !data[m_type][m_id]["month"].isNull()) { month = data[m_type][m_id]["month"].as<int>().unwrapOr(1); }
-	if (m_type == "monthly" && !data[m_type][m_id]["year"].isNull()) { year = data[m_type][m_id]["year"].as<int>().unwrapOr(1987); }
-	if (m_type == "monthly") {
-		saveID = fmt::format("{}-{}", month, year);
-	}
-	else {
-		if (!data[m_type][m_id]["saveID"].isNull()) { saveID = data[m_type][m_id]["saveID"].asString().unwrapOr("null"); }
-	}
-	if (!data[m_type][m_id]["levelIDs"].isNull()) { levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); }
-	if (m_type == "main" && !data[m_type][m_id]["reqLevels"].isNull()) { reqLevels = data[m_type][m_id]["reqLevels"].as<int>().unwrapOr(999); }
+	int month = data[m_type][m_id]["month"].as<int>().unwrapOr(11);
+	int year = data[m_type][m_id]["year"].as<int>().unwrapOr(1987);
+	std::vector<int> levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+	int reqLevels = data[m_type][m_id]["reqLevels"].as<int>().unwrapOr(-1);
+	std::string saveID = (m_type == "monthly") ? fmt::format("{}-{}", month, year) : data[m_type][m_id]["saveID"].asString().unwrapOr("null");
 
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
@@ -328,40 +266,11 @@ void DPListLayer::updateSave() {
 	}
 
 	//update status
-
-	auto hasRank = listSave.hasRank;
-
-	if ((progress >= reqLevels) && (m_type == "main")) {
-		hasRank = true;
-	}
-
-	auto completed = listSave.completed;
-
-	if (progress == levelIDs.size() && m_type != "monthly") {
-		completed = true;
-		if (m_type == "main") {
-			hasRank = true;
-		}
-	}
-	else if ((m_type == "monthly") && (progress > 5)) {
-		completed = true;
-	}
-	else {
-		completed = false;
-	}
+ 	auto hasRank = listSave.hasRank || ((progress >= reqLevels) && (reqLevels > -1));
+	auto completed = (progress == levelIDs.size());
 
 	if (m_type == "monthly" && progress >= 5) {
 		auto completedMonthlies = Mod::get()->getSavedValue<std::vector<std::string>>("monthly-completions");
-
-		//auto listID = data[m_type][m_id]["listID"].as_int(); //Only used for obtaining old data
-
-		//replace old monthly data if it exists
-		/*if (std::find(completedMonthlies.begin(), completedMonthlies.end(), listID) != completedMonthlies.end()) {
-			auto pos = std::find(completedMonthlies.begin(), completedMonthlies.end(), listID);
-			completedMonthlies.erase(pos);
-			completedMonthlies.insert(pos, saveID);
-			Mod::get()->setSavedValue<matjson::Array>("monthly-completions", completedMonthlies);
-		}*/
 
 		if (std::find(completedMonthlies.begin(), completedMonthlies.end(), saveID) == completedMonthlies.end()) {
 			completedMonthlies.insert(completedMonthlies.begin(), saveID);
@@ -369,13 +278,13 @@ void DPListLayer::updateSave() {
 		}
 	}
 
-	//save
-	Mod::get()->setSavedValue<ListSaveFormat>(saveID, ListSaveFormat{ .progress = progress, .completed = completed, .hasRank = hasRank });
-
 	//update recommendations
 	if (listSave.progress != progress && progress >= reqLevels - 2 && listSave.progress < reqLevels) {
 		RecommendedUtils::generateRecommendations();
 	}
+
+	//save
+	Mod::get()->setSavedValue<ListSaveFormat>(saveID, ListSaveFormat{ .progress = progress, .completed = completed, .hasRank = hasRank });
 	
 	return;
 }
@@ -420,30 +329,12 @@ void DPListLayer::loadLevels(int page) {
 	
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	std::vector<int> levelIDs = {0};
-	if (!data[m_type][m_id]["levelIDs"].isNull()) { levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); }
+	if (!data[m_type][m_id]["levelIDs"].isNull()) levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 
-	if (m_isPractice) {
+	m_IDs.clear();
 
-		m_IDs.clear();
-
-		if (m_type == "main" || m_type == "legacy") {
-			auto practiceIDs = data[m_type][m_id]["practiceIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(levelIDs.size(), 0));
-
-			for (auto const& level : practiceIDs)
-			{
-				if (level > 0) { m_IDs.push_back(std::to_string(level)); } //a level with an id of 0 is just a placeholder and should be skipped
-			}
-		}
-		else {
-			loadLevelsFailed("");
-		}
-
-	} else {
-		m_IDs.clear();
-
-		for (auto const& level : levelIDs) {
-			if (level > 0) m_IDs.push_back(std::to_string(level));
-		}
+	for (auto const& level : levelIDs) {
+		if (level > 0) m_IDs.push_back(std::to_string(level));
 	}
 
 	log::info("{}", m_IDs);
@@ -495,25 +386,13 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
-	if (m_type == "main" || m_type == "legacy") {
-		if (m_isPractice) {
-			m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), fmt::format("{} Demons (Practice)", data[m_type][m_id]["name"].asString().unwrapOrDefault()).c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
-			m_list->setZOrder(2);
-			m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
-			this->addChild(m_list);
-		} else {
-			m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), fmt::format("{} Demons", data[m_type][m_id]["name"].asString().unwrapOr("null")).c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
-			m_list->setZOrder(2);
-			m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
-			this->addChild(m_list);
-		}
-	}
-	else {
-		m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), data[m_type][m_id]["name"].asString().unwrapOr("null").c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
-		m_list->setZOrder(2);
-		m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
-		this->addChild(m_list);
-	}
+	std::string fullName = data[m_type][m_id]["name"].asString().unwrapOr("null") + 
+    ((m_type == "main" || m_type == "legacy") ? " Demons" : "");
+
+	m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), fullName.c_str(), { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
+	m_list->setZOrder(2);
+	m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
+	this->addChild(m_list);
 
 	//custom pack label
 	if ((Mod::get()->getSettingValue<bool>("custom-pack-text") && DPTextEffects.contains(data[m_type][m_id]["saveID"].asString().unwrapOr("null")))
@@ -613,9 +492,9 @@ void DPListLayer::loadLevelsFailed(const char*) {
 	return;
 }
 
-DPListLayer* DPListLayer::create(const char* type, int id, bool isPractice) {
+DPListLayer* DPListLayer::create(const char* type, int id) {
 	auto pRet = new DPListLayer();
-	if (pRet && pRet->init(type, id, isPractice)) {
+	if (pRet && pRet->init(type, id)) {
 		pRet->autorelease();
 		return pRet;
 	}
