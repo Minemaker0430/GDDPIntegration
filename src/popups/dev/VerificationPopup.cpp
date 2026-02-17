@@ -786,7 +786,7 @@ void VerificationPopup::onEdit(CCObject* sender) {
 	else if (tag == -100) {
 		log::info("Editing Level: {}", id);
 
-		loadLevel(DPUtils::safe_stoi(id));
+		loadLevel(numFromString<int>(id).unwrapOrDefault());
 	}
 	else if (m_skillsetsDev.contains(id)) {
 		log::info("Editing Skillset: {}", id);
@@ -954,14 +954,14 @@ void VerificationPopup::onSave(CCObject* sender) {
 				saveID = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-saveID")->getChildByID("value-menu")->getChildByID("value-input"))->getString(); 
 			}
 			if (m_index == "main") {
-				reqLevels = DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-reqLevels")->getChildByID("value-menu")->getChildByID("value-input"))->getString()); 
+				reqLevels = numFromString<int>(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-reqLevels")->getChildByID("value-menu")->getChildByID("value-input"))->getString()).unwrapOrDefault(); 
 			}
 			if (m_index == "legacy") {
-				mainPack = DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-mainPack")->getChildByID("value-menu")->getChildByID("value-input"))->getString()); 
+				mainPack = numFromString<int>(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-mainPack")->getChildByID("value-menu")->getChildByID("value-input"))->getString()).unwrapOrDefault(); 
 			}
 			if (m_index == "monthly") {
-				month = DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-month")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
-				year = DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-year")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
+				month = numFromString<int>(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-month")->getChildByID("value-menu")->getChildByID("value-input"))->getString()).unwrapOrDefault();
+				year = numFromString<int>(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-year")->getChildByID("value-menu")->getChildByID("value-input"))->getString()).unwrapOrDefault();
 			}
 
 			matjson::Value packData;
@@ -1026,15 +1026,15 @@ void VerificationPopup::onSave(CCObject* sender) {
 
 			auto levelID = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-level-id")->getChildByID("value-menu")->getChildByID("value-input"))->getString();
 			auto idChanged = false;
-			if (DPUtils::safe_stoi(levelID) != m_levelID) { idChanged = true; };
+			if (numFromString<int>(levelID).unwrapOrDefault() != m_levelID) { idChanged = true; };
 
 			//convert text inputs
 			auto name = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-name")->getChildByID("value-menu")->getChildByID("value-input"))->getString();
-			int difficulty = DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-difficulty")->getChildByID("value-menu")->getChildByID("value-input"))->getString());
+			int difficulty = numFromString<int>(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-difficulty")->getChildByID("value-menu")->getChildByID("value-input"))->getString()).unwrapOrDefault();
 			matjson::Value xp;
 			if (m_list->getChildByIDRecursive("property-xp-chokepoints")) { //we only need to check for one since the rest can't exist without it
 				for (auto skill : XPUtils::skillIDs) {
-					xp.set(skill, DPUtils::safe_stoi(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive(fmt::format("property-xp-{}", skill))->getChildByID("value-menu")->getChildByID("value-input"))->getString()));
+					xp.set(skill, numFromString<int>(typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive(fmt::format("property-xp-{}", skill))->getChildByID("value-menu")->getChildByID("value-input"))->getString()).unwrapOrDefault());
 				}
 			}
 
@@ -1053,7 +1053,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 						auto pos = 0;
 						for (auto lvl : lvlList) {
 							if (lvl == m_levelID) {
-								lvlList.at(pos) = DPUtils::safe_stoi(levelID);
+								lvlList.at(pos) = numFromString<int>(levelID).unwrapOrDefault();
 								data.at(packPos).set("levelIDs", lvlList);
 							}
 							pos += 1;
@@ -1397,7 +1397,7 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 			auto editBtn = CCMenuItemSpriteExtra::create(editSpr, this, menu_selector(VerificationPopup::onEdit));
 			editBtn->setID(std::to_string(id));
 			editBtn->setTag(-100);
-			editMenu->addChild(editBtn);
+			if (id > 0) editMenu->addChild(editBtn);
 
 			auto moveSpr = CCSprite::createWithSpriteFrameName("GJ_editModeBtn_001.png");
 			moveSpr->setScale(0.85f);
@@ -2039,7 +2039,7 @@ void AddLevelPopup::onPaste(CCObject*) {
 
 void AddLevelPopup::onAddLevel(CCObject*) {
 
-	int lvlID = DPUtils::safe_stoi(m_value->getString());
+	int lvlID = numFromString<int>(m_value->getString()).unwrapOrDefault();
 
 	VerificationPopup* popup = this->getParent()->getChildByType<VerificationPopup>(0);
 	auto lvlList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
@@ -2321,7 +2321,7 @@ void MovePopup::onConfirm(CCObject*) {
 		auto index = m_ID;
 		auto originalData = popup->m_dataDev[index][m_pos];
 		auto data = popup->m_dataDev[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
-		int newPos = DPUtils::safe_stoi(m_value->getString()) - 1;
+		int newPos = numFromString<int>(m_value->getString()).unwrapOrDefault() - 1;
 		log::info("old pos: {}", m_pos);
 		log::info("new pos: {}", newPos);
 
@@ -2436,8 +2436,8 @@ void MovePopup::onConfirm(CCObject*) {
 	}
 	else if (m_type == "level") { //level
 		auto levelList = popup->m_currentData["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-		int lvlID = DPUtils::safe_stoi(m_ID);
-		int newPos = DPUtils::safe_stoi(m_value->getString()) - 1;
+		int lvlID = numFromString<int>(m_ID).unwrapOrDefault();
+		int newPos = numFromString<int>(m_value->getString()).unwrapOrDefault() - 1;
 
 		//remove old level at position since we have the placement stored now
 		levelList.erase(levelList.begin() + m_pos);

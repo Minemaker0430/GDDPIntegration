@@ -14,15 +14,12 @@
 #include "RecommendedLayer.hpp"
 #include "../popups/StatsPopup.hpp"
 #include "../popups/SupportPopup.hpp"
-#include "../popups/NewsPopup.hpp"
 #include "../popups/XPPopup.hpp"
 #include "../popups/SearchPopup.hpp"
 #include "../popups/RoulettePopup.hpp"
 #include "../popups/dev/VerificationPopup.hpp"
-#include "../DPUtils.hpp"
 #include "../XPUtils.hpp"
 #include "../RecommendedUtils.hpp"
-#include "../CustomText.hpp"
 #include "DPPackCell.hpp"
 
 //geode namespace
@@ -469,6 +466,7 @@ bool DPLayer::init() {
 	//list tabs
 	auto listTabs = CCMenu::create();
 	listTabs->setID("list-tabs");
+	listTabs->setZOrder(9);
 
 	auto backTabSprite = CCSprite::createWithSpriteFrameName("DP_tabBack.png"_spr);
 	backTabSprite->setZOrder(-1);
@@ -567,7 +565,7 @@ void DPLayer::updateMonthlyTimer(float dt) {
 	now = time(NULL);
 	datetime = *localtime(&now);
 	datetime.tm_year = m_currentYear;
-	datetime.tm_mon = m_currentMonth + 1;
+	datetime.tm_mon = m_currentMonth;
 	datetime.tm_mday = 1;
 	datetime.tm_hour = 0; 
 	datetime.tm_min = 0; 

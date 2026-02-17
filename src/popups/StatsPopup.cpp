@@ -711,6 +711,7 @@ void StatsPopup::loadTab(int id) {
 			contentLayer->setPositionY(250.f);
 			scrollLayer->m_contentLayer->setPositionY(-250.f);
 			scrollLayer->m_contentLayer->setContentHeight(450.f);
+			scrollLayer->scrollToTop();
 
 			scrollLayer->m_contentLayer->addChild(contentLayer);
 			break;

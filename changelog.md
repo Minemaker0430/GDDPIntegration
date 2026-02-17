@@ -1,3 +1,12 @@
+# v1.0.15
+
+* Fixed monthly timer desync
+* Changed my implementation of stoi (safe_stoi) to Geode's
+* Removed Grandpa Demon compatibility
+* Roulette now uses bit flags instead of whatever I was doing previously
+* Changed Z Order of tabs for Touch Priority purposes
+* Fixed positioning of The Temple Series' icons
+
 # v1.0.14
 
 * Updated for Geode v5 & GD v2.2081

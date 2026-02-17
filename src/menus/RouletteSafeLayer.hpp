@@ -9,7 +9,7 @@ class RouletteSafeLayer : public CCLayer, LevelManagerDelegate {
 protected:
 	virtual bool init(std::vector<int> IDs); //add stuff to the layer
 	void backButton(CCObject*); //when you press back
-	virtual void keyBackClicked(); //when you press escape
+	virtual void keyBackClicked() override; //when you press escape
 
 	async::TaskHolder<web::WebResponse> m_listener;
 

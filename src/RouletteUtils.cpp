@@ -3,6 +3,7 @@
 #include <Geode/utils/JsonValidation.hpp>
 
 #include <random>
+#include <string>
 
 #include "RouletteUtils.hpp"
 #include "DPUtils.hpp"
@@ -12,17 +13,40 @@ using namespace geode::prelude;
 
 std::string RouletteUtils::toFlags(std::vector<bool> settings) {
     std::string result = "";
+    int flag = 0b000000;
     
     for (int i = 0; i < settings.size(); i++) {
         if (settings[i]) {
-            result.push_back('1');
+            switch(i % 6) {
+                case 0:
+                    flag |= 0b000001;
+                    break;
+                case 1:
+                    flag |= 0b000010;
+                    break;
+                case 2:
+                    flag |= 0b000100;
+                    break;
+                case 3:
+                    flag |= 0b001000;
+                    break;
+                case 4:
+                    flag |= 0b010000;
+                    break;
+                case 5:
+                    flag |= 0b100000;
+                    break;
+            }
         }
-        else {
-            result.push_back('0');
+
+        if ((i % 6 == 5) || (i == settings.size() - 1)) { //convert flag to string and push
+            std::string f = std::to_string(flag) + ',';
+            if (flag < 10) f.insert(f.begin(), '0');
+            result += f;
+
+            flag = 0b000000;
         }
     }
-
-    //log::info("to flags returned: {}", result);
 
     return result;
 }
@@ -36,20 +60,55 @@ std::vector<bool> RouletteUtils::fromFlags(std::string flags) {
     auto bonusPacks = data["bonus"].asArray().unwrap().size();
     auto size = (6 + mainPacks + legacyPacks + bonusPacks);
 
-    //fill vector with false so we can work backwards
     std::vector<bool> result = {};
-    for (int i = 0; i < size; i++) {
-        result.push_back(false);
+    std::vector<std::string> flagArray = DPUtils::substring(flags, ",");
+
+    if (flagArray.size() <= 1) { // if using the old settings system, convert to bools this way 
+        for (auto c : flags) {
+            result.push_back(c == '1');
+        }
+
+        for (int i = result.size(); i < size; i++) {
+            result.push_back(false); // fill in remaining settings
+        }
+
+        return result;
     }
 
-    //iterate backwards
-    for (int i = size - 1; i >= 0; i--) {
-        if (flags.size() >= i && flags[i] == '1') {
-            result[i] = true;
+    auto f = numFromString<int>(flagArray[0]).unwrapOr(0b000000);
+    int fIndex = 0;
+    for (int i = 0; i < size; i++) {
+        switch(i % 6) {
+            case 0:
+                result.push_back((f & 0b000001) > 0);
+                break;
+            case 1:
+                result.push_back((f & 0b000010) > 0);
+                break;
+            case 2:
+                result.push_back((f & 0b000100) > 0);
+                break;
+            case 3:
+                result.push_back((f & 0b001000) > 0);
+                break;
+            case 4:
+                result.push_back((f & 0b010000) > 0);
+                break;
+            case 5:
+                result.push_back((f & 0b100000) > 0);
+                break;
+        }
+
+        if (i % 6 == 5) {
+            fIndex += 1;
+            if (fIndex >= flagArray.size()) break;
+            f = numFromString<int>(flagArray[fIndex]).unwrapOr(0b000000);
         }
     }
 
-    //log::info("from flags returned: {}", result);
+    for (int i = result.size(); i < size; i++) {
+        result.push_back(false); // fill in remaining settings
+    }
 
     return result;
 }
@@ -82,6 +141,8 @@ std::vector<int> RouletteUtils::setupLevels(std::vector<matjson::Value> packs, s
         }
     }
 
+    if (levels.empty()) return levels;
+
     //randomize order based on seed
     std::seed_seq seed{randomSeed};
     std::mt19937 gen(seed);
@@ -112,7 +173,7 @@ std::vector<int> RouletteUtils::setupLevels(std::vector<matjson::Value> packs, s
 }
 
 void RouletteUtils::exportSettings(std::string settings, int seed) {
-    auto str = fmt::format("GDDPSettingsFormat;{};{};END", settings, seed);
+    auto str = fmt::format("GDDPSettingsFormatV2;{};{};END", settings, seed);
     auto encodedStr = ZipUtils::base64URLEncode(str);
 
     clipboard::write(encodedStr);
@@ -126,7 +187,14 @@ std::vector<std::string> RouletteUtils::importSettings(std::string str) {
     auto values = DPUtils::substring(decodedStr, ";");
 
     //verify settings string
-    if (values[0] != "GDDPSettingsFormat" || values.size() != 4 || values[3] != "END") { 
+    if (values[0] == "GDDPSettingsFormat" && values.size() == 4 && values[3] == "END") {
+        // convert old settings string to the new system
+        auto f = fromFlags(values[1]);
+        values[1] = toFlags(f);
+        values[0] = "GDDPSettingsFormatV2";
+    }
+
+    if (values[0] != "GDDPSettingsFormatV2" || values.size() != 4 || values[3] != "END") { 
         FLAlertLayer::create(
 			"ERROR",
 			"Invalid Settings. Make sure you copied the correct text and try again.",
@@ -168,25 +236,13 @@ void RouletteUtils::exportSave(matjson::Value save, bool toFile) {
 
     RouletteSaveFormat rsfSave = save.as<RouletteSaveFormat>().unwrapOrDefault();
 
-    auto settingsBools = fromFlags(rsfSave.settings);
-
     // format levels
     std::string lvlStr = "LVLS";
     for (auto lvl : rsfSave.levels) {
         lvlStr = fmt::format("{},{}", lvlStr.c_str(), lvl);
     }
 
-    auto isOld = false; //are the packs selected in this file outdated?
-
-    if (rsfSave.settings.size() < fromFlags("0").size()) { isOld = true; }
-
-    std::string str = "ERR";
-    if (isOld) {
-        //if the imported settings are gonna be wrong anyways, might as well guarantee they're gonna have the hardcoded settings :v
-        rsfSave.settings = toFlags({settingsBools[0], settingsBools[1], settingsBools[2], settingsBools[3], settingsBools[4], settingsBools[5]});
-    }
-
-    str = fmt::format("GDDPSaveFormat;{};{};{};{};{};{};{};END", rsfSave.name, rsfSave.settings, lvlStr, rsfSave.seed, rsfSave.progress, rsfSave.skips, rsfSave.score);
+    std::string str = fmt::format("GDDPSaveFormatV2;{};{};{};{};{};{};{};END", rsfSave.name, rsfSave.settings, lvlStr, rsfSave.seed, rsfSave.progress, rsfSave.skips, rsfSave.score);
     auto encodedStr = ZipUtils::base64URLEncode(str);
 
     if (toFile) {
@@ -211,7 +267,14 @@ void RouletteUtils::importSave(std::string saveStr, bool fromFile) {
         auto values = DPUtils::substring(decodedStr, ";");
 
         //verify save string
-        if (values[0] != "GDDPSaveFormat" || values.size() != 9 || values[8] != "END") { 
+        if (values[0] == "GDDPSaveFormat" && values.size() == 9 && values[8] == "END") {
+            // convert old settings string to the new system
+            auto f = fromFlags(values[2]);
+            values[2] = toFlags(f);
+            values[0] = "GDDPSaveFormatV2";
+        }
+
+        if (values[0] != "GDDPSaveFormatV2" || values.size() != 9 || values[8] != "END") { 
             FLAlertLayer::create(
 			"ERROR",
 			"Invalid Save File. Make sure you copied the correct text and try again.",
@@ -269,18 +332,18 @@ void RouletteUtils::importSave(std::string saveStr, bool fromFile) {
 
         for (std::string str : lvlStrings) {
             if (str != "LVLS") {
-                lvls.push_back(DPUtils::safe_stoi(str));
+                lvls.push_back(numFromString<int>(str).unwrapOrDefault());
             }
         }
 
         auto save = RouletteSaveFormat{
             .name = values[1],
             .settings = values[2],
-            .seed = DPUtils::safe_stoi(values[4], -1),
+            .seed = numFromString<int>(values[4]).unwrapOr(-1),
             .levels = lvls,
-            .progress = DPUtils::safe_stoi(values[5]),
-            .skips = DPUtils::safe_stoi(values[6]),
-            .score = DPUtils::safe_stoi(values[7])
+            .progress = numFromString<int>(values[5]).unwrapOrDefault(),
+            .skips = numFromString<int>(values[6]).unwrapOrDefault(),
+            .score = numFromString<int>(values[7]).unwrapOrDefault()
         };
 
         auto rouletteSaves = Mod::get()->getSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", {});

@@ -8,7 +8,6 @@
 
 #include "DPLayer.hpp"
 #include "DPSearchLayer.hpp"
-#include "../DPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -594,7 +593,7 @@ bool PagePopup::init() {
 void PagePopup::confirmPage(CCObject* sender) {
 
 	DPSearchLayer* searchLayer = this->getParent()->getChildByType<DPSearchLayer>(0);
-	int page = DPUtils::safe_stoi(m_value->getString());
+	int page = numFromString<int>(m_value->getString()).unwrapOr(1);
 	searchLayer->loadLevelsAtPage(page - 1);
 
 	this->removeMeAndCleanup();
@@ -609,7 +608,7 @@ void PagePopup::resetPage(CCObject* sender) {
 }
 
 void PagePopup::pageLeft(CCObject* sender) {
-	int value = DPUtils::safe_stoi(m_value->getString());
+	int value = numFromString<int>(m_value->getString()).unwrapOr(1);
 
 	value -= 1;
 	value = std::max(value, 1);
@@ -619,7 +618,7 @@ void PagePopup::pageLeft(CCObject* sender) {
 }
 
 void PagePopup::pageRight(CCObject* sender) {
-	int value = DPUtils::safe_stoi(m_value->getString());
+	int value = numFromString<int>(m_value->getString()).unwrapOr(1);
 
 	value += 1;
 	value = std::min(value, 999);

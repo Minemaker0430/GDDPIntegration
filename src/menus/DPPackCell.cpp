@@ -278,12 +278,12 @@ bool DPPackCell::init() {
 		auto michiHeart = CCSprite::createWithSpriteFrameName("d_heart01_001.png");
 
 		michiSpikes->setScale(0.5f);
-		michiSpikes->setPositionX(packText->getContentWidth() - 42.f);
+		michiSpikes->setPositionX(packText->getContentWidth() - 52.f);
 		michiSpikes->setPositionY(35.f);
 		michiSpikes->setID("michigun-spikes");
 
 		michiHeart->setScale(0.35f);
-		michiHeart->setPositionX(packText->getContentWidth() - 42.f);
+		michiHeart->setPositionX(packText->getContentWidth() - 52.f);
 		michiHeart->setPositionY(44.f);
 		michiHeart->setColor({ 0, 0, 0 });
 		michiHeart->setID("michigun-heart");

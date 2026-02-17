@@ -1372,7 +1372,9 @@ void RoulettePopup::onNext(CCObject *sender) {
 			"You\'re not winnin\' son",
 			"Stop! You have violated the law!",
 			"August 12th, 2036, Heat Death of the Universe",
-			"oopsie whoopsie!~ :3c"
+			"oopsie whoopsie!~ :3c",
+			"Erm... well this is awkward.",
+			"Boowomp"
 		};
 
 		std::vector<std::string> subtitleStrings = {
@@ -1383,7 +1385,9 @@ void RoulettePopup::onNext(CCObject *sender) {
 			fmt::format("Hey there, I can't let you pass until you get {}%.", rouletteGoal),
 			fmt::format("You need {}%.", rouletteGoal),
 			fmt::format("oopsie!~ s-sowwy, but wou need {}% to move on!~ >w<", rouletteGoal),
-			fmt::format("Yeaaa, I'm sorry, but you need {}% to move forward.", rouletteGoal)
+			fmt::format("Yeaaa, I'm sorry, but you need {}% to move forward.", rouletteGoal),
+			fmt::format("Apologies my good fellow, but it would appear that you need to aquire {}% in your assigned level before advancing.", rouletteGoal),
+			fmt::format("You have been BANNED from the clubhouse until you get {}%.", rouletteGoal)
 		};
 
 		std::vector<std::string> confirmStrings = {
@@ -1394,7 +1398,9 @@ void RoulettePopup::onNext(CCObject *sender) {
 			"Bruh",
 			":(",
 			"Oh come on",
-			"Really?"
+			"Really?",
+			"AAAAAA",
+			"Why?"
 		};
 
 		//randomize stuff
@@ -1427,6 +1433,12 @@ void RoulettePopup::saveProgress(bool skip) {
 	auto rouletteSaves = Mod::get()->getSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", {});
 	auto save = rouletteSaves[m_saveID];
 
+	// update settings to v2 format if detected
+	if (DPUtils::substring(save.settings, ",").size() <= 1) {
+		auto f = RouletteUtils::fromFlags(save.settings);
+        save.settings = RouletteUtils::toFlags(f);
+	}
+
 	if (skip) {
 		save.skips += 1;
 		save.progress = rouletteGoal;
@@ -1456,7 +1468,7 @@ void RoulettePopup::saveProgress(bool skip) {
 }
 
 void RoulettePopup::onEnterSave(CCObject *sender) {
-	auto btn = static_cast<CCMenuItemSpriteExtra *>(sender);
+	auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
 	auto id = btn->getTag();
 
 	loadRouletteSave(id);
@@ -1739,7 +1751,7 @@ bool RouletteNewPopup::init()
 
 void RouletteNewPopup::onCreate(CCObject*) {
 	RoulettePopup* popup = this->getParent()->getChildByType<RoulettePopup>(0);
-	popup->m_storedSettings = RouletteUtils::fromFlags("001100"); // default flags
+	popup->m_storedSettings = RouletteUtils::fromFlags("12,"); // default flags (equivalent to 0b001100)
 	popup->m_storedSeed = -1; // default seed, -1 means random
 	
 	popup->loadSettingsMenu();	
@@ -1847,7 +1859,7 @@ void RouletteImportPopup::onConfirm(CCObject*) {
 
 	if (m_isSettings) {
 		auto result = RouletteUtils::importSettings(m_value->getString());
-		auto seed = DPUtils::safe_stoi(result[1], -1);
+		auto seed = numFromString<int>(result[1]).unwrapOr(-1);
 		auto settings = result[0];
 
 		RoulettePopup* popup = this->getParent()->getChildByType<RoulettePopup>(0);
@@ -2011,7 +2023,7 @@ void RouletteSettingsPopup::onClose(CCObject *sender) {
 		m_seed = -1;
 	}
 	else {
-		m_seed = abs(DPUtils::safe_stoi(m_value->getString()));
+		m_seed = abs(numFromString<int>(m_value->getString()).unwrapOr(-1));
 	}
 
 	RoulettePopup *popup = this->getParent()->getChildByType<RoulettePopup>(0);

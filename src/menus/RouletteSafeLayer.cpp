@@ -8,8 +8,6 @@
 
 #include "DPLayer.hpp"
 #include "RouletteSafeLayer.hpp"
-#include "../DPUtils.hpp"
-#include "../RecommendedUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;

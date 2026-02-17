@@ -1,12 +1,12 @@
 {
-		"geode": "5.0.0-beta.1",
+		"geode": "5.0.0-beta.2",
 		"gd": {
 			"win": "2.2081",
 			"android": "2.2081",
 			"ios": "2.2081",
 			"mac": "2.2081"
 		},
-		"version": "v1.0.14",
+		"version": "v1.0.15",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "ItsMochaTheOtter",
@@ -49,10 +49,7 @@
 		],
 
 		"dependencies": {
-			"geode.node-ids": {
-				"version": ">=1.22.0",
-				"importance": "required"
-			}
+			"geode.node-ids": ">=1.22.0"
 		},
 
 	"settings": {
@@ -313,20 +310,6 @@
 			"name": "Compatibility",
 			"description": "Compatibility options for certain mods that may conflict.",
 			"type": "title"
-		},
-		"override-grandpa-demon": {
-			"name": "Override Grandpa Demon",
-			"description": "Overrides the custom Grandpa Demon Difficulty Faces in the GDDP Menus.",
-			"type": "bool",
-			"default": true,
-			"enable-if": "custom-difficulty-faces"
-		},
-		"disable-grandpa-demon-effects": {
-			"name": "Disable Grandpa Demon Effects",
-			"description": "Disables the Grandpa Demon background effects in the GDDP Menus.",
-			"type": "bool",
-			"default": true,
-			"enable-if": "custom-difficulty-faces"
 		},
 		"dont-move-side-btns": {
 			"name": "Don't Move Side Buttons",
