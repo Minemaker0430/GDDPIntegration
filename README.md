@@ -34,5 +34,4 @@ An official mod for the **G**eometry **D**ash **D**emon **P**rogression list tha
 
 * Colon - For helping me with Server Response stuff for lists
 * oatmealine - API Framework for "Rate All Demons"
-
 * wint0r - Created the "Rate All Demons" Option & its Sprite Framework

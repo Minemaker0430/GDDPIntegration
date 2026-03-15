@@ -1320,17 +1320,13 @@ void RoulettePopup::onNext(CCObject *sender) {
 
 	// check if the player is able to move on
 	bool canProceed = false;
-	if (gauntletEnabled && rouletteProgress >= rouletteGoal) {
-		canProceed = true;
-	}
-	else if (perfectEnabled && rouletteProgress == rouletteGoal) {
-		canProceed = true;
-	}
-	else if (!gauntletEnabled && !perfectEnabled && rouletteProgress >= rouletteGoal) {
-		canProceed = true;
-	}
+	if (gauntletEnabled && (rouletteProgress >= rouletteGoal)) canProceed = true;
+	else if (perfectEnabled && (rouletteProgress == rouletteGoal)) canProceed = true;
+	else if (!(gauntletEnabled && perfectEnabled) && (rouletteProgress >= rouletteGoal)) canProceed = true;
 
 	if (canProceed) {
+		saveProgress(false);
+
 		rouletteSaves = Mod::get()->getSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", {});
 		save = rouletteSaves[m_saveID];
 
@@ -1358,11 +1354,9 @@ void RoulettePopup::onNext(CCObject *sender) {
 			log::info("GG");
 			loadWinScreen(m_saveID);
 		}
-
-		saveProgress(false);
 	}
 	else {
-		if (gauntletEnabled) { rouletteGoal = 100; }
+		if (gauntletEnabled) rouletteGoal = 100;
 
 		std::vector<std::string> titleStrings = {
 			"You shall not pass!",
@@ -1442,7 +1436,7 @@ void RoulettePopup::saveProgress(bool skip) {
 	if (skip) {
 		save.skips += 1;
 		save.progress = rouletteGoal;
-		if (m_settings[1]) { save.score += 1; }
+		if (m_settings[1]) save.score += 1;
 	}
 	else if (gauntletEnabled && rouletteProgress == 100) {
 		save.score += 1;
@@ -1532,7 +1526,7 @@ void RoulettePopup::onExport(CCObject *sender)
 	matjson::Value save = rouletteSaves[id];
 	RouletteUtils::exportSave(save);
 
-	auto tap = TextAlertPopup::create("Save Copied to Clipboard", 2.f, .6f, 0x96, "bigFont.fnt");
+	auto tap = TextAlertPopup::create("Save Copied to Clipboard", 2.f, .6f, 150, "bigFont.fnt");
 	this->addChild(tap);
 }
 
@@ -1656,7 +1650,7 @@ void RouletteRenamePopup::onExportSettings(CCObject *)
 	RouletteSaveFormat save = rouletteSaves[m_saveID];
 	RouletteUtils::exportSettings(save.settings, save.seed);
 
-	auto tap = TextAlertPopup::create("Settings Copied to Clipboard", 2.f, .6f, 0x96, "bigFont.fnt");
+	auto tap = TextAlertPopup::create("Settings Copied to Clipboard", 2.f, .6f, 150, "bigFont.fnt");
 	this->addChild(tap);
 
 	return;
@@ -1667,14 +1661,7 @@ void RouletteRenamePopup::onConfirm(CCObject *)
 	auto rouletteSaves = Mod::get()->getSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", {});
 	RouletteSaveFormat save = rouletteSaves[m_saveID];
 
-	if (m_value->getString() == "")
-	{
-		save.name = "New Roulette";
-	}
-	else
-	{
-		save.name = m_value->getString();
-	}
+	save.name = (m_value->getString() == "") ? "New Roulette" : m_value->getString();
 
 	rouletteSaves[m_saveID] = save;
 	Mod::get()->setSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", rouletteSaves);

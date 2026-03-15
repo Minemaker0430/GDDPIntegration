@@ -1,3 +1,7 @@
+# v1.0.16
+
+* Fixed Roulette not working
+
 # v1.0.15
 
 * Fixed monthly timer desync
