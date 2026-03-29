@@ -281,7 +281,7 @@ void TextEffectEditorPopup::onValueChanged(CCObject* sender) {
         case ValueType::String: 
         {
             auto btn = static_cast<TextInput*>(sender);
-            m_data.set(params->m_key, btn->getString());
+            m_data.set(params->m_key, (std::string)btn->getString());
 
             m_sampleText->clearEffects();
             m_sampleText->addEffectsFromProperties(m_data);
