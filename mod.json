@@ -142,12 +142,6 @@
 			"type": "bool",
 			"default": true
 		},
-		"replace-main-levels": {
-			"name": "Replace Main Level Copies",
-			"description": "Overrides the GDDP's Main Level Copies by sending you to the actual Main Levels.",
-			"type": "bool",
-			"default": true
-		},
 		"faces-section": {
 			"name": "Difficulty Faces",
 			"description": "Options relating to the GDDP Difficulties. Purely cosmetic.",

@@ -36,10 +36,7 @@ protected:
 	int m_currentMonth = 0;
 	int m_currentYear = 87;
 
-	//listeners
-	async::TaskHolder<WebResponse> m_listListener;
-	async::TaskHolder<WebResponse> m_skillListener;
-	async::TaskHolder<WebResponse> m_listener; //default
+	async::TaskHolder<WebResponse> m_listener;
 
 	virtual ~DPLayer();
 public:
