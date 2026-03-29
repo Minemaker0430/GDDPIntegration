@@ -41,18 +41,6 @@ class $modify(PlayLayer) {
     void levelComplete() {
         PlayLayer::levelComplete();
 
-        if (this->m_isPracticeMode) return; // ALWAYS return if in practice mode
-
-        auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-        auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-
-        //mark level as completed
-        if (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value())) && !DPUtils::containsInt(completedLvls, this->m_level->m_levelID.value())) {
-            completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
-			Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
-        }
-
-        //roulette stuff
         bool inRoulette = Mod::get()->getSavedValue<bool>("in-roulette", false);
         int currentLvlID = Mod::get()->getSavedValue<int>("roulette-lvl-id", -1);
         int rouletteProgress = Mod::get()->getSavedValue<int>("roulette-progress", 0);
