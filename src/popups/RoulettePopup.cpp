@@ -73,12 +73,14 @@ void RoulettePopup::loadSaveMenu() {
 
 	// create/import button
 	auto newMenu = CCMenu::create();
-	newMenu->setPosition({322.5f, -13.f});
-	newMenu->setScale(0.75f);
+	newMenu->setPosition({ m_mainLayer->getContentWidth() - 25.f, 25.f });
 	newMenu->setZOrder(1);
 	newMenu->setID("new-menu");
 
-	auto newBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_plusBtn_001.png"), this, menu_selector(RoulettePopup::onNewSave));
+	auto newSpr = CCSprite::createWithSpriteFrameName("GJ_plusBtn_001.png");
+	newSpr->setScale(0.75f);
+
+	auto newBtn = CCMenuItemSpriteExtra::create(newSpr, this, menu_selector(RoulettePopup::onNewSave));
 	newBtn->setID("new-btn");
 
 	newMenu->addChild(newBtn);
