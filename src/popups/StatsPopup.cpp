@@ -6,6 +6,7 @@
 
 #include "../menus/DPLayer.hpp"
 #include "StatsPopup.hpp"
+#include "../CustomText.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -126,11 +127,15 @@ void StatsPopup::loadTab(int id) {
 			scoreInfoBtn->setID("info-btn");
 			infoMenu->addChild(scoreInfoBtn);
 
+			//get total level count
+			auto totalLevels = 0;
+			for (auto pack : data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+				totalLevels += pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size();
+			}
+
 			auto milestone = floor(getScore() / 25);
 			auto milestoneStr = fmt::format("Next Milestone at {}", (milestone + 1) * 25);
-			if (milestone >= 14) {
-				milestoneStr = "All Milestones Reached!";
-			}
+			if (milestone >= (floor(totalLevels / 25) - 1)) milestoneStr = "All Milestones Reached!";
 
 			auto scoreMilestone = CCLabelBMFont::create(milestoneStr.c_str(), "bigFont.fnt");
 			scoreMilestone->setPositionY(-20.f);
@@ -166,12 +171,8 @@ void StatsPopup::loadTab(int id) {
 			epicSprite->setPosition({ 11.5f, 7.5f });
 			epicSprite->setZOrder(-1);
 
-			if (listSave.progress == 6) {
-				monthlySprite->addChild(epicSprite);
-			}
-			else if (listSave.progress < 5) {
-				monthlySprite->setColor({ 0, 0, 0 });
-			}
+			if (listSave.progress == 6) monthlySprite->addChild(epicSprite);
+			else if (listSave.progress < 5) monthlySprite->setColor({ 0, 0, 0 });
 
 			auto monthlyInfoMenu = CCMenu::create();
 			monthlyInfoMenu->setPosition({ 49.f, 25.f });
@@ -245,20 +246,19 @@ void StatsPopup::loadTab(int id) {
 			highestRankHeader->setScale(0.35f);
 			highestRankHeader->setID("highest-rank-header");
 
-			auto highestRankSprite = CCSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
+			auto highestRankSprite = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 
-			for (int i = 0; i < data["main"].asArray().unwrap().size(); i++) {
-				auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
+			auto revData = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
+			std::reverse(revData.begin(), revData.end());
+
+			for (auto pack : revData) {
+				auto saveID = pack["saveID"].asString().unwrapOr("null");
 				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 				if (listSave.hasRank) {
-					auto sprName = fmt::format("{}.png", data["main"][i]["sprite"].asString().unwrapOr("DP_Beginner"));
+					auto sprName = fmt::format("{}.png", pack["sprite"].asString().unwrapOr("DP_Unknown"));
 					highestRankSprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
-				}
-				else {
-					if (i == 0) {
-						highestRankSprite->setColor({ 0, 0, 0 });
-					}
+					break;
 				}
 			}
 
@@ -281,20 +281,16 @@ void StatsPopup::loadTab(int id) {
 			highestPlusHeader->setScale(0.35f);
 			highestPlusHeader->setID("highest-plus-rank-header");
 
-			auto highestPlusSprite = CCSprite::createWithSpriteFrameName("DP_BeginnerPlus.png"_spr);
+			auto highestPlusSprite = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 
-			for (int i = 0; i < data["main"].asArray().unwrap().size(); i++) {
-				auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
+			for (auto pack : revData) {
+				auto saveID = pack["saveID"].asString().unwrapOr("null");
 				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 				if (listSave.completed) {
-					auto sprName = fmt::format("{}.png", data["main"][i]["plusSprite"].asString().unwrapOr("DP_Beginner"));
+					auto sprName = fmt::format("{}.png", pack["plusSprite"].asString().unwrapOr("DP_Unknown"));
 					highestPlusSprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
-				}
-				else {
-					if (i == 0) {
-						highestPlusSprite->setColor({ 0, 0, 0 });
-					}
+					break;
 				}
 			}
 
@@ -317,21 +313,17 @@ void StatsPopup::loadTab(int id) {
 			nextRankHeader->setScale(0.35f);
 			nextRankHeader->setID("next-rank-header");
 
-			auto nextRankSprite = CCSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
+			auto nextRankSprite = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 
-			for (int i = 0; i < data["main"].asArray().unwrap().size(); i++) {
+			for (auto pack : data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
 
-				auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
+				auto saveID = pack["saveID"].asString().unwrapOr("null");
 				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
-				if (i + 1 >= data["main"].asArray().unwrap().size() && listSave.hasRank) {
-					nextRankSprite = CCSprite::createWithSpriteFrameName("DP_Obsidian.png"_spr);
-					nextRankSprite->setColor({ 0, 0, 0 });
-					break;
-				}
-				else if (listSave.hasRank) {
-					auto sprName = fmt::format("{}.png", data["main"][i + 1]["sprite"].asString().unwrapOr("DP_Beginner"));
+				if (!listSave.hasRank) {
+					auto sprName = fmt::format("{}.png", pack["sprite"].asString().unwrapOr("DP_Unknown"));
 					nextRankSprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
+					break;
 				}
 			}
 
@@ -354,21 +346,17 @@ void StatsPopup::loadTab(int id) {
 			nextPlusHeader->setScale(0.35f);
 			nextPlusHeader->setID("next-plus-rank-header");
 
-			auto nextPlusSprite = CCSprite::createWithSpriteFrameName("DP_BeginnerPlus.png"_spr);
+			auto nextPlusSprite = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 
-			for (int i = 0; i < data["main"].asArray().unwrap().size(); i++) {
+			for (auto pack : data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
 
-				auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
+				auto saveID = pack["saveID"].asString().unwrapOr("null");
 				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
-				if (i + 1 >= data["main"].asArray().unwrap().size() && listSave.completed) {
-					nextPlusSprite = CCSprite::createWithSpriteFrameName("DP_ObsidianPlus.png"_spr);
-					nextPlusSprite->setColor({ 0, 0, 0 });
-					break;
-				}
-				else if (listSave.completed) {
-					auto sprName = fmt::format("{}.png", data["main"][i + 1]["plusSprite"].asString().unwrapOr("DP_Beginner"));
+				if (!listSave.completed) {
+					auto sprName = fmt::format("{}.png", pack["plusSprite"].asString().unwrapOr("DP_Unknown"));
 					nextPlusSprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
+					break;
 				}
 			}
 
@@ -391,28 +379,39 @@ void StatsPopup::loadTab(int id) {
 			medalHeader->setScale(0.35f);
 			medalHeader->setID("medal-header");
 
-			auto highestMedal = -1;
-			for (int i = 0; i < NormalMedals.size(); i++) {
-				if (getPercentToRank(NormalMedalRequirements[i], false) >= 1.f) {
-					highestMedal = i;
-				}
-			}
+			auto normalMedals = data["medals"]["normal"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
+			auto plusMedals = data["medals"]["plus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 
-			auto medalStr = "None";
+			auto highestMedal = -1;
+			for (int i = 0; i < normalMedals.size(); i++) if (getPercentToRank(normalMedals[i]["requirement"].as<int>().unwrapOr(0), false) >= 1.f) highestMedal = i;
+
+			std::string medalStr = "None";
 			ccColor3B medalColor = { 130, 130, 130 };
 			if (highestMedal != -1) {
-				medalStr = NormalMedals[highestMedal].c_str();
-				medalColor = NormalMedalColors[highestMedal];
+				medalStr = normalMedals[highestMedal]["name"].asString().unwrapOr("???");
+				medalColor = normalMedals[highestMedal]["color"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255});
 			}
 
-			auto medalValue = CCLabelBMFont::create(medalStr, "bigFont.fnt");
+			auto medalValue = CCLabelBMFont::create(medalStr.c_str(), "bigFont.fnt");
 			medalValue->setColor(medalColor);
 			medalValue->setPositionY(0.f);
 			medalValue->setScale(0.7f);
 			medalValue->setID("medal-value");
 
+			if (Mod::get()->getSettingValue<bool>("fancy-medals")) {
+				auto customText = CustomText::create(medalStr);
+				customText->setAnchorPoint({ 0.5f, 0.5f });
+				customText->setPositionY(0.f);
+				customText->setScale(0.7f);
+				customText->setID("medal-value");
+				customText->setTextColor(medalColor);
+				customText->addGradient((highestMedal == -1) ? ccColor3B{0, 0, 0} : ccColor3B{255, 255, 255}, 0.25f);
+				if (highestMedal != -1) customText->addBevel();
+				medalSection->addChild(customText);
+			}
+			else medalSection->addChild(medalValue);
+
 			medalSection->addChild(medalHeader);
-			medalSection->addChild(medalValue);
 
 			m_mainLayer->addChild(medalSection);
 
@@ -427,20 +426,16 @@ void StatsPopup::loadTab(int id) {
 			medalPlusHeader->setID("plus-medal-header");
 
 			auto highestPlusMedal = -1;
-			for (int i = 0; i < PlusMedals.size(); i++) {
-				if (getPercentToRank(PlusMedalRequirements[i], true) >= 1.f) {
-					highestPlusMedal = i;
-				}
-			}
+			for (int i = 0; i < plusMedals.size(); i++) if (getPercentToRank(plusMedals[i]["requirement"].as<int>().unwrapOr(0), true) >= 1.f) highestPlusMedal = i;
 
 			//Absolute Perfection Progress
 			auto progressPercent = getPercentToRank(data["main"].asArray().unwrap().size() - 1, true);
 
 			auto bonusProgress = 0;
 			auto bonusTotalLevels = 0;
-			for (int i = 0; i < data["bonus"].asArray().unwrap().size(); i++) {
-				auto saveID = data["bonus"][i]["saveID"].asString().unwrapOr("null");
-				auto totalLevels = data["bonus"][i]["levelIDs"].asArray().unwrap().size();
+			for (auto p : data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+				auto saveID = p["saveID"].asString().unwrapOr("null");
+				auto totalLevels = p["levelIDs"].asArray().unwrap().size();
 				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 				bonusProgress += listSave.progress;
@@ -450,32 +445,44 @@ void StatsPopup::loadTab(int id) {
 			auto bonusPercent = static_cast<float>(bonusProgress) / static_cast<float>(bonusTotalLevels);
 			auto totalPercent = (progressPercent + bonusPercent) / 2.f;
 
-			if (totalPercent >= 1.f) {
-				highestPlusMedal = -2;
-			}
+			if (totalPercent >= 1.f) highestPlusMedal = -2;
 
-			auto plusMedalStr = "None";
+			std::string plusMedalStr = "None";
 			ccColor3B plusMedalColor = { 130, 130, 130 };
 			if (highestPlusMedal > -1) {
-				plusMedalStr = PlusMedals[highestPlusMedal].c_str();
-				plusMedalColor = PlusMedalColors[highestPlusMedal];
+				plusMedalStr = plusMedals[highestMedal]["name"].asString().unwrapOr("???");
+				plusMedalColor = plusMedals[highestMedal]["color"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255});
 			}
 			else if (highestPlusMedal == -2) {
 				plusMedalStr = "ABSOLUTE PERFECTION";
 				plusMedalColor = { 255, 190, 255 };
 			}
 
-			auto plusMedalValue = CCLabelBMFont::create(plusMedalStr, "bigFont.fnt");
+			auto plusMedalValue = CCLabelBMFont::create(plusMedalStr.c_str(), "bigFont.fnt");
 			plusMedalValue->setColor(plusMedalColor);
 			plusMedalValue->setPositionY(0.f);
 			plusMedalValue->setScale(0.7f);
-			if (highestPlusMedal == -2) {
-				plusMedalValue->setScale(0.425f);
-			}
+			if (highestPlusMedal == -2) plusMedalValue->setScale(0.425f);
 			plusMedalValue->setID("plus-medal-value");
 
+			if (Mod::get()->getSettingValue<bool>("fancy-medals")) {
+				auto customText = CustomText::create(plusMedalStr);
+				customText->setAnchorPoint({ 0.5f, 0.5f });
+				customText->setPositionY(0.f);
+				customText->setScale(0.7f);
+				if (highestPlusMedal == -2) customText->setScale(0.425f);
+				customText->setID("plus-medal-value");
+				customText->setTextColor(plusMedalColor);
+				customText->addGradient((highestPlusMedal == -1) ? ccColor3B{0, 0, 0} : ccColor3B{255, 255, 255}, 0.25f);
+				if (highestPlusMedal != -1) {
+					customText->setOutlineColor({255, 255, 255});
+					customText->addCrystals({255, 255, 255}, 0.5f);
+				}
+				medalPlusSection->addChild(customText);
+			}
+			else medalPlusSection->addChild(plusMedalValue);
+
 			medalPlusSection->addChild(medalPlusHeader);
-			medalPlusSection->addChild(plusMedalValue);
 
 			m_mainLayer->addChild(medalPlusSection);
 
@@ -488,232 +495,99 @@ void StatsPopup::loadTab(int id) {
 			scrollLayer->setID("scroll-layer");
 			m_mainLayer->addChild(scrollLayer);
 
-			//Ranks
-			auto ranksSection = CCNode::create();
-			ranksSection->setPosition({ 200.f, 138.f });
-			ranksSection->setID("ranks-section");
+			auto layout = AxisLayout::create();
+			layout->setGap(7.5f);
+			layout->setAxisAlignment(AxisAlignment::Start);
+			layout->setAxis(Axis::Column);
+			layout->setAutoScale(false);
+			layout->setAxisReverse(true);
+			layout->ignoreInvisibleChildren(false);
+			layout->setAutoGrowAxis(true);
 
-			auto ranksHeader = CCLabelBMFont::create("Ranks", "bigFont.fnt");
-			ranksHeader->setPositionY(50.f);
-			ranksHeader->setScale(0.65f);
-			ranksHeader->setID("header");
+			scrollLayer->m_contentLayer->setPosition({ 200.f, 0.f });
+			scrollLayer->m_contentLayer->setLayout(layout);
 
-			auto ranksBG = CCScale9Sprite::create("square02_001.png");
-			ranksBG->setPositionY(-10.f);
-			ranksBG->setContentSize({ 400.f, 90.f });
-			ranksBG->setOpacity(128);
-			ranksBG->setID("bg");
+			std::vector<std::string> names = {"Ranks", "Legacy Ranks", "Bonus Packs"};
+			std::vector<std::string> indexes = {"main", "legacy", "bonus"};
 
-			auto ranksContainer = CCMenu::create();
-			ranksContainer->setPosition({ 0.f, -10.f });
-			ranksContainer->setContentSize({ 400.f, 95.5f });
-			ranksContainer->setID("container");
+			for (int id = 0; id < indexes.size(); id++) {
+				auto section = CCNode::create();
+				section->setAnchorPoint({ 0.f, 1.f });
+				section->setID(fmt::format("{}-section", indexes[id]));
 
-			auto containerLayout = AxisLayout::create();
-			containerLayout->setGrowCrossAxis(true);
-			containerLayout->setGap(-2.f);
-			containerLayout->setAxisAlignment(AxisAlignment::Center);
-			containerLayout->setCrossAxisAlignment(AxisAlignment::Center);
-			containerLayout->setCrossAxisLineAlignment(AxisAlignment::Start);
-			containerLayout->setAxis(Axis::Row);
+				auto container = CCMenu::create();
+				container->setPosition({ 0.f, 10.f });
+				container->setAnchorPoint({ 0.5f, 0.f });
+				container->setContentSize({ 400.f, 95.5f });
+				container->setID("container");
 
-			ranksContainer->setLayout(containerLayout, true);
+				auto containerLayout = AxisLayout::create();
+				containerLayout->setGrowCrossAxis(true);
+				containerLayout->setGap(-2.f);
+				containerLayout->setAxisAlignment(AxisAlignment::Center);
+				containerLayout->setCrossAxisAlignment(AxisAlignment::Center);
+				containerLayout->setCrossAxisLineAlignment(AxisAlignment::Start);
+				containerLayout->setAxis(Axis::Row);
 
-			for (int i = 0; i < data["main"].asArray().unwrap().size(); i++) {
+				container->setLayout(containerLayout, true);
 
-				auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
-				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
+				for (int i = 0; i < data[indexes[id]].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 
-				auto sprName = fmt::format("{}.png", data["main"][i]["sprite"].asString().unwrapOr("DP_Invisible"));
-				auto plusSprName = fmt::format("{}.png", data["main"][i]["plusSprite"].asString().unwrapOr("DP_Invisible"));
+					auto saveID = data[indexes[id]][i]["saveID"].asString().unwrapOr("null");
+					auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
-				auto rankSprite = CCSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
+					auto sprName = fmt::format("{}.png", data[indexes[id]][i]["sprite"].asString().unwrapOr("DP_Unknown"));
+					auto plusSprName = fmt::format("{}.png", data[indexes[id]][i]["plusSprite"].asString().unwrapOr("DP_Unknown"));
 
-				if (sprName != "DP_Invisible.png") {
-					rankSprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
+					auto sprite = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
+
+					if (sprName != "DP_Invisible.png") sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
+
+					if (!listSave.hasRank && !listSave.completed) sprite->setColor({ 0, 0, 0 });
+					else if (listSave.completed && indexes[id] == "main") sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(plusSprName).data());
+					if (sprName == "DP_Invisible.png") sprite->setOpacity(0);
+
+					auto infoMenu = CCMenu::create();
+					infoMenu->setPosition({ 10.f, 10.f });
+					infoMenu->setContentSize({ 0.f, 0.f });
+					infoMenu->setScale(0.6f);
+					infoMenu->setZOrder(1);
+					infoMenu->setID("info-menu");
+
+					auto infoBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(StatsPopup::rankInfoCallback));
+					infoBtn->setID(indexes[id]);
+					infoBtn->setTag(i);
+					infoMenu->addChild(infoBtn);
+
+					sprite->addChild(infoMenu);
+
+					container->addChild(sprite);
 				}
-				else {
-					rankSprite->setOpacity(0);
-				}
 
-				if (!listSave.hasRank && !listSave.completed) {
-					rankSprite->setColor({ 0, 0, 0 });
-				}
-				else if (listSave.completed && sprName != "DP_Invisible.png") {
-					rankSprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(plusSprName).data());
-				}
+				container->updateLayout(false);
 
-				auto infoMenu = CCMenu::create();
-				infoMenu->setPosition({ 10.f, 10.f });
-				infoMenu->setContentSize({ 0.f, 0.f });
-				infoMenu->setScale(0.6f);
-				infoMenu->setZOrder(1);
-				infoMenu->setID("info-menu");
+				auto bg = CCScale9Sprite::create("square02_001.png");
+				bg->setAnchorPoint({ 0.5f, 0.f });
+				bg->setContentSize({ 400.f, container->getContentHeight() + 20.f });
+				bg->setOpacity(128);
+				bg->setID("bg");
 
-				auto infoBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(StatsPopup::rankInfoCallback));
-				infoBtn->setID("main");
-				infoBtn->setTag(i);
-				infoMenu->addChild(infoBtn);
+				auto header = CCLabelBMFont::create(names[id].c_str(), "bigFont.fnt");
+				header->setPositionY(bg->getContentHeight() + 15.f);
+				header->setScale(0.65f);
+				header->setID("header");
 
-				rankSprite->addChild(infoMenu);
+				section->addChild(bg);
+				section->addChild(header);
+				section->addChild(container);
 
-				ranksContainer->addChild(rankSprite);
+				section->setContentHeight(bg->getContentHeight() + header->getContentHeight());
+
+				scrollLayer->m_contentLayer->addChild(section);
+				scrollLayer->m_contentLayer->updateLayout(false);
 			}
 
-			ranksContainer->updateLayout(false);
-
-			ranksSection->addChild(ranksBG);
-			ranksSection->addChild(ranksHeader);
-			ranksSection->addChild(ranksContainer);
-
-			//Legacy Ranks
-			auto legacyRanksSection = CCNode::create();
-			legacyRanksSection->setPosition({ 200.f, 20.f });
-			legacyRanksSection->setID("legacy-ranks-section");
-
-			auto legacyRanksHeader = CCLabelBMFont::create("Legacy Ranks", "bigFont.fnt");
-			legacyRanksHeader->setPositionY(50.f);
-			legacyRanksHeader->setScale(0.65f);
-			legacyRanksHeader->setID("header");
-
-			auto legacyRanksBG = CCScale9Sprite::create("square02_001.png");
-			legacyRanksBG->setPositionY(-10.f);
-			legacyRanksBG->setContentSize({ 400.f, 90.f });
-			legacyRanksBG->setOpacity(128);
-			legacyRanksBG->setID("bg");
-
-			auto legacyRanksContainer = CCMenu::create();
-			legacyRanksContainer->setPosition({ 0.f, -10.f });
-			legacyRanksContainer->setContentSize({ 400.f, 95.5f });
-			legacyRanksContainer->setID("container");
-
-			legacyRanksContainer->setLayout(containerLayout, true);
-
-			for (int i = 0; i < data["legacy"].asArray().unwrap().size(); i++) {
-
-				auto saveID = data["legacy"][i]["saveID"].asString().unwrapOr("null");
-				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
-
-				auto mainPack = data["legacy"][i]["mainPack"].asInt().unwrapOr(0);
-
-				auto sprName = fmt::format("{}.png", data["main"][mainPack]["sprite"].asString().unwrapOr("DP_Invisible"));
-
-				auto rankSprite = CCSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
-
-				if (sprName != "DP_Invisible.png") {
-					rankSprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
-				}
-				else {
-					rankSprite->setOpacity(0);
-				}
-
-				if (!listSave.hasRank && !listSave.completed) {
-					rankSprite->setColor({ 0, 0, 0 });
-				}
-
-				auto infoMenu = CCMenu::create();
-				infoMenu->setPosition({ 10.f, 10.f });
-				infoMenu->setContentSize({ 0.f, 0.f });
-				infoMenu->setScale(0.6f);
-				infoMenu->setZOrder(1);
-				infoMenu->setID("info-menu");
-
-				auto infoBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(StatsPopup::rankInfoCallback));
-				infoBtn->setID("legacy");
-				infoBtn->setTag(i);
-				infoMenu->addChild(infoBtn);
-
-				rankSprite->addChild(infoMenu);
-
-				legacyRanksContainer->addChild(rankSprite);
-			}
-
-			legacyRanksContainer->updateLayout(false);
-
-			legacyRanksSection->addChild(legacyRanksBG);
-			legacyRanksSection->addChild(legacyRanksHeader);
-			legacyRanksSection->addChild(legacyRanksContainer);
-
-			//Bonus Ranks
-			auto bonusRanksSection = CCNode::create();
-			bonusRanksSection->setPosition({ 200.f, -97.f });
-			bonusRanksSection->setID("bonus-ranks-section");
-
-			auto bonusRanksHeader = CCLabelBMFont::create("Bonus Packs", "bigFont.fnt");
-			bonusRanksHeader->setPositionY(50.f);
-			bonusRanksHeader->setScale(0.65f);
-			bonusRanksHeader->setID("header");
-
-			auto bonusRanksBG = CCScale9Sprite::create("square02_001.png");
-			bonusRanksBG->setPositionY(-(bonusRanksHeader->getPositionY() - bonusRanksHeader->getContentHeight()) - 35.f);
-			bonusRanksBG->setContentSize({ 400.f, (floor(data["bonus"].asArray().unwrap().size() / 9.f) * 60.f) });
-			bonusRanksBG->setOpacity(128);
-			bonusRanksBG->setID("bg");
-
-			auto bonusRanksContainer = CCMenu::create();
-			bonusRanksContainer->setPosition({ 0.f, bonusRanksBG->getPositionY()});
-			bonusRanksContainer->setContentSize({ 400.f, bonusRanksBG->getContentHeight() });
-			bonusRanksContainer->setID("container");
-
-			bonusRanksContainer->setLayout(containerLayout, true);
-
-			for (int i = 0; i < data["bonus"].asArray().unwrap().size(); i++) {
-
-				auto saveID = data["bonus"][i]["saveID"].asString().unwrapOr("null");
-				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
-
-				auto sprName = fmt::format("{}.png", data["bonus"][i]["sprite"].asString().unwrapOr("DP_Invisible"));
-
-				auto rankSprite = CCSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
-
-				if (sprName != "DP_Invisible.png") {
-					rankSprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
-				}
-				else {
-					rankSprite->setOpacity(0);
-				}
-
-				if (!listSave.hasRank && !listSave.completed) {
-					rankSprite->setColor({ 0, 0, 0 });
-				}
-
-				auto infoMenu = CCMenu::create();
-				infoMenu->setPosition({ 10.f, 10.f });
-				infoMenu->setContentSize({ 0.f, 0.f });
-				infoMenu->setScale(0.6f);
-				infoMenu->setZOrder(1);
-				infoMenu->setID("info-menu");
-
-				auto infoBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(StatsPopup::rankInfoCallback));
-				infoBtn->setID("bonus");
-				infoBtn->setTag(i);
-				infoMenu->addChild(infoBtn);
-
-				rankSprite->addChild(infoMenu);
-
-				bonusRanksContainer->addChild(rankSprite);
-			}
-
-			bonusRanksContainer->updateLayout(false);
-
-			bonusRanksSection->addChild(bonusRanksBG);
-			bonusRanksSection->addChild(bonusRanksHeader);
-			bonusRanksSection->addChild(bonusRanksContainer);
-
-			//Add Sections
-			auto contentLayer = CCLayer::create();
-			contentLayer->setID("content-layer");
-
-			contentLayer->addChild(ranksSection);
-			contentLayer->addChild(legacyRanksSection);
-			contentLayer->addChild(bonusRanksSection);
-
-			contentLayer->setPositionY(250.f);
-			scrollLayer->m_contentLayer->setPositionY(-250.f);
-			scrollLayer->m_contentLayer->setContentHeight(450.f);
 			scrollLayer->scrollToTop();
-
-			scrollLayer->m_contentLayer->addChild(contentLayer);
 			break;
 		}
 		case static_cast<int>(StatsTab::Medals):
@@ -723,270 +597,253 @@ void StatsPopup::loadTab(int id) {
 			scrollLayer->setID("scroll-layer");
 			m_mainLayer->addChild(scrollLayer);
 
-			//Normal Medals
-			auto normalSection = CCNode::create();
-			normalSection->setPosition({ 200.f, 138.f });
-			normalSection->setID("normal-section");
+			auto layout = AxisLayout::create();
+			layout->setGap(20.f);
+			layout->setAxisAlignment(AxisAlignment::Start);
+			layout->setAxis(Axis::Column);
+			layout->setAutoScale(false);
+			layout->setAxisReverse(true);
+			layout->ignoreInvisibleChildren(false);
+			layout->setAutoGrowAxis(true);
 
-			auto normalHeader = CCLabelBMFont::create("Medals", "bigFont.fnt");
-			normalHeader->setPositionY(50.f);
-			normalHeader->setScale(0.65f);
-			normalHeader->setID("normal-header");
-			normalSection->addChild(normalHeader);
+			scrollLayer->m_contentLayer->setPosition({ 200.f, 0.f });
+			scrollLayer->m_contentLayer->setLayout(layout);
 
-			for (int i = 0; i < NormalMedals.size(); i++) {
-				auto medal = CCNode::create();
-				medal->setPosition({ 0.f, (15.f - (30.f * i))});
-				medal->setID(fmt::format("normal-medal-{}", i + 1));
+			for (std::string id : {"normal", "plus"}) {
+				auto section = CCNode::create();
+				section->setPosition({ 200.f, 138.f });
+				section->setID(fmt::format("{}-section", id));
+				
+				auto sectionLayout = AxisLayout::create();
+				sectionLayout->setGap(10.f);
+				sectionLayout->setAxisAlignment(AxisAlignment::Start);
+				sectionLayout->setAxis(Axis::Column);
+				sectionLayout->setAutoScale(false);
+				sectionLayout->setAxisReverse(true);
+				sectionLayout->ignoreInvisibleChildren(true);
+				sectionLayout->setAutoGrowAxis(true);
+				section->setLayout(sectionLayout);
 
-				auto medalHeader = CCLabelBMFont::create(NormalMedals[i].c_str(), "bigFont.fnt");
-				medalHeader->setPositionY(1.f);
-				medalHeader->setScale(0.75f);
-				medalHeader->setColor(NormalMedalColors[i]);
-				medalHeader->setID("medal-header");
+				auto header = CCLabelBMFont::create((id == "plus") ? "Plus Medals" : "Medals", "bigFont.fnt");
+				header->setPositionY(30.f);
+				header->setAnchorPoint({ 0.5f, 1.f });
+				header->setScale(0.65f);
+				header->setID(fmt::format("{}-header", id));
 
-				auto packProgressBack = CCSprite::create("GJ_progressBar_001.png");
-				packProgressBack->setAnchorPoint({ 0, 0.5 });
-				packProgressBack->setPosition({ -102.f, -15.f });
-				packProgressBack->setColor({ 0, 0, 0 });
-				packProgressBack->setOpacity(128);
-				packProgressBack->setID("progress-bar");
+				auto headerNode = CCNode::create(); // gotta make the header a child of an empty node so it doesn't mess up the layout
+				headerNode->setContentHeight(30.f);
+				headerNode->setAnchorPoint({ 0.f, 1.f });
+				headerNode->setID("header-parent");
+				headerNode->addChild(header);
+				section->addChild(headerNode);
 
-				auto packProgressFront = CCSprite::create("GJ_progressBar_001.png");
-				packProgressFront->setAnchorPoint({ 0, 0.5 });
-				packProgressFront->setPosition({ 0.0f, 10.f });
-				packProgressFront->setScaleX(0.98f);
-				packProgressFront->setScaleY(0.75f);
-				packProgressFront->setZOrder(1);
-				packProgressFront->setColor(NormalMedalColors[i]);
+				for (int i = 0; i < data["medals"][id].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
+					auto medal = CCNode::create();
+					medal->setAnchorPoint({ 0.f, 1.f });
+					medal->setContentHeight(20.f);
+					medal->setID(fmt::format("{}-medal-{}", id, (i + 1)));
 
-				auto progressPercent = getPercentToRank(NormalMedalRequirements[i], false);
+					auto medalData = data["medals"][id][i];
 
-				auto clippingNode = CCClippingNode::create();
-				auto stencil = CCScale9Sprite::create("square02_001.png");
-				stencil->setAnchorPoint({ 0, 0.5f });
-				stencil->setContentWidth(packProgressFront->getScaledContentSize().width);
-				stencil->setScaleX(progressPercent);
-				stencil->setContentHeight(100);
-				clippingNode->setStencil(stencil);
-				clippingNode->setAnchorPoint({ 0, 0.5f });
-				clippingNode->setPosition({ 3.25f, 10.5f });
-				clippingNode->setContentWidth(packProgressFront->getContentWidth() - 2.f);
-				clippingNode->setContentHeight(20);
-				clippingNode->addChild(packProgressFront);
-				packProgressBack->addChild(clippingNode);
+					auto medalHeader = CCLabelBMFont::create(medalData["name"].asString().unwrapOr("???").c_str(), "bigFont.fnt");
+					medalHeader->setPositionY(17.5f);
+					medalHeader->setScale(0.75f);
+					medalHeader->setColor(medalData["color"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}));
+					medalHeader->setID("medal-header");
 
-				packProgressBack->setScaleX(0.6f);
-				packProgressBack->setScaleY(0.65f);
+					if (Mod::get()->getSettingValue<bool>("fancy-medals")) {
+						auto customHeader = CustomText::create(medalData["name"].asString().unwrapOr("???"));
+						customHeader->setAnchorPoint({ 0.5f, 0.5f });
+						customHeader->setPositionY(17.5f);
+						customHeader->setScale(0.75f);
+						customHeader->setTextColor(medalData["color"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}));
+						customHeader->addGradient({255, 255, 255}, 0.25f);
+						if (id == "plus") {
+							customHeader->setOutlineColor({255, 255, 255});
+							customHeader->addCrystals({255, 255, 255}, 0.5f);
+						}
+						else customHeader->addBevel();
+						customHeader->setID("medal-header");
+						medal->addChild(customHeader);
+					}
+					else medal->addChild(medalHeader);
 
-				auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clampf(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
-				progressLabel->setPosition({ 170.f, 12.f });
-				progressLabel->setScale(0.65f);
-				progressLabel->setZOrder(2);
-				progressLabel->setID("progress-label");
-				packProgressBack->addChild(progressLabel);
+					auto packProgressBack = CCSprite::create("GJ_progressBar_001.png");
+					packProgressBack->setAnchorPoint({ 0.f, 0.5f });
+					packProgressBack->setPosition({ -102.f, 0.f });
+					packProgressBack->setColor((Mod::get()->getSettingValue<bool>("fancy-medals") && id == "plus") ? ccColor3B{ 255, 255, 255 } : ccColor3B{ 0, 0, 0 });
+					packProgressBack->setOpacity(128);
+					packProgressBack->setID("progress-bar");
 
-				auto infoMenu = CCMenu::create();
-				infoMenu->setPosition({ 110.f, -15.f });
-				infoMenu->setContentSize({ 0.f, 0.f });
-				infoMenu->setScale(0.6f);
-				infoMenu->setZOrder(1);
-				infoMenu->setID("info-menu");
+					auto packProgressFront = CCSprite::create("GJ_progressBar_001.png");
+					packProgressFront->setAnchorPoint({ 0.f, 0.5f });
+					packProgressFront->setPosition({ 0.0f, 10.f });
+					packProgressFront->setScaleX(0.98f);
+					packProgressFront->setScaleY(0.75f);
+					packProgressFront->setZOrder(1);
+					packProgressFront->setColor(medalData["color"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}));
 
-				auto infoBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(StatsPopup::medalInfoCallback));
-				infoBtn->setID("normal");
-				infoBtn->setTag(i);
-				infoMenu->addChild(infoBtn);
+					auto progressPercent = getPercentToRank(medalData["requirement"].as<int>().unwrapOr(0), id == "plus");
 
-				medal->addChild(packProgressBack);
-				medal->addChild(medalHeader);
-				medal->addChild(infoMenu);
+					auto clippingNode = CCClippingNode::create();
+					auto stencil = CCScale9Sprite::create("square02_001.png");
+					stencil->setAnchorPoint({ 0, 0.5f });
+					stencil->setContentWidth(packProgressFront->getScaledContentSize().width);
+					stencil->setScaleX(progressPercent);
+					stencil->setContentHeight(100);
+					clippingNode->setStencil(stencil);
+					clippingNode->setAnchorPoint({ 0.f, 0.5f });
+					clippingNode->setPosition({ 3.25f, 10.5f });
+					clippingNode->setContentWidth(packProgressFront->getContentWidth() - 2.f);
+					clippingNode->setContentHeight(20);
+					clippingNode->addChild(packProgressFront);
+					packProgressBack->addChild(clippingNode);
 
-				normalSection->addChild(medal);
+					packProgressBack->setScaleX(0.6f);
+					packProgressBack->setScaleY(0.65f);
+
+					auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clampf(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
+					progressLabel->setPosition({ 170.f, 12.f });
+					progressLabel->setScale(0.65f);
+					progressLabel->setZOrder(2);
+					progressLabel->setID("progress-label");
+					packProgressBack->addChild(progressLabel);
+
+					auto infoMenu = CCMenu::create();
+					infoMenu->setPosition({ 110.f, 0.f });
+					infoMenu->setContentSize({ 0.f, 0.f });
+					infoMenu->setScale(0.6f);
+					infoMenu->setZOrder(1);
+					infoMenu->setID("info-menu");
+
+					auto infoBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(StatsPopup::medalInfoCallback));
+					infoBtn->setID(id);
+					infoBtn->setTag(i);
+					infoMenu->addChild(infoBtn);
+
+					medal->addChild(packProgressBack);
+					medal->addChild(infoMenu);
+
+					section->addChild(medal);
+					section->updateLayout(false);
+				}
+
+				if (id == "plus") {
+					//Absolute Perfection
+					auto medal = CCNode::create();
+					medal->setAnchorPoint({ 0.f, 1.f });
+					medal->setContentHeight(20.f);
+					medal->setID(fmt::format("plus-medal-{}", data["medals"][id].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() + 1));
+					medal->setTag(-1);
+
+					auto medalHeader = CCLabelBMFont::create("ABSOLUTE PERFECTION", "bigFont.fnt");
+					medalHeader->setPositionY(17.5f);
+					medalHeader->setScale(0.75f);
+					medalHeader->setColor({ 255, 190, 255 });
+					medalHeader->setID("medal-header");
+
+					if (Mod::get()->getSettingValue<bool>("fancy-medals")) {
+						auto customHeader = CustomText::create("ABSOLUTE PERFECTION");
+						customHeader->setAnchorPoint({ 0.5f, 0.5f });
+						customHeader->setPositionY(17.5f);
+						customHeader->setScale(0.75f);
+						customHeader->setTextColor({ 255, 190, 255 });
+						customHeader->addGradient({255, 255, 255}, 0.25f);
+						if (id == "plus") {
+							customHeader->setOutlineColor({255, 255, 255});
+							customHeader->addCrystals({255, 255, 255}, 0.5f);
+						}
+						else customHeader->addBevel();
+						customHeader->setID("medal-header");
+						medal->addChild(customHeader);
+					}
+					else medal->addChild(medalHeader);
+
+					auto packProgressBack = CCSprite::create("GJ_progressBar_001.png");
+					packProgressBack->setAnchorPoint({ 0.f, 0.5f });
+					packProgressBack->setPosition({ -102.f, 0.f });
+					packProgressBack->setColor(Mod::get()->getSettingValue<bool>("fancy-medals") ? ccColor3B{ 255, 255, 255 } : ccColor3B{ 0, 0, 0 });
+					packProgressBack->setOpacity(128);
+					packProgressBack->setID("progress-bar");
+
+					auto packProgressFront = CCSprite::create("GJ_progressBar_001.png");
+					packProgressFront->setAnchorPoint({ 0.f, 0.5f });
+					packProgressFront->setPosition({ 0.0f, 10.f });
+					packProgressFront->setScaleX(0.98f);
+					packProgressFront->setScaleY(0.75f);
+					packProgressFront->setZOrder(1);
+					packProgressFront->setColor({ 255, 190, 255 });
+
+					auto progressPercent = getPercentToRank(data["main"].asArray().unwrap().size() - 1, true);
+
+					//Get All Bonus Progress
+					auto bonusProgress = 0;
+					auto bonusTotalLevels = 0;
+					for (auto pack : data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+						auto saveID = pack["saveID"].asString().unwrapOr("null");
+						auto totalLevels = pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size();
+						auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
+
+						bonusProgress += listSave.progress;
+						bonusTotalLevels += totalLevels;
+					}
+
+					auto bonusPercent = static_cast<float>(bonusProgress) / static_cast<float>(bonusTotalLevels);
+					auto totalPercent = (progressPercent + bonusPercent) / 2.f;
+
+					auto clippingNode = CCClippingNode::create();
+					auto stencil = CCScale9Sprite::create("square02_001.png");
+					stencil->setAnchorPoint({ 0, 0.5f });
+					stencil->setContentWidth(packProgressFront->getScaledContentSize().width);
+					stencil->setScaleX(totalPercent);
+					stencil->setContentHeight(100);
+					clippingNode->setStencil(stencil);
+					clippingNode->setAnchorPoint({ 0.f, 0.5f });
+					clippingNode->setPosition({ 3.25f, 10.5f });
+					clippingNode->setContentWidth(packProgressFront->getContentWidth() - 2.f);
+					clippingNode->setContentHeight(20);
+					clippingNode->addChild(packProgressFront);
+					packProgressBack->addChild(clippingNode);
+
+					packProgressBack->setScaleX(0.6f);
+					packProgressBack->setScaleY(0.65f);
+
+					auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clampf(floor(totalPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
+					progressLabel->setPosition({ 170.f, 12.f });
+					progressLabel->setScale(0.65f);
+					progressLabel->setZOrder(2);
+					progressLabel->setID("progress-label");
+					packProgressBack->addChild(progressLabel);
+
+					auto infoMenu = CCMenu::create();
+					infoMenu->setPosition({ 110.f, 0.f });
+					infoMenu->setContentSize({ 0.f, 0.f });
+					infoMenu->setScale(0.6f);
+					infoMenu->setZOrder(1);
+					infoMenu->setID("info-menu");
+
+					auto infoBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(StatsPopup::medalInfoCallback));
+					infoBtn->setID("plus");
+					infoBtn->setTag(-1);
+					infoMenu->addChild(infoBtn);
+
+					medal->addChild(packProgressBack);
+					medal->addChild(infoMenu);
+
+					section->addChild(medal);
+
+					auto margin = CCNode::create();
+					margin->setID("margin-node");
+					section->addChild(margin);
+
+					section->updateLayout(false);
+				}
+
+				scrollLayer->m_contentLayer->addChild(section);
+				scrollLayer->m_contentLayer->updateLayout(false);
 			}
 
-			//Plus Medals
-			auto plusSection = CCNode::create();
-			plusSection->setPosition({ 200.f, -60.f });
-			plusSection->setID("plus-section");
-
-			auto plusHeader = CCLabelBMFont::create("Plus Medals", "bigFont.fnt");
-			plusHeader->setPositionY(50.f);
-			plusHeader->setScale(0.65f);
-			plusHeader->setID("plus-header");
-			plusSection->addChild(plusHeader);
-
-			for (int i = 0; i < PlusMedals.size(); i++) {
-				auto medal = CCNode::create();
-				medal->setPosition({ 0.f, (15.f - (30.f * i)) });
-				medal->setID(fmt::format("plus-medal-{}", i + 1));
-				medal->setTag(i);
-
-				auto medalHeader = CCLabelBMFont::create(PlusMedals[i].c_str(), "bigFont.fnt");
-				medalHeader->setPositionY(1.f);
-				medalHeader->setScale(0.75f);
-				medalHeader->setColor(PlusMedalColors[i]);
-				medalHeader->setID("medal-header");
-
-				auto packProgressBack = CCSprite::create("GJ_progressBar_001.png");
-				packProgressBack->setAnchorPoint({ 0, 0.5 });
-				packProgressBack->setPosition({ -102.f, -15.f });
-				packProgressBack->setColor({ 0, 0, 0 });
-				packProgressBack->setOpacity(128);
-				packProgressBack->setID("progress-bar");
-
-				auto packProgressFront = CCSprite::create("GJ_progressBar_001.png");
-				packProgressFront->setAnchorPoint({ 0, 0.5 });
-				packProgressFront->setPosition({ 0.0f, 10.f });
-				packProgressFront->setScaleX(0.98f);
-				packProgressFront->setScaleY(0.75f);
-				packProgressFront->setZOrder(1);
-				packProgressFront->setColor(PlusMedalColors[i]);
-
-				auto progressPercent = getPercentToRank(PlusMedalRequirements[i], true);
-
-				auto clippingNode = CCClippingNode::create();
-				auto stencil = CCScale9Sprite::create("square02_001.png");
-				stencil->setAnchorPoint({ 0, 0.5f });
-				stencil->setContentWidth(packProgressFront->getScaledContentSize().width);
-				stencil->setScaleX(progressPercent);
-				stencil->setContentHeight(100);
-				clippingNode->setStencil(stencil);
-				clippingNode->setAnchorPoint({ 0, 0.5f });
-				clippingNode->setPosition({ 3.25f, 10.5f });
-				clippingNode->setContentWidth(packProgressFront->getContentWidth() - 2.f);
-				clippingNode->setContentHeight(20);
-				clippingNode->addChild(packProgressFront);
-				packProgressBack->addChild(clippingNode);
-
-				packProgressBack->setScaleX(0.6f);
-				packProgressBack->setScaleY(0.65f);
-
-				auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clampf(floor(progressPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
-				progressLabel->setPosition({ 170.f, 12.f });
-				progressLabel->setScale(0.65f);
-				progressLabel->setZOrder(2);
-				progressLabel->setID("progress-label");
-				packProgressBack->addChild(progressLabel);
-
-				auto infoMenu = CCMenu::create();
-				infoMenu->setPosition({ 110.f, -15.f });
-				infoMenu->setContentSize({ 0.f, 0.f });
-				infoMenu->setScale(0.6f);
-				infoMenu->setZOrder(1);
-				infoMenu->setID("info-menu");
-
-				auto infoBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(StatsPopup::medalInfoCallback));
-				infoBtn->setID("plus");
-				infoBtn->setTag(i);
-				infoMenu->addChild(infoBtn);
-
-				medal->addChild(packProgressBack);
-				medal->addChild(medalHeader);
-				medal->addChild(infoMenu);
-
-				plusSection->addChild(medal);
-			}
-
-			//Absolute Perfection
-			auto medal = CCNode::create();
-			medal->setPosition({ 0.f, (15.f - (30.f * PlusMedals.size() + 1)) });
-			medal->setID(fmt::format("plus-medal-{}", PlusMedals.size() + 1));
-			medal->setTag(-1);
-
-			auto medalHeader = CCLabelBMFont::create("ABSOLUTE PERFECTION", "bigFont.fnt");
-			medalHeader->setPositionY(1.f);
-			medalHeader->setScale(0.75f);
-			medalHeader->setColor({ 255, 190, 255 });
-			medalHeader->setID("medal-header");
-
-			auto packProgressBack = CCSprite::create("GJ_progressBar_001.png");
-			packProgressBack->setAnchorPoint({ 0, 0.5 });
-			packProgressBack->setPosition({ -102.f, -15.f });
-			packProgressBack->setColor({ 0, 0, 0 });
-			packProgressBack->setOpacity(128);
-			packProgressBack->setID("progress-bar");
-
-			auto packProgressFront = CCSprite::create("GJ_progressBar_001.png");
-			packProgressFront->setAnchorPoint({ 0, 0.5 });
-			packProgressFront->setPosition({ 0.0f, 10.f });
-			packProgressFront->setScaleX(0.98f);
-			packProgressFront->setScaleY(0.75f);
-			packProgressFront->setZOrder(1);
-			packProgressFront->setColor({ 255, 190, 255 });
-
-			auto progressPercent = getPercentToRank(data["main"].asArray().unwrap().size() - 1, true);
-
-			//Get All Bonus Progress
-			auto bonusProgress = 0;
-			auto bonusTotalLevels = 0;
-			for (auto pack : data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
-				auto saveID = pack["saveID"].asString().unwrapOr("null");
-				auto totalLevels = pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size();
-				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
-
-				bonusProgress += listSave.progress;
-				bonusTotalLevels += totalLevels;
-			}
-
-			auto bonusPercent = static_cast<float>(bonusProgress) / static_cast<float>(bonusTotalLevels);
-			auto totalPercent = (progressPercent + bonusPercent) / 2.f;
-
-			auto clippingNode = CCClippingNode::create();
-			auto stencil = CCScale9Sprite::create("square02_001.png");
-			stencil->setAnchorPoint({ 0, 0.5f });
-			stencil->setContentWidth(packProgressFront->getScaledContentSize().width);
-			stencil->setScaleX(totalPercent);
-			stencil->setContentHeight(100);
-			clippingNode->setStencil(stencil);
-			clippingNode->setAnchorPoint({ 0, 0.5f });
-			clippingNode->setPosition({ 3.25f, 10.5f });
-			clippingNode->setContentWidth(packProgressFront->getContentWidth() - 2.f);
-			clippingNode->setContentHeight(20);
-			clippingNode->addChild(packProgressFront);
-			packProgressBack->addChild(clippingNode);
-
-			packProgressBack->setScaleX(0.6f);
-			packProgressBack->setScaleY(0.65f);
-
-			auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clampf(floor(totalPercent * 100), 0, 100)).c_str(), "bigFont.fnt");
-			progressLabel->setPosition({ 170.f, 12.f });
-			progressLabel->setScale(0.65f);
-			progressLabel->setZOrder(2);
-			progressLabel->setID("progress-label");
-			packProgressBack->addChild(progressLabel);
-
-			auto infoMenu = CCMenu::create();
-			infoMenu->setPosition({ 110.f, -15.f });
-			infoMenu->setContentSize({ 0.f, 0.f });
-			infoMenu->setScale(0.6f);
-			infoMenu->setZOrder(1);
-			infoMenu->setID("info-menu");
-
-			auto infoBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(StatsPopup::medalInfoCallback));
-			infoBtn->setID("plus");
-			infoBtn->setTag(-1);
-			infoMenu->addChild(infoBtn);
-
-			medal->addChild(packProgressBack);
-			medal->addChild(medalHeader);
-			medal->addChild(infoMenu);
-
-			plusSection->addChild(medal);
-
-			//Add Sections
-			auto contentLayer = CCLayer::create();
-			contentLayer->setID("content-layer");
-
-			contentLayer->addChild(normalSection);
-			contentLayer->addChild(plusSection);
-
-			contentLayer->setPositionY(375.f);
-			contentLayer->setContentHeight(1000.f);
-			scrollLayer->m_contentLayer->setPositionY(-405.f);
-			scrollLayer->m_contentLayer->setContentHeight(580.f);
-
-			scrollLayer->m_contentLayer->addChild(contentLayer);
+			scrollLayer->scrollToTop();
 			break;
 		}
 	}
@@ -1012,6 +869,9 @@ void StatsPopup::medalInfoCallback(CCObject* sender) {
 	auto medalType = btn->getID();
 	auto medalID = btn->getTag();
 
+	auto normalMedals = data["medals"]["normal"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
+	auto plusMedals = data["medals"]["plus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
+
 	if (medalID == -1) { //Special Case for ABSOLUTE PERFECTION
 		//Absolute Perfection Progress is just score, so borrow from that
 		auto progress = getScore();
@@ -1034,27 +894,23 @@ void StatsPopup::medalInfoCallback(CCObject* sender) {
 			bonusTotalLevels += total;
 		}
 
-		std::string progressStr = fmt::format("{}/{} Main Levels\n{}/{} Bonus Levels", progress, totalLevels, bonusProgress, bonusTotalLevels);
-
-		if (progress == totalLevels && bonusProgress != bonusTotalLevels) {
-			progressStr = fmt::format("<cy>{}/{} Main Levels</c>\n{}/{} Bonus Levels", progress, totalLevels, bonusProgress, bonusTotalLevels);
-		}
-		else if (progress != totalLevels && bonusProgress == bonusTotalLevels) {
-			progressStr = fmt::format("{}/{} Main Levels\n<cy>{}/{} Bonus Levels</c>", progress, totalLevels, bonusProgress, bonusTotalLevels);
-		}
-		else if (progress == totalLevels && bonusProgress == bonusTotalLevels) {
-			progressStr = fmt::format("<cy>{}/{} Main Levels</c>\n<cy>{}/{} Bonus Levels</c>", progress, totalLevels, bonusProgress, bonusTotalLevels);
-		}
+		std::string progressStr = (
+			((progress == totalLevels) ? "<cy>" : "") +
+			fmt::format("{}/{} Main Levels", progress, totalLevels) +
+			((progress == totalLevels) ? "</c>\n" : "\n") +
+			((bonusProgress == bonusTotalLevels) ? "<cy>" : "") +
+			fmt::format("{}/{} Bonus Levels", bonusProgress, bonusTotalLevels) +
+			((bonusProgress == bonusTotalLevels) ? "</c>" : "")
+		);
 
 		FLAlertLayer::create("Medal Info", fmt::format("Nope, this is not happening, there is no way anyone will ever do this, absolutely no way. Wont happen.\n\n (Beat every Level in every Tier & Bonus Pack on the list to achieve this Medal)\n\n{}", progressStr), "OK")->show();
 	}
 	else {
-		if (medalType == "plus")
-		{
+		if (medalType == "plus") {
 			//get plus progress up to whatever plus medal is there
 			auto progress = 0;
 			auto totalLevels = 0;
-			for (int i = 0; i <= PlusMedalRequirements[medalID]; i++) {
+			for (int i = 0; i <= plusMedals[medalID]["requirement"].as<int>().unwrapOr(0); i++) {
 				auto pack = data["main"][i];
 				auto saveID = pack["saveID"].asString().unwrapOr("null");
 				auto total = pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size();
@@ -1063,46 +919,52 @@ void StatsPopup::medalInfoCallback(CCObject* sender) {
 				progress += listSave.progress;
 				totalLevels += total;
 			}
-
-			if (progress >= totalLevels) {
-				progress = clampf(progress, 0, totalLevels);
-				FLAlertLayer::create("Medal Info", fmt::format("{}\n\n<cy>{}/{} to Medal</c>", PlusMedalDescriptions[medalID], progress, totalLevels), "OK")->show();
-			}
-			else {
-				FLAlertLayer::create("Medal Info", fmt::format("{}\n\n{}/{} to Medal", PlusMedalDescriptions[medalID], progress, totalLevels), "OK")->show();
-			}
+			
+			FLAlertLayer::create(
+				"Medal Info", 
+				fmt::format(
+					"Achieve every rank from {} to {}+\n\n{}{}/{} to Medal{}", 
+					data["main"][0]["name"].asString().unwrapOr("???"),
+					data["main"][plusMedals[medalID]["requirement"].as<int>().unwrapOr(0)]["name"].asString().unwrapOr("???"),
+					(progress == totalLevels) ? "<cy>" : "",
+					clampf(progress, 0, totalLevels), 
+					totalLevels,
+					(progress == totalLevels) ? "</c>" : ""
+				), 
+				"OK"
+			)->show();
 		}
-		else if (medalType == "normal")
-		{
+		else if (medalType == "normal") {
 			//get plus progress up to whatever plus medal is there
 			auto progress = 0;
 			auto totalLevels = 0;
-			for (int i = 0; i <= NormalMedalRequirements[medalID]; i++) {
+			for (int i = 0; i <= normalMedals[medalID]["requirement"].as<int>().unwrapOr(0); i++) {
 				auto pack = data["main"][i];
 				auto saveID = pack["saveID"].asString().unwrapOr("null");
 				auto reqLevels = pack["reqLevels"].as<int>().unwrapOr(999);
 				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
-				if (listSave.hasRank) {
-					progress += reqLevels;
-				}
-				else {
-					progress += listSave.progress;
-				}
+				if (listSave.hasRank) progress += reqLevels;
+				else progress += listSave.progress;
 
 				totalLevels += reqLevels;
 			}
 
-			if (progress >= totalLevels) {
-				progress = clampf(progress, 0, totalLevels);
-				FLAlertLayer::create("Medal Info", fmt::format("{}\n\n<cy>{}/{} to Medal</c>", NormalMedalDescriptions[medalID], progress, totalLevels), "OK")->show();
-			}
-			else {
-				FLAlertLayer::create("Medal Info", fmt::format("{}\n\n{}/{} to Medal", NormalMedalDescriptions[medalID], progress, totalLevels), "OK")->show();
-			}
+			FLAlertLayer::create(
+				"Medal Info", 
+				fmt::format(
+					"Get the normal ranks from {} to {}\n\n{}{}/{} to Medal{}", 
+					data["main"][0]["name"].asString().unwrapOr("???"),
+					data["main"][normalMedals[medalID]["requirement"].as<int>().unwrapOr(0)]["name"].asString().unwrapOr("???"),
+					(progress == totalLevels) ? "<cy>" : "",
+					clampf(progress, 0, totalLevels), 
+					totalLevels,
+					(progress == totalLevels) ? "</c>" : ""
+				), 
+				"OK"
+			)->show();
 		}
-		else
-		{
+		else {
 			FLAlertLayer::create("Oops!!", "Something went wrong, you should probably tell the dev about this.", "OK")->show();
 		}
 	}
@@ -1121,47 +983,30 @@ void StatsPopup::rankInfoCallback(CCObject* sender) {
 	auto saveID = data[type][id]["saveID"].asString().unwrapOr("null");
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
-	if (type == "main")
-	{
-		if (listSave.hasRank && !listSave.completed)
-		{
-			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n<cy>{}/{} to Rank</c>\n{}/{} to Plus Rank", data["main"][id]["name"].asString().unwrapOr("null"), clampf(listSave.progress, 0, data["main"][id]["reqLevels"].asInt().unwrapOr(999)), data["main"][id]["reqLevels"].asInt().unwrapOr(999), listSave.progress, data["main"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
-		}
-		else if (listSave.completed)
-		{
-			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n<cy>{}/{} to Rank</c>\n<cy>{}/{} to Plus Rank</c>", data["main"][id]["name"].asString().unwrapOr("null"), clampf(listSave.progress, 0, data["main"][id]["reqLevels"].asInt().unwrapOr(999)), data["main"][id]["reqLevels"].asInt().unwrapOr(999), listSave.progress, data["main"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
-		}
-		else
-		{
-			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Rank\n{}/{} to Plus Rank", data["main"][id]["name"].asString().unwrapOr("null"), clampf(listSave.progress, 0, data["main"][id]["reqLevels"].asInt().unwrapOr(999)), data["main"][id]["reqLevels"].asInt().unwrapOr(999), listSave.progress, data["main"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
-		}
-	}
-	else if (type == "legacy")
-	{
-		if (listSave.completed)
-		{
-			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n<cy>{}/{} to Completion</c>", data["legacy"][id]["name"].asString().unwrapOr("null"), listSave.progress, data["legacy"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
-		}
-		else
-		{
-			FLAlertLayer::create("Rank Info", fmt::format("{} Demons\n\n{}/{} to Completion", data["legacy"][id]["name"].asString().unwrapOr("null"), listSave.progress, data["legacy"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
-		}
-	}
-	else if (type == "bonus")
-	{
-		if (listSave.completed)
-		{
-			FLAlertLayer::create("Rank Info", fmt::format("{}\n\n<cy>{}/{} to Completion</c>", data["bonus"][id]["name"].asString().unwrapOr("null"), listSave.progress, data["bonus"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
-		}
-		else
-		{
-			FLAlertLayer::create("Rank Info", fmt::format("{}\n\n{}/{} to Completion", data["bonus"][id]["name"].asString().unwrapOr("null"), listSave.progress, data["bonus"][id]["levelIDs"].asArray().unwrap().size()), "OK")->show();
-		}
-	}
-	else
-	{
-		FLAlertLayer::create("Oops!!", "Something went wrong, you should probably tell the dev about this.", "OK")->show();
-	}
+	FLAlertLayer::create(
+		"Rank Info",
+		(type == "main") ? fmt::format(
+			"{} Demons\n\n{}{}/{} to Rank{}\n{}{}/{} to Plus Rank{}", 
+			data[type][id]["name"].asString().unwrapOr("null"), 
+			((listSave.hasRank) ? "<cy>" : ""),
+			clampf(listSave.progress, 0, data[type][id]["reqLevels"].asInt().unwrapOr(999)), 
+			data[type][id]["reqLevels"].asInt().unwrapOr(999),
+			((listSave.hasRank) ? "</c>" : ""),
+			((listSave.completed) ? "<cy>" : ""),
+			listSave.progress, 
+			data[type][id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size(),
+			((listSave.completed) ? "</c>" : "")
+		) : fmt::format(
+			"{}{}\n\n{}{}/{} to Completion{}", 
+			data[type][id]["name"].asString().unwrapOr("null"), 
+			((type == "legacy") ? " Demons" : ""),
+			((listSave.completed) ? "<cy>" : ""),
+			listSave.progress, 
+			data[type][id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size(),
+			((listSave.completed) ? "</c>" : "")
+		),
+		"OK"
+	)->show();
 
 	return;
 }
@@ -1170,44 +1015,17 @@ void StatsPopup::onTab(CCObject* sender) {
 	auto btn = static_cast<CCMenuItemToggler*>(sender);
 	auto menuType = btn->getTag();
 
-	auto mainbtn = m_tabs->getChildByID("main");
-	auto ranksbtn = m_tabs->getChildByID("ranks");
-	auto medalsbtn = m_tabs->getChildByID("medals");
+	CCArrayExt<CCMenuItemToggler*> tabs;
+	tabs.push_back(static_cast<CCMenuItemToggler*>(m_tabs->getChildByID("main")));
+	tabs.push_back(static_cast<CCMenuItemToggler*>(m_tabs->getChildByID("ranks")));
+	tabs.push_back(static_cast<CCMenuItemToggler*>(m_tabs->getChildByID("medals")));
 
-	if (btn->isToggled()) {
-		btn->toggle(false);
-	}
+	for (auto b : tabs) if (b) static_cast<CCMenuItemToggler*>(b)->toggle(false);
+	btn->m_toggled = false;
 
-	if (m_mainLayer) {
-		m_mainLayer->removeAllChildrenWithCleanup(true);
-	}
+	if (m_mainLayer) m_mainLayer->removeAllChildrenWithCleanup(true);
 
-	switch(menuType) {
-		case static_cast<int>(StatsTab::Main):
-		{
-			static_cast<CCMenuItemToggler*>(ranksbtn)->toggle(false);
-			static_cast<CCMenuItemToggler*>(medalsbtn)->toggle(false);
-
-			loadTab(menuType);
-			break;
-		}
-		case static_cast<int>(StatsTab::Ranks):
-		{
-			static_cast<CCMenuItemToggler*>(mainbtn)->toggle(false);
-			static_cast<CCMenuItemToggler*>(medalsbtn)->toggle(false);
-
-			loadTab(menuType);
-			break;
-		}
-		case static_cast<int>(StatsTab::Medals):
-		{
-			static_cast<CCMenuItemToggler*>(ranksbtn)->toggle(false);
-			static_cast<CCMenuItemToggler*>(mainbtn)->toggle(false);
-
-			loadTab(menuType);
-			break;
-		}
-	}
+	loadTab(menuType);
 
 	return;
 }
@@ -1254,10 +1072,10 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 	auto progress = 0;
 	auto totalLvls = 0;
 
-	if (rankID == 0) {
-		auto saveID = data["main"][0]["saveID"].asString().unwrapOr("null");
-		auto reqLevels = data["main"][0]["reqLevels"].asInt().unwrapOr(999);
-		auto totalLevels = data["main"][0]["levelIDs"].asArray().unwrap().size();
+	for (int i = 0; i <= rankID; i++) {
+		auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
+		auto reqLevels = data["main"][i]["reqLevels"].asInt().unwrapOr(999);
+		auto totalLevels = data["main"][i]["levelIDs"].asArray().unwrap().size();
 		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 		if (isPlus) {
@@ -1265,35 +1083,9 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 			totalLvls += totalLevels;
 		}
 		else {
-			if (listSave.hasRank) {
-				progress += reqLevels;
-			}
-			else {
-				progress += clampf(listSave.progress, 0, reqLevels);
-			}
+			if (listSave.hasRank) progress += reqLevels;
+			else progress += clampf(listSave.progress, 0, reqLevels);
 			totalLvls += reqLevels;
-		}
-	}
-	else {
-		for (int i = 0; i <= rankID; i++) {
-			auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
-			auto reqLevels = data["main"][i]["reqLevels"].asInt().unwrapOr(999);
-			auto totalLevels = data["main"][i]["levelIDs"].asArray().unwrap().size();
-			auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
-
-			if (isPlus) {
-				progress += listSave.progress;
-				totalLvls += totalLevels;
-			}
-			else {
-				if (listSave.hasRank) {
-					progress += reqLevels;
-				}
-				else {
-					progress += clampf(listSave.progress, 0, reqLevels);
-				}
-				totalLvls += reqLevels;
-			}
 		}
 	}
 

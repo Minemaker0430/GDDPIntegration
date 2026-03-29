@@ -43,19 +43,29 @@ above for that skill. its very unlikely that anyone will encounter this scenario
 //geode header
 #include <Geode/Geode.hpp>
 #include <Geode/utils/JsonValidation.hpp>
+#include <winspool.h>
 
 #include "./menus/DPLayer.hpp"
 #include "./popups/StatsPopup.hpp"
 #include "XPUtils.hpp"
 #include "RecommendedUtils.hpp"
+#include "DPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
 
 void RecommendedUtils::validateLevels() {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	auto levels = Mod::get()->getSavedValue<std::vector<int>>("recommended-levels");
+	auto recommendations = Mod::get()->getSavedValue<matjson::Value>("recommended-levels");
 	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
+
+	std::vector<int> levels = {};
+
+	for (auto [key, value] : XPUtils::skills) {
+		for (auto l : recommendations[key].as<std::vector<int>>().unwrapOrDefault()) {
+			if (!DPUtils::containsInt(levels, l)) levels.push_back(l);
+		}
+	}
 
 	//check for errors
 	auto jsonCheck = checkJson(data, "");
@@ -66,17 +76,12 @@ void RecommendedUtils::validateLevels() {
 		return;
 	}
 
-	//check if data exists
-	if (!data["main"].isArray() && !data["legacy"].isArray()) { return; }
-
-	if (levels.empty() && completedLvls.size() > 0) {
-		generateRecommendations();
-	}
+	if (levels.empty() && completedLvls.size() > 0) generateRecommendations();
 	else {
 
 		//check if you completed a recommended level
 		for (auto lvl : levels) {
-			if (std::find(completedLvls.begin(), completedLvls.end(), lvl) != completedLvls.end()) {
+			if (DPUtils::containsInt(completedLvls, lvl)) {
 				generateRecommendations();
 				break;
 			}
@@ -91,7 +96,7 @@ void RecommendedUtils::validateLevels() {
 			for (auto lvl : levelIDs) {
 				//auto levelID = std::to_string(lvl);
 
-				if (std::find(mainList.begin(), mainList.end(), lvl) != mainList.end()) {
+				if (DPUtils::containsInt(mainList, lvl)) {
 					generateRecommendations();
 					stop = true;
 					break;
@@ -105,23 +110,18 @@ void RecommendedUtils::validateLevels() {
 	return;
 }
 
-std::vector<int> RecommendedUtils::sortSkills(std::vector<float> xp) {
+std::vector<std::string> RecommendedUtils::sortSkills(matjson::Value xp) {
 	
 	//assign skills to key
-	std::vector<SkillSort> out(XPUtils::skillIDs.size(), SkillSort(0, 0.f));
-
-	for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
-		out[i] = SkillSort(i, xp[i]);
-	}
+	std::vector<SkillSort> out;
+	for (auto [key, value] : XPUtils::skills) out.push_back(SkillSort(key, xp[key].as<float>().unwrapOr(0.f)));
 
 	//sort
 	std::sort(out.begin(), out.end(), std::greater<SkillSort>());
 
 	//convert to int vector and return
-	std::vector<int> result;
-	for (SkillSort value : out) {
-		result.push_back(value.key);
-	}
+	std::vector<std::string> result;
+	for (SkillSort s : out) result.push_back(s.key);
 
 	return result;
 }
@@ -131,7 +131,6 @@ void RecommendedUtils::generateRecommendations() {
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-	auto skillIDs = XPUtils::skillIDs;
 
 	XPUtils::getXP();
 
@@ -144,261 +143,193 @@ void RecommendedUtils::generateRecommendations() {
 		return;
 	}
 
+	//Sort Skills
+	auto xp = Mod::get()->getSavedValue<matjson::Value>("xp");
+	std::vector<std::string> skills = sortSkills(xp); //Highest -> Lowest
+	//log::info("sorted skills: (highest) {} (lowest)", skills);
+
 	//Get Highest Rank
 	auto highest = 0; //Defaults to Beginner
 	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 		//Check For Non-Plus Rank
-		if (StatsPopup::getPercentToRank(i, false) >= 1.f) {
-			highest = i;
-		}
+		if (StatsPopup::getPercentToRank(i, false) >= 1.f) highest = i;
 
 		//Check For Plus Rank
-		if (StatsPopup::getPercentToRank(i, true) >= 1.f) {
-			highest = std::min(i + 1, static_cast<int>(data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - 1));
-		}
-
+		if (StatsPopup::getPercentToRank(i, true) >= 1.f) highest = std::min(i + 1, static_cast<int>(data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - 1));
 	}
-	log::info("highest rank: {}", highest);
+	//log::info("highest rank: {}", highest);
 
 	//Get Highest Partial Rank
 	auto highestPartial = -1;
+	auto partialDelta = 0;
 	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
-		if (hasPartial(i)) {
+		auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
+		auto reqLevels = data["main"][i]["reqLevels"].as<int>().unwrapOr(-1);
+
+		if (saveID == "null") continue;
+
+		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
+		auto delta = listSave.progress - (reqLevels + 3);
+
+		if (listSave.progress > 0 && i > highestPartial && delta > 0 && delta <= 2) {
 			highestPartial = i;
+			partialDelta = delta;
 		}
 	}
-	log::info("highest partial rank: {}", highestPartial);
+	//log::info("highest partial rank: {}", highestPartial);
 
-	//Sort Skills
-	auto xp = Mod::get()->getSavedValue<std::vector<float>>("xp", { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f });
-	std::vector<int> skills = sortSkills(xp); //Highest -> Lowest
-	log::info("sorted skills: (highest) {} (lowest)", skills);
+	// get hardest demons by skill by tier
+	matjson::Value hardestSkills = {};
+	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
+		auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
+		
+		matjson::Value res = {};
+		for (auto s : skills) res.set(s, -1);
+		hardestSkills.set(saveID, res);
+		
+		for (auto lvl : data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault()) {
+			if (!DPUtils::containsInt(completedLvls, lvl)) continue;
+
+			for (auto s : skills) {
+				auto val = data["level-data"][std::to_string(lvl)]["xp"][s].as<int>().unwrapOr(0);
+				auto hVal = hardestSkills[saveID][s].as<int>().unwrapOr(-1);
+				if (val >= hVal) hardestSkills[saveID].set(s, val);
+			}
+		}
+	}
+	//log::info("hardest skills by tier: {}", hardestSkills.dump());
+
+	// if partial < highest rank, skip partial recommendations
+	if (highestPartial < highest) highestPartial = -1;
+	bool hasJump = (highestPartial != -1);
+	int jumpThreshold = skills.size() - partialDelta;
+	//log::info("jump threshold: {}", jumpThreshold);
 	
-	auto stop = false;
-	std::vector<int> recommendations = {};
+	matjson::Value recommendations = {};
+	std::vector<int> used = {};
 
-	//Generate Strong Skill Recommendations
-	//4 unique recommendations for your top 4 strongest skills from any higher tier
-	//2 additional recommendations for your top 2 strongest skills from your highest partially completed rank
-	//skill difficulty order: average (2) -> above average (3)
+	const int numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
 
-	for (int i = 0; i < 4; i++) { // 4 strongest skills
+	//reverse list to go weakest -> strongest
+	std::reverse(skills.begin(), skills.end());
 
-		auto currentSkill = skillIDs[skills[i]];
+	for (int i = 0; i < skills.size(); i++) {
+		auto skillID = skills[i];
+		
+		int start = highest;
+		int end = numOfPacks - 1;
 
-		//log::info("skill {}: {}", i, currentSkill);
+		bool isJump = (hasJump && (i >= jumpThreshold));
+		bool isStrong = ((jumpThreshold - 4 <= i) && (i < jumpThreshold));
+		bool isWeakest = (i == 0);
+		bool isUnique = (hasJump ? isJump : isStrong);
 
-		stop = false;
+		if (skills[0] != skills[skills.size() - 1]) {
+			if (isStrong) start++;
+			if (isWeakest) start--;
+			if (isJump) start = highestPartial;
+		}
 
-		auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
+		//log::info("strong: {}, weakest: {}, jump: {}", isStrong, isWeakest, isJump);
 
-		for (int j = std::min(highest + 1, static_cast<int>(numOfPacks - 1)); j < numOfPacks; j++) { //search the tier above your highest, it'll move on to the next tier if it can't find anything
-			//log::info("current tier: {}", data["main"][j]["name"].as_string());
-			auto levelIDs = data["main"][j]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+		// Generate Recommendation
+		for (int j = std::min(start, end); j <= end; j++) {
+			auto lvls = data["main"][j]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+			auto saveID = data["main"][j]["saveID"].as<std::string>().unwrapOrDefault();
 
-			for (int rating = 2; rating <= 3; rating++) { //cycles through ratings. if it can't find a rating of 2 for any level with that skill, it starts searching for 3
+			auto hardestSkillRating = std::max(hardestSkills[saveID][skills[i]].as<int>().unwrapOr(-1), 2);
 
-				//log::info("looking for rating: {}", rating);
+			bool isTierAbove = (j == highest + 1);
+			bool isTierBelow = (j == highest - 1);
+			bool isTierCurrent = (j == highest);
 
-				for (auto lvl : levelIDs) { //search through all levels of that tier
-					auto id = std::to_string(lvl);
+			//log::info("above: {}, below: {}, current: {}", isTierAbove, isTierBelow, isTierCurrent);
 
-					if (std::find(recommendations.begin(), recommendations.end(), lvl) == recommendations.end()
-						&& std::find(completedLvls.begin(), completedLvls.end(), lvl) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].isNumber() && data["level-data"][id]["xp"][currentSkill].as<int>().unwrapOr(0) == rating) { // found a level that matches criteria, stop searching and go to the next skill
-							//log::info("found level with id: {}", levelIDs[k].as_int());
-							recommendations.push_back(lvl);
-							stop = true; 
-							break;
-						}
-					}
+			int ratingStart = isTierBelow ? 3 : (isTierCurrent ? hardestSkillRating : (isTierAbove ? 3 : 2));
+			int step = isTierBelow ? -1 : 1;
 
+			std::vector<int> ratingSearch = {ratingStart, cycleRating(ratingStart, step)};
+
+			for (auto k : ratingSearch) {
+				int res = 0;
+
+				//log::info("searching for rating: {}", k);
+
+				int lStart = (step > 0 ? 0 : lvls.size() - 1);
+				int lEnd = (step > 0 ? lvls.size() - 1 : 0);
+
+				//log::info("start: {}, end: {}", lStart, lEnd);
+
+				for (auto l = lStart; step > 0 ? l <= lEnd : l >= lEnd; l += step) {
+					auto d = lvls[l];
+					if (DPUtils::containsInt(completedLvls, d)) continue; // if the level is completed, skip
+							
+					auto val = data["level-data"][std::to_string(d)]["xp"][skillID].as<int>().unwrapOr(0);
+					if (val != k) continue; // if values don't match, skip
+					if (isUnique && DPUtils::containsInt(used, d)) continue; // marked as "unique" and therefore can't qualify for another skill
+					
+					res = d;
+					//log::info("found {} recommendation: {}", skillID, res);
+					break;
 				}
 
-				if (stop) { break; }
+				if (res == 0) continue;
+
+				auto s = recommendations[skillID].as<std::vector<int>>().unwrapOrDefault();
+				s.push_back(res);
+				used.push_back(res);
+				recommendations.set(skillID, s);
+				break;
 			}
 
-			if (stop) { break; }
+			if (recommendations[skillID].as<std::vector<int>>().unwrapOrDefault().size() > 0) break;
 		}
+
 	}
 
-	if (highestPartial > -1) { // make sure your highest partial exists
-		for (int i = 0; i < 2; i++) { //two strongest skills
-
-			auto currentSkill = skillIDs[skills[i]];
-
-			//log::info("skill {}: {}", i, currentSkill);
-
-			stop = false;
-
-			//log::info("current tier: {}", data["main"][highestPartial]["name"].as_string());
-			auto levelIDs = data["main"][highestPartial]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-
-			for (int rating = 2; rating <= 3; rating++) { //cycles through ratings. if it can't find a rating of 2 for any level with that skill, it starts searching for 3
-
-				//log::info("looking for rating: {}", rating);
-
-				for (auto lvl : levelIDs) { //search through all levels of that tier
-					auto id = std::to_string(lvl);
-
-					if (std::find(recommendations.begin(), recommendations.end(), lvl) == recommendations.end()
-						&& std::find(completedLvls.begin(), completedLvls.end(), lvl) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].isNumber() && data["level-data"][id]["xp"][currentSkill].as<int>().unwrapOr(0) == rating) { // found a level that matches criteria, stop searching and go to the next skill
-							//log::info("found level with id: {}", levelIDs[k].as_int());
-							recommendations.push_back(lvl);
-							stop = true;
-							break;
-						}
-					}
-
-				}
-
-				if (stop) { break; }
-			}
-		}
-	}
-
-	//Generate Weakest Skill Recommendation
-	// 1 unique recommendation for your weakest skill
-	// a:
-	// tier below highest rank
-	// skill difficulty order: 3 -> 2
-	// b:
-	// tier of highest rank
-	// reverse index order
-	// skill difficulty order: 3 -> 2 -> 1
-
-	for (int i = 0; i <= 1; i++) { //0 = a, 1 = b
-
-		auto currentSkill = skillIDs[skills[skillIDs.size() - 1]]; // always weakest
-
-		//log::info("skill: {}", currentSkill);
-
-		stop = false;
-
-		if (i == 0 && highest > 0) { // if scenario a and the tier below is available
-			//log::info("current tier: {}", data["main"][highest - 1]["name"].as_string());
-			auto levelIDs = data["main"][highest - 1]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-
-			for (int rating = 3; rating >= 2; rating--) { //cycles through ratings. if it can't find a rating of 3 for any level with that skill, it starts searching for 2
-
-				//log::info("looking for rating: {}", rating);
-
-				for (auto lvl : levelIDs) { //search through all levels of that tier
-					auto id = std::to_string(lvl);
-
-					if (std::find(recommendations.begin(), recommendations.end(), lvl) == recommendations.end()
-						&& std::find(completedLvls.begin(), completedLvls.end(), lvl) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].isNumber() && data["level-data"][id]["xp"][currentSkill].as<int>().unwrapOr(0) == rating) { // found a level that matches criteria, stop searching
-							//log::info("found level with id: {}", levelIDs[k].as_int());
-							recommendations.push_back(lvl);
-							stop = true;
-							break;
-						}
-					}
-
-				}
-
-				if (stop) { break; }
-			}
-		}
-		else { // scenario b
-			//log::info("current tier: {}", data["main"][highest]["name"].as_string());
-			auto levelIDs = data["main"][highest]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-
-			for (int rating = 3; rating > 0; rating--) { //cycles through ratings. if it can't find a rating of 3 for any level with that skill, it starts searching for 2, then 1
-
-				//log::info("looking for rating: {}", rating);
-				std::vector<int> revLevelIDs = levelIDs;
-				std::reverse(revLevelIDs.begin(), revLevelIDs.end());
-				for (int lvl : revLevelIDs) { //search through all levels of that tier (reverse order)
-					//auto lvl = levelIDs[k];
-					auto id = std::to_string(lvl);
-
-					if (std::find(recommendations.begin(), recommendations.end(), lvl) == recommendations.end()
-						&& std::find(completedLvls.begin(), completedLvls.end(), lvl) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-						if (data["level-data"][id]["xp"][currentSkill].isNumber() && data["level-data"][id]["xp"][currentSkill].as<int>().unwrapOr(0) == rating) { // found a level that matches criteria, stop searching
-							//log::info("found level with id: {}", levelIDs[k].as_int());
-							recommendations.push_back(lvl);
-							stop = true;
-							break;
-						}
-					}
-
-				}
-
-				if (stop) { break; }
-			}
-		}
-
-		if (stop) { break; } // if one scenario succeeds, don't run the second one
-	}
-	
-	//Other Recommendations
-	// use the rest of the skills (index 4-7, 4 skills remaining)
-	// tier of highest rank
-	// reverse index order
-	// skill difficulty order: 3 -> 2 -> 1
-
-	for (int i = 4; i <= 7; i++) { //all remaining skills
-		auto currentSkill = skillIDs[skills[i]];
-
-		//log::info("skill: {}", currentSkill);
-
-		stop = false;
-
-		//log::info("current tier: {}", data["main"][highest]["name"].as_string());
-		auto levelIDs = data["main"][highest]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-
-		for (int rating = 3; rating > 0; rating--) { //cycles through ratings. if it can't find a rating of 3 for any level with that skill, it starts searching for 2, then 1
-
-			//log::info("looking for rating: {}", rating);
-
-			std::vector<int> revLevelIDs = levelIDs;
-			std::reverse(revLevelIDs.begin(), revLevelIDs.end());
-			for (int lvl : revLevelIDs) { //search through all levels of that tier (reverse order)
-				auto id = std::to_string(lvl);
-
-				if (std::find(recommendations.begin(), recommendations.end(), lvl) == recommendations.end()
-					&& std::find(completedLvls.begin(), completedLvls.end(), lvl) == completedLvls.end()) { //make sure the level isn't already in recommendations or completed
-					if (data["level-data"][id]["xp"][currentSkill].isNumber() && data["level-data"][id]["xp"][currentSkill].as<int>().unwrapOr(0) == rating) { // found a level that matches criteria, stop searching
-						//log::info("found level with id: {}", levelIDs[k].as_int());
-						recommendations.push_back(lvl);
-						stop = true;
-						break;
-					}
-				}
-
-			}
-
-			if (stop) { break; }
-		}
-	}
-
-	log::info("Recommendations: {}", recommendations);
-	Mod::get()->setSavedValue<std::vector<int>>("recommended-levels", recommendations);
+	log::info("Recommendations: {}", recommendations.dump());
+	Mod::get()->setSavedValue<matjson::Value>("recommended-levels", recommendations);
 	return;
 }
 
-bool RecommendedUtils::hasPartial(int id) {
-	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+int RecommendedUtils::cycleRating(int n, int step) {
+	const int min = 2;
+	const int max = 3;
 
-	//check for errors
-	auto jsonCheck = checkJson(data, "");
+	n += step;
+	if (n > max) return min;
+	if (n < min) return max;
 
-	if (!jsonCheck.ok()) {
-		log::info("Something went wrong validating the GDDP list data.");
+	return n;
+}
 
-		return false;
+void RecommendedUtils::getSkillsForRecommendation(int levelID) {
+	auto recommendations = Mod::get()->getSavedValue<matjson::Value>("recommended-levels");
+	std::vector<std::string> skills;
+
+	//log::info("recommended results for {}", levelID);
+
+	for (auto [key, value] : XPUtils::skills) {
+		if (DPUtils::containsInt(recommendations[key].as<std::vector<int>>().unwrapOrDefault(), levelID)) skills.push_back(key);
 	}
 
-	auto saveID = data["main"][id]["saveID"].asString().unwrapOr("null");
-	auto reqLevels = data["main"][id]["reqLevels"].asInt().unwrapOr(999);
-	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
-
-	if (listSave.progress >= reqLevels - 2 && listSave.progress < reqLevels && listSave.progress > 0) {
-		return true;
+	std::string str = "Recommended for:\n";
+	for (int s = 0; s < skills.size(); s++) {
+		str += fmt::format(
+			"{}<cy>{}</c>{}",
+			(s == skills.size() - 1 && skills.size() > 1) ? "& " : "",
+			XPUtils::skills[skills[s]]["name"].asString().unwrapOr("???"),
+			(s < skills.size() && skills.size() > 2) ? ", " : " "
+		);
 	}
 
-	return false;
+	str.pop_back();
+
+	FLAlertLayer::create(
+		"Recommended",
+		str.c_str(),
+		"OK"
+	)->show();
+
+	return;
 }

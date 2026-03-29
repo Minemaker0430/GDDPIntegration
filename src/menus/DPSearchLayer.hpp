@@ -66,6 +66,8 @@ public:
 	void pageSelect(CCObject*);
 	void reverseList(CCObject*);
 
+	void onRandomLevel(CCObject*);
+
 	void loadLevels(int);
 	void loadLevelsAtPage(int);
 	void loadLevelsFinished(CCArray*, const char*) override;

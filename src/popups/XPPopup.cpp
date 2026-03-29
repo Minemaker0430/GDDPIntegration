@@ -6,7 +6,9 @@
 
 #include "../menus/DPLayer.hpp"
 #include "../XPUtils.hpp"
+#include "../DPUtils.hpp"
 #include "XPPopup.hpp"
+#include "../CustomText.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -26,12 +28,6 @@ bool XPPopup::init() {
 	layer->addChild(mainLayer);
 	m_mainLayer = mainLayer;
 
-	//Get XP
-	auto xp = Mod::get()->getSavedValue<std::vector<float>>("xp");
-	auto levelProgress = Mod::get()->getSavedValue<std::vector<float>>("percent-to-level");
-	auto level = Mod::get()->getSavedValue<std::vector<int>>("level");
-	auto maxLevel = Mod::get()->getSavedValue<std::vector<int>>("max-levels");
-
 	//Create Info Button
 	auto infoMenu = CCMenu::create();
 	auto infoButton = InfoAlertButton::create("XP Info", "<cy>XP</c> is gained by completing <cy>Main Tier</c> levels. Higher <cy>Tiers</c> give Higher <cy>XP</c>. Try to find levels that improve your <cr>Least Improved</c> skill!", 1.0f);
@@ -47,20 +43,24 @@ bool XPPopup::init() {
 	alignment->setPosition({ 210.f, 185.f });
 	m_mainLayer->addChild(alignment);
 
-	for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
-		auto skill = XPUtils::skillIDs[i];
+	for (auto [key, value] : XPUtils::skills) {
+		//Get XP
+		auto xp = Mod::get()->getSavedValue<matjson::Value>("xp")[key].as<float>().unwrapOr(0.f);
+		auto levelProgress = Mod::get()->getSavedValue<matjson::Value>("percent-to-level")[key].as<float>().unwrapOr(0.f);
+		auto level = Mod::get()->getSavedValue<matjson::Value>("level")[key].as<int>().unwrapOr(0);
+		auto maxLevel = Mod::get()->getSavedValue<matjson::Value>("max-levels")[key].as<int>().unwrapOr(0);
 
 		auto title = CCNode::create();
-		title->setPosition(skillPositions[i]);
-		title->setID(fmt::format("skill-{}", skill));
-		title->setTag(i);
+		title->setPosition({ value["position"][0].as<float>().unwrapOr(0.f), value["position"][1].as<float>().unwrapOr(0.f) });
+		title->setID(fmt::format("skill-{}", key));
 
-		auto titleHeader = CCLabelBMFont::create(skillNames[i].c_str(), "bigFont.fnt");
+		auto titleHeader = CCLabelBMFont::create(value["name"].asString().unwrapOr("???").c_str(), "bigFont.fnt");
 		titleHeader->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
 		titleHeader->setPositionY(1.f);
 		titleHeader->setScale(0.75f);
-		titleHeader->setColor(skillColors[i]);
+		titleHeader->setColor(value["color"].as<ccColor3B>().unwrapOrDefault());
 		titleHeader->setID("header");
+		title->addChild(titleHeader);
 
 		auto progressBack = CCSprite::create("GJ_progressBar_001.png");
 		progressBack->setAnchorPoint({ 0, 0.5 });
@@ -75,12 +75,10 @@ bool XPPopup::init() {
 		progressFront->setScaleX(0.98f);
 		progressFront->setScaleY(0.75f);
 		progressFront->setZOrder(1);
-		progressFront->setColor(skillColors[i]);
+		progressFront->setColor(value["color"].as<ccColor3B>().unwrapOrDefault());
 
-		auto percent = levelProgress[i];
-		if (xp[i] >= 1.f) {
-			percent = 1.f;
-		}
+		auto percent = levelProgress;
+		if (xp >= 1.f) percent = 1.f;
 
 		auto clippingNode = CCClippingNode::create();
 		auto stencil = CCScale9Sprite::create("square02_001.png");
@@ -99,13 +97,22 @@ bool XPPopup::init() {
 		progressBack->setScaleX(0.6f);
 		progressBack->setScaleY(0.65f);
 
-		auto levelLabel = CCLabelBMFont::create(fmt::format("Level {}/{}", level[i], maxLevel[i]).c_str(), "bigFont.fnt");
+		auto levelLabel = CCLabelBMFont::create(fmt::format("Level {}/{}", level, maxLevel).c_str(), "bigFont.fnt");
 		levelLabel->setPosition({ 10.f, 11.5f });
 		levelLabel->setAnchorPoint({ 0.f, 0.5f });
 		levelLabel->setScale(0.65f);
 		levelLabel->setZOrder(2);
 		levelLabel->setID("level-label");
 		progressBack->addChild(levelLabel);
+
+		auto totalXPLabel = CCLabelBMFont::create(fmt::format("({}%)", clampf(floor(((float)level / (float)maxLevel) * 10000) / 100.f, 0, 100)).c_str(), "bigFont.fnt");
+		totalXPLabel->setPosition({ 10.f + levelLabel->getScaledContentWidth(), 11.5f });
+		totalXPLabel->setAnchorPoint({ 0.f, 0.5f });
+		totalXPLabel->setScale(0.5f);
+		totalXPLabel->setZOrder(2);
+		totalXPLabel->setOpacity(150);
+		totalXPLabel->setID("total-xp-label");
+		progressBack->addChild(totalXPLabel);
 
 		auto progressLabel = CCLabelBMFont::create(fmt::format("{}%", clampf(floor(percent * 100), 0, 100)).c_str(), "bigFont.fnt");
 		progressLabel->setPosition({ 330.f, 11.5f });
@@ -116,17 +123,18 @@ bool XPPopup::init() {
 		progressBack->addChild(progressLabel);
 
 		title->addChild(progressBack);
-		title->addChild(titleHeader);
 
 		alignment->addChild(title);
 	}
 
 	//Least Improved Skill
-	auto leastImproved = 9;
-	for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
-		if (xp[i] < xp[leastImproved]) {
-			leastImproved = i;
-		}
+	std::string leastImproved = "null";
+	auto skillRev = XPUtils::skills;
+	std::reverse(skillRev.begin(), skillRev.end());
+	for (auto [key, value] : skillRev) {
+		auto xp = Mod::get()->getSavedValue<matjson::Value>("xp")[key].as<float>().unwrapOr(0.f);
+		auto liXP = Mod::get()->getSavedValue<matjson::Value>("xp")[leastImproved].as<float>().unwrapOr(1.f);
+		if (xp < liXP) leastImproved = key;
 	}
 
 	auto leastImprovedTitle = CCLabelBMFont::create("Least Improved", "bigFont.fnt");
@@ -136,20 +144,20 @@ bool XPPopup::init() {
 	leastImprovedTitle->setID("least-improved-header");
 	alignment->addChild(leastImprovedTitle);
 
-	auto leastImprovedValue = CCLabelBMFont::create(skillNames[leastImproved].c_str(), "bigFont.fnt");
+	auto leastImprovedValue = CCLabelBMFont::create(XPUtils::skills[leastImproved]["name"].asString().unwrapOr("???").c_str(), "bigFont.fnt");
 	leastImprovedValue->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
 	leastImprovedValue->setPosition({ -100.f, -150.f });
 	leastImprovedValue->setScale(0.7f);
-	leastImprovedValue->setColor(skillColors[leastImproved]);
+	leastImprovedValue->setColor(XPUtils::skills[leastImproved]["color"].as<ccColor3B>().unwrapOrDefault());
 	leastImprovedValue->setID("least-improved-value");
 	alignment->addChild(leastImprovedValue);
 
 	//Most Improved Skill
-	auto mostImproved = 0;
-	for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
-		if (xp[i] > xp[mostImproved]) {
-			mostImproved = i;
-		}
+	std::string mostImproved = "null";
+	for (auto [key, value] : XPUtils::skills) {
+		auto xp = Mod::get()->getSavedValue<matjson::Value>("xp")[key].as<float>().unwrapOr(0.f);
+		auto miXP = Mod::get()->getSavedValue<matjson::Value>("xp")[mostImproved].as<float>().unwrapOr(0.f);
+		if (xp > miXP) mostImproved = key;
 	}
 
 	auto mostImprovedTitle = CCLabelBMFont::create("Most Improved", "bigFont.fnt");
@@ -159,11 +167,11 @@ bool XPPopup::init() {
 	mostImprovedTitle->setID("most-improved-header");
 	alignment->addChild(mostImprovedTitle);
 
-	auto mostImprovedValue = CCLabelBMFont::create(skillNames[mostImproved].c_str(), "bigFont.fnt");
+	auto mostImprovedValue = CCLabelBMFont::create(XPUtils::skills[mostImproved]["name"].asString().unwrapOr("???").c_str(), "bigFont.fnt");
 	mostImprovedValue->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
 	mostImprovedValue->setPosition({ 100.f, -150.f });
 	mostImprovedValue->setScale(0.7f);
-	mostImprovedValue->setColor(skillColors[mostImproved]);
+	mostImprovedValue->setColor(XPUtils::skills[mostImproved]["color"].as<ccColor3B>().unwrapOrDefault());
 	mostImprovedValue->setID("most-improved-value");
 	alignment->addChild(mostImprovedValue);
 
@@ -201,8 +209,9 @@ bool DemonXPPopup::init() {
 	layer->addChild(mainLayer);
 	m_mainLayer = mainLayer;
 
-	//Get XP
+	//Get data and completed levels
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 
 	//Create Info Button
 	auto infoMenu = CCMenu::create();
@@ -213,31 +222,47 @@ bool DemonXPPopup::init() {
 	infoMenu->setID("info-menu");
 	m_mainLayer->addChild(infoMenu);
 
+	//Create Projection Toggle
+	auto toggleMenu = CCMenu::create();
+	toggleMenu->setPosition({ -125.f, -65.f });
+	toggleMenu->setScale(0.5f);
+	toggleMenu->setID("toggle-menu");
+	
+	auto toggleBtn = CCMenuItemToggler::create(
+		CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png"),
+		CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png"),
+		this,
+		menu_selector(DemonXPPopup::onToggle)
+	);
+	
+	auto toggleLabel = CCLabelBMFont::create("Show Projected XP", "bigFont.fnt");
+	toggleLabel->setAnchorPoint({ 0.f, 0.5f });
+	toggleLabel->setPositionX(20.f);
+
+	toggleMenu->addChild(toggleBtn);
+	toggleMenu->addChild(toggleLabel);
+	if (!DPUtils::containsInt(completedLvls, m_levelID)) m_mainLayer->addChild(toggleMenu);
+
 	//Create Progress Bars
 
 	auto alignment = CCNode::create();
 	alignment->setPosition({ 210.f, 170.f });
 	m_mainLayer->addChild(alignment);
 
-	for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
-		auto skill = XPUtils::skillIDs[i];
+	for (auto [key, value] : XPUtils::skills) {
 		auto levelID = std::to_string(m_levelID);
 		//log::info("id: {}, skill: {}", levelID, skill);
-		auto skillValue = 0;
-		if (data["level-data"][levelID]["xp"][skill].isNumber()) {
-			skillValue = data["level-data"][levelID]["xp"][skill].as<int>().unwrapOr(0);
-		}
+		auto skillValue = data["level-data"][levelID]["xp"][key].as<int>().unwrapOr(0);
 
 		auto title = CCNode::create();
-		title->setPosition(skillPositions[i]);
-		title->setID(fmt::format("skill-{}", skill));
-		title->setTag(i);
+		title->setPosition({ value["position"][0].as<float>().unwrapOr(0.f), value["position"][1].as<float>().unwrapOr(0.f) });
+		title->setID(fmt::format("skill-{}", key));
 
-		auto titleHeader = CCLabelBMFont::create(skillNames[i].c_str(), "bigFont.fnt");
+		auto titleHeader = CCLabelBMFont::create(value["name"].asString().unwrapOr("???").c_str(), "bigFont.fnt");
 		titleHeader->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
 		titleHeader->setPositionY(1.f);
 		titleHeader->setScale(0.75f);
-		titleHeader->setColor(skillColors[i]);
+		titleHeader->setColor(value["color"].as<ccColor3B>().unwrapOrDefault());
 		titleHeader->setID("header");
 
 		auto progressBack = CCSprite::create("GJ_progressBar_001.png");
@@ -253,26 +278,50 @@ bool DemonXPPopup::init() {
 		progressFront->setScaleX(0.98f);
 		progressFront->setScaleY(0.75f);
 		progressFront->setZOrder(1);
-		progressFront->setColor(skillColors[i]);
-
-		auto percent = static_cast<float>(skillValue) / 3.f;
+		progressFront->setColor(value["color"].as<ccColor3B>().unwrapOrDefault());
+		progressFront->setID("progress-bar-front");
 
 		auto clippingNode = CCClippingNode::create();
-		auto stencil = CCScale9Sprite::create("square02_001.png");
-		stencil->setAnchorPoint({ 0, 0.5f });
-		stencil->setContentWidth(progressFront->getScaledContentSize().width);
-		stencil->setScaleX(percent);
-		stencil->setContentHeight(100);
-		clippingNode->setStencil(stencil);
+		clippingNode->setStencil(progressFront);
 		clippingNode->setAnchorPoint({ 0, 0.5f });
 		clippingNode->setPosition({ 3.25f, 10.5f });
 		clippingNode->setContentWidth(progressFront->getContentWidth() - 2.f);
 		clippingNode->setContentHeight(20);
+		clippingNode->setID("progress-bar-node");
 		clippingNode->addChild(progressFront);
 		progressBack->addChild(clippingNode);
 
 		progressBack->setScaleX(0.6f);
 		progressBack->setScaleY(0.65f);
+
+		auto projProgressFront = CCSprite::create("GJ_progressBar_001.png");
+		projProgressFront->setAnchorPoint({ 0, 0.5 });
+		projProgressFront->setPosition({ 0.0f, 10.f });
+		projProgressFront->setScaleX(0.98f);
+		projProgressFront->setScaleY(0.75f);
+		projProgressFront->setZOrder(1);
+		projProgressFront->setColor(value["color"].as<ccColor3B>().unwrapOrDefault());
+		projProgressFront->setOpacity(150);
+		projProgressFront->setID("projected-progress-bar-front");
+
+		auto projectedClippingNode = CCClippingNode::create();
+		projectedClippingNode->setStencil(progressFront);
+		projectedClippingNode->setAnchorPoint({ 0, 0.5f });
+		projectedClippingNode->setPosition({ 3.25f, 10.5f });
+		projectedClippingNode->setContentWidth(progressFront->getContentWidth() - 2.f);
+		projectedClippingNode->setContentHeight(20);
+		projectedClippingNode->setID("projected-progress-bar-node");
+		projectedClippingNode->addChild(projProgressFront);
+		progressBack->addChild(projectedClippingNode);
+
+		auto projectedChangeLabel = CCLabelBMFont::create("No Change", "bigFont.fnt");
+		projectedChangeLabel->setPosition({ 10.f, 11.5f });
+		projectedChangeLabel->setAnchorPoint({ 0.f, 0.5f });
+		projectedChangeLabel->setScale(0.65f);
+		projectedChangeLabel->setZOrder(2);
+		projectedChangeLabel->setOpacity(150);
+		projectedChangeLabel->setID("projected-change-label");
+		progressBack->addChild(projectedChangeLabel);
 
 		title->addChild(progressBack);
 		title->addChild(titleHeader);
@@ -280,7 +329,88 @@ bool DemonXPPopup::init() {
 		alignment->addChild(title);
 	}
 
+	update();
+
 	return true;
+}
+
+void DemonXPPopup::onToggle(CCObject* sender) {
+	auto btn = static_cast<CCMenuItemToggler*>(sender);
+
+	m_toggled = !btn->isToggled();
+
+	update();
+	
+	return;
+}
+
+void DemonXPPopup::update() {
+
+	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+	auto projected = (m_toggled) ? XPUtils::getProjectedXP(m_levelID) : matjson::Value();
+	
+	for (auto [key, value] : XPUtils::skills) {
+
+		if (m_toggled) { // show projected xp values
+			auto levelProgress = Mod::get()->getSavedValue<matjson::Value>("percent-to-level")[key].as<float>().unwrapOr(0.f);
+			auto level = Mod::get()->getSavedValue<matjson::Value>("level")[key].as<int>().unwrapOr(0);
+
+			//get nodes
+			auto parent = m_mainLayer->getChildByIDRecursive(fmt::format("skill-{}", key));
+			auto clippingNode = static_cast<CCClippingNode*>(parent->getChildByIDRecursive("progress-bar-node"));
+			auto projectedClippingNode = static_cast<CCClippingNode*>(parent->getChildByIDRecursive("projected-progress-bar-node"));
+			auto projectedChangeLabel = static_cast<CCLabelBMFont*>(parent->getChildByIDRecursive("projected-change-label"));
+			auto progressFront = static_cast<CCSprite*>(clippingNode->getChildByID("progress-bar-front"));
+
+			auto stencil = CCScale9Sprite::create("square02_001.png");
+			stencil->setAnchorPoint({ 0, 0.5f });
+			stencil->setContentWidth(progressFront->getScaledContentSize().width);
+			stencil->setScaleX(levelProgress);
+			stencil->setContentHeight(100);
+			clippingNode->setStencil(stencil);
+
+			auto pXP = projected["xp"][key].as<float>().unwrapOr(0.f);
+			auto pLevel = projected["level"][key].as<int>().unwrapOr(1);
+			auto pNext = projected["next"][key].as<float>().unwrapOr(0.f);
+
+			auto projectedStencil = CCScale9Sprite::create("square02_001.png");
+			projectedStencil->setAnchorPoint({ 0, 0.5f });
+			projectedStencil->setContentWidth(progressFront->getScaledContentSize().width);
+			projectedStencil->setScaleX((pLevel > level) ? 1.f : pNext);
+			projectedStencil->setContentHeight(100);
+			projectedClippingNode->setStencil(projectedStencil);
+
+			auto diff = (pNext - levelProgress);
+			if (diff > 0.f) projectedChangeLabel->setCString(fmt::format("+{}%", floorf(diff * 100)).c_str());
+			if (pLevel > level) projectedChangeLabel->setCString(((pLevel - level) > 1) ? fmt::format("+Level Up x{}", (pLevel - level)).c_str() : "+Level Up");
+
+			// show nodes
+			parent->getChildByIDRecursive("projected-progress-bar-node")->setVisible(true);
+			parent->getChildByIDRecursive("projected-change-label")->setVisible(true);
+		}
+		else { // load bars as normal
+			auto skillValue = data["level-data"][std::to_string(m_levelID)]["xp"][key].as<int>().unwrapOr(0);
+			auto percent = static_cast<float>(skillValue) / 3.f;
+
+			//get nodes
+			auto parent = m_mainLayer->getChildByIDRecursive(fmt::format("skill-{}", key));
+			auto clippingNode = static_cast<CCClippingNode*>(parent->getChildByIDRecursive("progress-bar-node"));
+			auto progressFront = static_cast<CCSprite*>(clippingNode->getChildByID("progress-bar-front"));
+
+			auto stencil = CCScale9Sprite::create("square02_001.png");
+			stencil->setAnchorPoint({ 0, 0.5f });
+			stencil->setContentWidth(progressFront->getScaledContentSize().width);
+			stencil->setScaleX(percent);
+			stencil->setContentHeight(100);
+			clippingNode->setStencil(stencil);
+
+			// hide unneeded nodes
+			parent->getChildByIDRecursive("projected-progress-bar-node")->setVisible(false);
+			parent->getChildByIDRecursive("projected-change-label")->setVisible(false);
+		}
+	}
+	
+	return;
 }
 
 DemonXPPopup* DemonXPPopup::create(int levelID) {

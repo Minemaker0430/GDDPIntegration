@@ -10,6 +10,7 @@ protected:
 	virtual bool init(); //add stuff to the layer
 	void backButton(CCObject*); //when you press back
 	virtual void keyBackClicked(); //when you press escape
+	virtual void update(float) override;
 
 	async::TaskHolder<web::WebResponse> m_listener;
 
@@ -32,6 +33,8 @@ public:
 	void reloadLevels(CCObject*);
 	void pageRight(CCObject*);
 	void pageLeft(CCObject*);
+
+	void onRandomLevel(CCObject*);
 
 	void loadLevels(int);
 	void loadLevelsFinished(CCArray*, const char*) override;

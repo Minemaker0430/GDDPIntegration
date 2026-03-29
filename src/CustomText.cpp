@@ -74,7 +74,7 @@ std::string CustomText::getText() {
 }
 
 void CustomText::addBevel() {
-    if (Mod::get()->getSettingValue<bool>("disable-bevel")) { return; }
+    if (Mod::get()->getSettingValue<bool>("disable-bevel")) return;
     
     auto bevel = CCLabelBMFont::create(m_label->getString(), "bevelFont.fnt"_spr);
     bevel->setOpacity(125);
@@ -88,7 +88,7 @@ void CustomText::addBevel() {
 }
 
 void CustomText::addGradient(ccColor3B color, float opacity, bool rotated) {
-    if (Mod::get()->getSettingValue<bool>("disable-text-gradient")) { return; }
+    if (Mod::get()->getSettingValue<bool>("disable-text-gradient")) return;
 
     auto gradient = CCSprite::createWithSpriteFrameName("DP_Gradient.png"_spr);
     gradient->setColor(color);
@@ -116,7 +116,7 @@ void CustomText::addGradient(ccColor3B color, float opacity, bool rotated) {
 }
 
 void CustomText::addRadialGradient(ccColor3B color, float opacity) {
-    if (Mod::get()->getSettingValue<bool>("disable-text-gradient")) { return; }
+    if (Mod::get()->getSettingValue<bool>("disable-text-gradient")) return;
     
     auto gradient = CCSprite::createWithSpriteFrameName("DP_RadialGradient.png"_spr);
     gradient->setColor(color);
@@ -132,7 +132,7 @@ void CustomText::addRadialGradient(ccColor3B color, float opacity) {
 }
 
 void CustomText::addStars(ccColor3B color, float opacity) {
-    if (Mod::get()->getSettingValue<bool>("disable-stars")) { return; }
+    if (Mod::get()->getSettingValue<bool>("disable-stars")) return;
     
     auto frontStars = CCSprite::createWithSpriteFrameName("DP_Stars.png"_spr);
     auto backStars = CCSprite::createWithSpriteFrameName("DP_Stars.png"_spr);
@@ -157,7 +157,7 @@ void CustomText::addStars(ccColor3B color, float opacity) {
 }
 
 void CustomText::addCrystals(ccColor3B color, float opacity) {
-    if (Mod::get()->getSettingValue<bool>("disable-crystals")) { return; }
+    if (Mod::get()->getSettingValue<bool>("disable-crystals")) return;
     
     auto crystalParent = CCNode::create();
     
@@ -339,16 +339,8 @@ void CustomText::scaleToContentSize(CCNode* node, CCSize size) {
 }
 
 void CustomText::addEffectsFromProperties(matjson::Value properties) {
-    bool reducedEffects = (Mod::get()->getSettingValue<bool>("reduce-demon-label-effects") && this->getScale() <= 0.35f);
-    
     m_label->setColor(properties["textColor"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}));
-    if (reducedEffects) { 
-        m_outline->setColor(ccColor3B{ 135, 135, 135 });
-    }
-    else {
-        m_outline->setColor(properties["outlineColor"].as<ccColor3B>().unwrapOr(ccColor3B{0, 0, 0}));
-    }
-
+    m_outline->setColor(properties["outlineColor"].as<ccColor3B>().unwrapOr(ccColor3B{0, 0, 0}));
     m_dropshadow->setColor(properties["shadowColor"].as<ccColor3B>().unwrapOr(ccColor3B{0, 0, 0}));
 
     bool gradient = properties["gradient"].as<bool>().unwrapOr(false);
@@ -381,21 +373,21 @@ void CustomText::addEffectsFromProperties(matjson::Value properties) {
         }
     }
 
-    if (crystal && !reducedEffects) {
+    if (crystal) {
         addCrystals(
             properties["crystalColor"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}),
             properties["crystalOpacity"].as<float>().unwrapOr(1.0f)
         );
     }
 
-    if (stars && !reducedEffects) {
+    if (stars) {
         addStars(
             properties["starsColor"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}),
             properties["starsOpacity"].as<float>().unwrapOr(1.0f)
         );
     }
 
-    if (bevel && !reducedEffects) {
+    if (bevel) {
         addBevel();
     }
 
@@ -404,6 +396,10 @@ void CustomText::addEffectsFromProperties(matjson::Value properties) {
     }
 
     return;
+}
+
+void CustomText::clearEffects() {
+    m_effects->removeAllChildrenWithCleanup(true);
 }
 
 CustomText* CustomText::create(std::string text) {

@@ -3,14 +3,106 @@
 #include <cmath>
 
 #include "XPUtils.hpp"
+#include "DPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
 
-const std::vector<std::string> XPUtils::skillIDs = { "chokepoints", "duals", "fastPaced", "cps", "memory", "nerve", "ship", "swing", "timings", "wave" };
+const matjson::Value XPUtils::skills = matjson::makeObject({
+	{"chokepoints", matjson::makeObject({
+		{"name", "Chokepoints"},
+		{"position", std::vector<float>{-105.f, 15.f}},
+		{"color", ccColor3B{255, 0, 0}}
+	})},
+	{"duals", matjson::makeObject({
+		{"name", "Duals"},
+		{"position", std::vector<float>{-105.f, -15.f}},
+		{"color", ccColor3B{255, 128, 0}}
+	})},
+	{"fastPaced", matjson::makeObject({
+		{"name", "Fast Paced"},
+		{"position", std::vector<float>{-105.f, -45.f}},
+		{"color", ccColor3B{255, 255, 0}}
+	})},
+	{"cps", matjson::makeObject({
+		{"name", "High CPS"},
+		{"position", std::vector<float>{-105.f, -75.f}},
+		{"color", ccColor3B{128, 255, 0}}
+	})},
+	{"memory", matjson::makeObject({
+		{"name", "Memory/Learny"},
+		{"position", std::vector<float>{-105.f, -105.f}},
+		{"color", ccColor3B{0, 255, 0}}
+	})},
+	{"nerve", matjson::makeObject({
+		{"name", "Nerve Control"},
+		{"position", std::vector<float>{105.f, 15.f}},
+		{"color", ccColor3B{0, 255, 128}}
+	})},
+	{"ship", matjson::makeObject({
+		{"name", "Ship"},
+		{"position", std::vector<float>{105.f, -15.f}},
+		{"color", ccColor3B{0, 255, 255}}
+	})},
+	{"swing", matjson::makeObject({
+		{"name", "Swing"},
+		{"position", std::vector<float>{105.f, -45.f}},
+		{"color", ccColor3B{0, 128, 255}}
+	})},
+	{"timings", matjson::makeObject({
+		{"name", "Timings"},
+		{"position", std::vector<float>{105.f, -75.f}},
+		{"color", ccColor3B{0, 0, 255}}
+	})},
+	{"wave", matjson::makeObject({
+		{"name", "Wave"},
+		{"position", std::vector<float>{105.f, -105.f}},
+		{"color", ccColor3B{128, 0, 255}}
+	})}
+});
 
-const float PI = M_PI;
-const std::vector<int> FIBONACCI = {1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181};
+/*const std::vector<std::string> XPUtils::skillIDs = { "chokepoints", "duals", "fastPaced", "cps", "memory", "nerve", "ship", "swing", "timings", "wave" };
+
+const std::map<std::string, std::string> skillNames = {
+	{"chokepoints", "Chokepoints"},
+	{"duals", "Duals"},
+	{"fastPaced", "Fast Paced"},
+	{"cps", "High CPS"},
+	{"memory", "Memory/Learny"},
+	{"nerve", "Nerve Control"},
+	{"ship", "Ship"},
+	{"swing", "Swing"},
+	{"timings", "Timings"},
+	{"wave", "Wave"}
+};
+
+const std::map<std::string, CCPoint> skillPositions = {
+	{"chokepoints", {-105.f, 15.f}},
+	{"duals", {-105.f, -15.f}},
+	{"fastPaced", {-105.f, -45.f}},
+	{"cps", {-105.f, -75.f}},
+	{"memory", {-105.f, -105.f}},
+	{"nerve", {105.f, 15.f}},
+	{"ship", {105.f, -15.f}},
+	{"swing", {105.f, -45.f}},
+	{"timings", {105.f, -75.f}},
+	{"wave", {105.f, -105.f}}
+};
+
+const std::map<std::string, ccColor3B> skillColors = {
+	{"chokepoints", ccColor3B{255, 0, 0}}, 
+	{"duals", ccColor3B{255, 128, 0}}, 
+	{"fastPaced", ccColor3B{255, 255, 0}}, 
+	{"cps", ccColor3B{128, 255, 0}}, 
+	{"memory", ccColor3B{0, 255, 0}}, 
+	{"nerve", ccColor3B{0, 255, 128}}, 
+	{"ship", ccColor3B{0, 255, 255}}, 
+	{"swing", ccColor3B{0, 128, 255}}, 
+	{"timings", ccColor3B{0, 0, 255}},
+	{"wave", ccColor3B{128, 0, 255}}
+};*/
+
+//const std::vector<int> FIBONACCI = {1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181};
 const float scaling = (1.f / 500.f);
 
 void XPUtils::getMaxLevels() {
@@ -19,34 +111,23 @@ void XPUtils::getMaxLevels() {
 	MAX_LEVEL(skill) = Math.ceil(TWS(skill) * scaling)
 	*/
 
-	log::info("Getting Max Levels...");
+	//log::info("Getting Max Levels...");
 
-	/*std::vector<int> skills = {};
-	for (int i = 0; i < skillIDs.size(); i++) { skills.push_back(0); }*/
-	std::vector<int> skills(skillIDs.size(), 0);
-	for (int i = 0; i < skillIDs.size(); i++) {
-		skills[i] = ceil(getTotalWeightedSum(skillIDs[i]) * scaling);
-		//log::info("{} max level: {}", skillIDs[i], skills[i]);
-	}
+	matjson::Value res;
+	for (auto [key, value] : skills) res.set(key, ceil(getTotalWeightedSum(key) * scaling));
 
-	Mod::get()->setSavedValue<std::vector<int>>("max-levels", skills);
+	Mod::get()->setSavedValue<matjson::Value>("max-levels", res);
 	
 	return;
 }
 
 void XPUtils::getXP() {
-	log::info("Getting XP...");
+	//log::info("Getting XP...");
 
-	/*std::vector<float> skills = {};
-	for (int i = 0; i < skillIDs.size(); i++) { skills.push_back(0.f); }*/
-	std::vector<float> skills(skillIDs.size(), 0.f);
+	matjson::Value res;
+	for (auto [key, value] : skills) res.set(key, getCompletedWeightedSum(key) / getTotalWeightedSum(key));
 
-	for (int i = 0; i < skillIDs.size(); i++) {
-		skills[i] = getCompletedWeightedSum(skillIDs[i]) / getTotalWeightedSum(skillIDs[i]);
-		//log::info("{}: {}", skillIDs[i], skills[i]);
-	}
-
-	Mod::get()->setSavedValue<std::vector<float>>("xp", skills);
+	Mod::get()->setSavedValue<matjson::Value>("xp", res);
 	
 	return;
 }
@@ -56,113 +137,181 @@ void XPUtils::getLevels() {
 	getMaxLevels();
 	getXP();
 
-	log::info("Getting Levels...");
+	//log::info("Getting Levels...");
 
-	auto xp = Mod::get()->getSavedValue<std::vector<float>>("xp");
-	auto maxLvl = Mod::get()->getSavedValue<std::vector<int>>("max-levels");
-	/*std::vector<int> skills = {};
-	for (int i = 0; i < skillIDs.size(); i++) { skills.push_back(0); }
-	std::vector<float> percent = {};
-	for (int i = 0; i < skillIDs.size(); i++) { percent.push_back(0.f); }*/
-	std::vector<int> skills(skillIDs.size(), 0);
-    std::vector<float> percent(skillIDs.size(), 0.f);
+	matjson::Value skillVal;
+    matjson::Value percent;
 	
-	for (int i = 0; i < skillIDs.size(); i++) {
+	for (auto [key, value] : skills) {
+		auto xp = Mod::get()->getSavedValue<matjson::Value>("xp")[key].as<float>().unwrapOr(0.f);
+		auto maxLvl = Mod::get()->getSavedValue<matjson::Value>("max-levels")[key].as<int>().unwrapOr(-1);
+
 		// Pre-calculate exponents for powf
-		std::vector<float> exponents(maxLvl[i] + 1, 0.f);
-		for (int lvl = 1; lvl <= maxLvl[i]; lvl++) {
-			exponents[lvl] = static_cast<float>(lvl) / static_cast<float>(maxLvl[i]);
-		}
+		std::vector<float> exponents(maxLvl + 1, 0.f);
+		for (int lvl = 1; lvl <= maxLvl; lvl++) exponents[lvl] = static_cast<float>(lvl) / static_cast<float>(maxLvl);
 		
 		//Get XP Requirements
-		std::vector<float> xpRequirements(maxLvl[i] + 1, 0.f); // Pre-allocate xpRequirements
-        for (int lvl = 1; lvl <= maxLvl[i]; lvl++) {
-            xpRequirements[lvl] = powf(exponents[lvl], PI); // Use pre-calculated exponent
-        }
-		
-		/*std::vector<float> xpRequirements = { 0.f };
-
-		for (int lvl = 1; lvl <= maxLvl[i]; lvl++) {
-			xpRequirements.push_back(powf(static_cast<float>(lvl) / static_cast<float>(maxLvl[i]), PI));
-		}*/
-
-		//log::info("{} level requirements: {}", skillIDs[i], xpRequirements);
+		std::vector<float> xpRequirements(maxLvl + 1, 0.f);
+        for (int lvl = 1; lvl <= maxLvl; lvl++) xpRequirements[lvl] = powf(exponents[lvl], M_PI);
 
 		//Get Level
 		auto level = -1;
         auto next = 0.f;
-        auto start = 1;
+        auto start = 0;
         auto end = xpRequirements.size() - 1;
         while (start <= end) {
             auto mid = (start + end) / 2;
-            if (xp[i] >= xpRequirements[mid]) {
+            if (xp >= xpRequirements[mid]) {
                 level = mid;
                 start = mid + 1;
-            } else {
-                end = mid - 1;
             }
+			else end = mid - 1;
         }
 		
-		if (level != maxLvl[i] && level + 1 < xpRequirements.size()) {
-            next = (xpRequirements[level + 1] - xp[i]) / (xpRequirements[level + 1] - xpRequirements[level]);
-        }
+		if (level != maxLvl && level + 1 < xpRequirements.size()) next = 1.f - ((xpRequirements[level + 1] - xp) / (xpRequirements[level + 1] - xpRequirements[level]));
 
-        skills[i] = std::max(level, 1);
-        percent[i] = next;
-		
-		/*auto level = -1;
-		auto next = 0.f;
-		for (int req = 0; req < xpRequirements.size(); req++) {
-			if (xp[i] >= xpRequirements[req]) {
-				level = req;
-
-				//Percent to Next Level
-				//(req - xp) / (req - lvl)
-				if (level != maxLvl[i] && req + 1 < xpRequirements.size()) {
-					next = (xpRequirements[req + 1] - xp[i]) / (xpRequirements[req + 1] - xpRequirements[req]);
-				}
-			}
-		}
-
-		skills[i] = level;
-		percent[i] = next;*/
-
-		//log::info("{}: {}, next: {}", skillIDs[i], skills[i], percent[i]);
+        skillVal.set(key, std::max(level, 1));
+        percent.set(key, next);
 	}
 
-	Mod::get()->setSavedValue<std::vector<int>>("level", skills);
-	Mod::get()->setSavedValue<std::vector<float>>("percent-to-level", percent);
+	Mod::get()->setSavedValue<matjson::Value>("level", skillVal);
+	Mod::get()->setSavedValue<matjson::Value>("percent-to-level", percent);
 
 	return;
 }
 
-float XPUtils::getTotalWeightedSum(std::string skillID) {
+matjson::Value XPUtils::getProjectedXP(int lvlID) {
+	
+	getLevels();
+
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+	auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
+	
+	matjson::Value res;
+
+	matjson::Value pXP;
+	matjson::Value pLevel;
+	matjson::Value pNext;
+	
+	for (auto [key, value] : skills) {
+		
+		//XP
+		pXP.set(key, getProjectedWeightedSum(key, lvlID) / getTotalWeightedSum(key));
+
+		//Level
+		auto maxLvl = Mod::get()->getSavedValue<matjson::Value>("max-levels")[key].as<int>().unwrapOr(-1);
+
+		std::vector<float> exponents(maxLvl + 1, 0.f);
+		for (int lvl = 1; lvl <= maxLvl; lvl++) exponents[lvl] = static_cast<float>(lvl) / static_cast<float>(maxLvl);
+	
+		std::vector<float> xpRequirements(maxLvl + 1, 0.f);
+        for (int lvl = 1; lvl <= maxLvl; lvl++) xpRequirements[lvl] = powf(exponents[lvl], M_PI);
+
+		auto xp = pXP[key].as<float>().unwrapOr(0.f);
+
+		auto level = -1;
+        auto next = 0.f;
+        auto start = 0;
+        auto end = xpRequirements.size() - 1;
+        while (start <= end) {
+            auto mid = (start + end) / 2;
+            if (xp >= xpRequirements[mid]) {
+                level = mid;
+                start = mid + 1;
+            }
+			else end = mid - 1;
+        }
+		
+        pLevel.set(key, std::max(level, 1));
+        
+		//Next
+		if (level != maxLvl && level + 1 < xpRequirements.size()) next = 1.f - ((xpRequirements[level + 1] - xp) / (xpRequirements[level + 1] - xpRequirements[level]));
+		pNext.set(key, next);
+	}
+
+	res.set("xp", pXP);
+	res.set("level", pLevel);
+	res.set("next", pNext);
+
+	return res;
+}
+
+float XPUtils::getProjectedWeightedSum(std::string skillID, int level) {
+	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
+	auto fibonacci = Mod::get()->getSavedValue<std::vector<int>>("fibonacci", {1, 1});
+	
+	if (completedLvls.empty()) return 0.f;
 
 	auto sum = 0.f;
 	
 	auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
 	auto lvlData = data["level-data"];
 
+	if (fibonacci.size() <= numOfPacks) {
+		for (int i = 1; i <= numOfPacks; i++) {
+			fibonacci.push_back(fibonacci[i] + fibonacci[i - 1]);
+		}
+		Mod::get()->setSavedValue<std::vector<int>>("fibonacci", fibonacci);
+	}
+
 	for (int i = 0; i < numOfPacks; i++) {
 		auto levelIDs = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-		auto multiplier = FIBONACCI[i + 1];
+		auto multiplier = fibonacci[i + 1];
 
 		auto tierSum = 0.f;
 
-		for (int j = 0; j < levelIDs.size(); j++) {
-			auto levelID = std::to_string(levelIDs[j]);
-
-			if (lvlData[levelID]["xp"][skillID].isNumber()) {
-				auto xp = lvlData[levelID]["xp"][skillID].asInt().unwrapOr(0);
-				tierSum += xp;
+		for (auto lvlID : levelIDs) {
+			if (lvlData[std::to_string(lvlID)].contains("xp")) {
+				if (DPUtils::containsInt(completedLvls, lvlID) || (level == lvlID)) {
+					auto xp = lvlData[std::to_string(lvlID)]["xp"][skillID].asInt().unwrapOr(0);
+					tierSum += xp;
+				}
 			}
 		}
 
 		sum += (tierSum * multiplier);
 	}
 
-	//log::info("total weighted sum: {}", sum);
+	//log::info("projected weighted sum: {}", sum);
+
+	return sum;
+}
+
+float XPUtils::getTotalWeightedSum(std::string skillID) {
+	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+	auto fibonacci = Mod::get()->getSavedValue<std::vector<int>>("fibonacci", {1, 1});
+
+	auto sum = 0.f;
+	
+	auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
+	auto lvlData = data["level-data"];
+
+	if (fibonacci.size() <= numOfPacks) {
+		for (int i = 1; i <= numOfPacks; i++) {
+			fibonacci.push_back(fibonacci[i] + fibonacci[i - 1]);
+		}
+		Mod::get()->setSavedValue<std::vector<int>>("fibonacci", fibonacci);
+	}
+
+	for (int i = 0; i < numOfPacks; i++) {
+		auto levelIDs = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+		auto multiplier = fibonacci[i + 1];
+
+		//auto tierSum = 0.f;
+
+		for (auto lvlID : levelIDs) {
+
+			if (lvlData[std::to_string(lvlID)].contains("xp")) {
+				auto xp = lvlData[std::to_string(lvlID)]["xp"][skillID].asInt().unwrapOr(0);
+				sum += (xp * multiplier);
+			}
+		}
+
+		//sum += (tierSum * multiplier);
+	}
+
+	//log::info("{} total weighted sum: {}", skillID, sum);
 	
 	return sum;
 }
@@ -170,34 +319,38 @@ float XPUtils::getTotalWeightedSum(std::string skillID) {
 float XPUtils::getCompletedWeightedSum(std::string skillID) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
+	auto fibonacci = Mod::get()->getSavedValue<std::vector<int>>("fibonacci", {1, 1});
 	
-	if (completedLvls.empty()) {
-		return 0.f;
-	}
+	if (completedLvls.empty()) return 0.f;
 
 	auto sum = 0.f;
 	
 	auto numOfPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
 	auto lvlData = data["level-data"];
 
+	if (fibonacci.size() <= numOfPacks) {
+		for (int i = 1; i <= numOfPacks; i++) {
+			fibonacci.push_back(fibonacci[i] + fibonacci[i - 1]);
+		}
+		Mod::get()->setSavedValue<std::vector<int>>("fibonacci", fibonacci);
+	}
+
 	for (int i = 0; i < numOfPacks; i++) {
 		auto levelIDs = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-		auto multiplier = FIBONACCI[i + 1];
+		auto multiplier = fibonacci[i + 1];
 
-		auto tierSum = 0.f;
+		//auto tierSum = 0.f;
 
-		for (int j = 0; j < levelIDs.size(); j++) {
-			auto levelID = std::to_string(levelIDs[j]);
-
-			if (lvlData[levelID]["xp"][skillID].isNumber()) {
-				if (std::find(completedLvls.begin(), completedLvls.end(), levelIDs[j]) != completedLvls.end()) {
-					auto xp = lvlData[levelID]["xp"][skillID].asInt().unwrapOr(0);
-					tierSum += xp;
+		for (auto lvlID : levelIDs) {
+			if (lvlData[std::to_string(lvlID)].contains("xp")) {
+				if (DPUtils::containsInt(completedLvls, lvlID)) {
+					auto xp = lvlData[std::to_string(lvlID)]["xp"][skillID].asInt().unwrapOr(0);
+					sum += (xp * multiplier);
 				}
 			}
 		}
 
-		sum += (tierSum * multiplier);
+		//sum += (tierSum );
 	}
 
 	//log::info("completed weighted sum: {}", sum);

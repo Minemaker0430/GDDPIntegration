@@ -1,12 +1,12 @@
 {
-		"geode": "5.0.0-beta.2",
+		"geode": "5.4.1",
 		"gd": {
 			"win": "2.2081",
 			"android": "2.2081",
 			"ios": "2.2081",
 			"mac": "2.2081"
 		},
-		"version": "v1.0.15",
+		"version": "v1.1.0-beta.1",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "ItsMochaTheOtter",
@@ -93,6 +93,13 @@
 			"default": true,
 			"enable-if": "skillset-badges"
 		},
+		"show-recommended-in-list": {
+			"name": "Show Recommendations Button in List",
+			"description": "If disabled, the star button on recommendations will only be shown on the Level Page.",
+			"type": "bool",
+			"default": true,
+			"enable-if": "skillset-badges"
+		},
 		"enable-search": {
 			"name": "Enable Search Menu",
 			"description": "Enables the Advanced GDDP Search Menu.",
@@ -111,6 +118,18 @@
 			"type": "bool",
 			"default": true
 		},
+		"enable-recommended-btn": {
+			"name": "Enable Recommendation Button",
+			"description": "Enables the Star button next to recommended levels.",
+			"type": "bool",
+			"default": true
+		},
+		"enable-random-level-picker": {
+			"name": "Enable Random Level Picker",
+			"description": "Enables the Button on GDDP Pages that pick a Random Level.",
+			"type": "bool",
+			"default": true
+		},
 		"show-xp": {
 			"name": "Enable XP",
 			"description": "Enables all XP-Related Buttons.",
@@ -120,6 +139,12 @@
 		"enable-practice": {
 			"name": "Enable Practice",
 			"description": "Enables StartPos Copies to be accessed.",
+			"type": "bool",
+			"default": true
+		},
+		"replace-main-levels": {
+			"name": "Replace Main Level Copies",
+			"description": "Overrides the GDDP's Main Level Copies by sending you to the actual Main Levels.",
 			"type": "bool",
 			"default": true
 		},
@@ -210,6 +235,30 @@
 			"description": "Options that relate to cosmetics in menus.",
 			"type": "title"
 		},
+		"achievement-popups": {
+			"name": "Achievement Popups",
+			"description": "Toggles the Achievement Popups that happen whenever you get a Rank, Plus Rank, Pack Completion, Monthly Completion, or Medal.",
+			"type": "bool",
+			"default": true
+		},
+		"disable-pack-achievements": {
+			"name": "Disable Pack Achievements",
+			"description": "Disables the Achievement Popups that happen whenever you complete a Legacy or Bonus Pack.",
+			"type": "bool",
+			"default": false
+		},
+		"disable-monthly-achievements": {
+			"name": "Disable Monthly Achievements",
+			"description": "Disables the Achievement Popups that happen whenever you complete the Monthly.",
+			"type": "bool",
+			"default": false
+		},
+		"disable-medal-achievements": {
+			"name": "Disable Medal Achievements",
+			"description": "Disables the Achievement Popups that happen whenever you get a Medal or Plus Medal.",
+			"type": "bool",
+			"default": false
+		},
 		"custom-pack-text": {
 			"name": "Fancy Pack Text",
 			"description": "Adds fancy text to pack names.",
@@ -222,15 +271,15 @@
 			"type": "bool",
 			"default": true
 		},
-		"reduce-demon-label-effects": {
-			"name": "Reduce Demon Label Effects",
-			"description": "Disables most Demon Label Effects to prevent eyestrain from pixelation on lower resolutions.",
-			"type": "bool",
-			"default": false
-		},
 		"custom-level-name": {
 			"name": "Fancy Level Name",
 			"description": "Adds fancy text to level names.",
+			"type": "bool",
+			"default": true
+		},
+		"fancy-medals": {
+			"name": "Fancy Medals",
+			"description": "Adds fancy text to Medals & Plus Medals.",
 			"type": "bool",
 			"default": true
 		},
@@ -270,17 +319,11 @@
 			"type": "bool",
 			"default": false
 		},
-		"custom-banners": {
-			"name": "Enable Banners [NYI]",
-			"description": "Adds a custom banner for each tier.",
+		"disable-fancy-monthly-text": {
+			"name": "Disable Fancy Monthly Pack Text",
+			"description": "Disables the text effects on monthly packs.",
 			"type": "bool",
-			"default": true
-		},
-		"custom-backgrounds": {
-			"name": "Enable Tier Backgrounds [NYI]",
-			"description": "Adds a custom background for each tier.",
-			"type": "bool",
-			"default": true
+			"default": false
 		},
 		"restore-bg-color": {
 			"name": "Vanilla Background Color",

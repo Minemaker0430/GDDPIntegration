@@ -3,6 +3,7 @@
 
 //other headers
 #include <Geode/modify/PlayLayer.hpp>
+#include "../DPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -25,18 +26,11 @@ class $modify(PlayLayer) {
             this->m_level->m_levelID.value() != currentLvlID ||
             this->m_isPracticeMode ||
             gauntletEnabled
-        ) { return; }
+        ) return;
 
-        const int percentage = this->getCurrentPercentInt();
-        if (percentage > 0) {
-            //log::info("died at {}%", percentage);
-        }
+        int percentage = this->getCurrentPercentInt();
 
-        if (perfectEnabled && percentage == rouletteGoal) {
-            Mod::get()->setSavedValue<int>("roulette-progress", percentage);
-            log::info("reached goal of {}% in perfect mode", percentage);
-        }
-        else if (!perfectEnabled && percentage > rouletteProgress) {
+        if ((perfectEnabled ? (percentage == rouletteGoal) : (percentage >= rouletteProgress)) && percentage > 0) {
             Mod::get()->setSavedValue<int>("roulette-progress", percentage);
             log::info("new best in roulette! {}%", percentage);
         }
@@ -47,6 +41,18 @@ class $modify(PlayLayer) {
     void levelComplete() {
         PlayLayer::levelComplete();
 
+        if (this->m_isPracticeMode) return; // ALWAYS return if in practice mode
+
+        auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+        auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
+
+        //mark level as completed
+        if (data["level-data"].contains(std::to_string(this->m_level->m_levelID.value())) && !DPUtils::containsInt(completedLvls, this->m_level->m_levelID.value())) {
+            completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
+			Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
+        }
+
+        //roulette stuff
         bool inRoulette = Mod::get()->getSavedValue<bool>("in-roulette", false);
         int currentLvlID = Mod::get()->getSavedValue<int>("roulette-lvl-id", -1);
         int rouletteProgress = Mod::get()->getSavedValue<int>("roulette-progress", 0);
@@ -56,18 +62,9 @@ class $modify(PlayLayer) {
         bool gauntletEnabled = Mod::get()->getSavedValue<bool>("roulette-gauntlet", false);
 
         //make sure you're playing the roulette
-        if (
-            !inRoulette ||
-            this->m_level->m_levelID.value() != currentLvlID ||
-            this->m_isPracticeMode
-        ) { return; }
+        if (!inRoulette || this->m_level->m_levelID.value() != currentLvlID) return;
 
-        if (!gauntletEnabled) {
-            Mod::get()->setSavedValue<int>("roulette-progress", 100);
-        }
-        else {
-            Mod::get()->setSavedValue<int>("roulette-progress", rouletteGoal);
-        }
+        Mod::get()->setSavedValue<int>("roulette-progress", (gauntletEnabled) ? rouletteGoal : 100);
 
         return;
     }

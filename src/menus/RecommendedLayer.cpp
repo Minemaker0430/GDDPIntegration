@@ -7,10 +7,11 @@
 #include <Geode/utils/JsonValidation.hpp>
 
 #include "DPLayer.hpp"
-#include "../popups/StatsPopup.hpp"
+#include "../popups/RandomLevelPopup.hpp"
 #include "RecommendedLayer.hpp"
 #include "../DPUtils.hpp"
 #include "../RecommendedUtils.hpp"
+#include "../XPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -92,6 +93,12 @@ bool RecommendedLayer::init() {
 	reloadMenu->setID("reload-menu");
 	this->addChild(reloadMenu);
 
+	auto randomSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
+	auto randomBtn = CCMenuItemSpriteExtra::create(randomSpr, this, menu_selector(RecommendedLayer::onRandomLevel));
+	randomBtn->setPositionY(-50.f);
+	randomBtn->setID("random-btn");
+	if (Mod::get()->getSettingValue<bool>("enable-random-level-picker")) reloadMenu->addChild(randomBtn);
+
 	//pages menu
 	m_pagesMenu = CCMenu::create();
 	m_pagesMenu->setPosition({ 0, 0 });
@@ -130,7 +137,16 @@ bool RecommendedLayer::init() {
 	this->setKeyboardEnabled(true);
 	this->setKeypadEnabled(true);
 
+	this->scheduleUpdate();
+
 	return true;
+}
+
+void RecommendedLayer::onRandomLevel(CCObject*) {
+	std::vector<int> ids;
+	for (auto i : m_IDs) ids.push_back(numFromString<int>(i).unwrapOr(0));
+	RandomLevelPopup::create(ids)->show();
+	return;
 }
 
 void RecommendedLayer::reloadLevels(CCObject* sender) {
@@ -138,9 +154,7 @@ void RecommendedLayer::reloadLevels(CCObject* sender) {
 
 	RecommendedUtils::validateLevels();
 
-	if (m_levelsLoaded) {
-		loadLevels(m_page);
-	}
+	if (m_levelsLoaded) loadLevels(m_page);
 
 	return;
 }
@@ -173,15 +187,18 @@ void RecommendedLayer::loadLevels(int page) {
 
 	m_list->m_listView->setVisible(false);
 
-	std::vector<int> levelIDs = Mod::get()->getSavedValue<std::vector<int>>("recommended-levels");
+	auto recommendations = Mod::get()->getSavedValue<matjson::Value>("recommended-levels");
+	std::vector<int> levelIDs = {};
+
+	for (auto [key, value] : XPUtils::skills) {
+		for (auto l : recommendations[key].as<std::vector<int>>().unwrapOrDefault()) {
+			if (!DPUtils::containsInt(levelIDs, l)) levelIDs.push_back(l);
+		}
+	}
 		
 	m_IDs.clear();
 
-	for (auto const& level : levelIDs) {
-		m_IDs.push_back(std::to_string(level));
-	}
-
-	log::info("{}", m_IDs);
+	for (auto const& level : levelIDs) if (level > 0) m_IDs.push_back(std::to_string(level));
 
 	m_right->setVisible(m_IDs.size() > 10);
 
@@ -193,24 +210,15 @@ void RecommendedLayer::loadLevels(int page) {
 	auto searchObject = GJSearchObject::create(SearchType::Type19, string::join(results, ","));
 	auto storedLevels = glm->getStoredOnlineLevels(searchObject->getKey());
 
-	//log::info("{}", searchObject);
-	//log::info("{}", searchObject->getKey());
-	//log::info("{}", storedLevels);
-
-	if (storedLevels) {
-		loadLevelsFinished(storedLevels, "");
-	}
-	else
-	{
-		glm->getOnlineLevels(searchObject);
-	}
+	if (storedLevels) loadLevelsFinished(storedLevels, "");
+	else glm->getOnlineLevels(searchObject);
 
 	return;
 }
 
 void RecommendedLayer::loadLevelsFinished(CCArray* levels, const char*) {
 
-	if (m_loadingCancelled) { return; }
+	if (m_loadingCancelled) return;
 
 	auto listSize = m_IDs.size();
 	auto maxPage = (listSize % 10 == 0 ? listSize : listSize + (10 - (listSize % 10))) / 10 - 1;
@@ -226,7 +234,7 @@ void RecommendedLayer::loadLevelsFinished(CCArray* levels, const char*) {
 	auto director = CCDirector::sharedDirector();
 	auto size = director->getWinSize();
 
-	if (m_list->getParent() == this) { this->removeChild(m_list); }
+	if (m_list->getParent() == this) this->removeChild(m_list);
 
 	m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), "Recommendations", {194, 114, 62, 255}, 358.0f, 220.0f, 0);
 	m_list->setZOrder(2);
@@ -238,18 +246,14 @@ void RecommendedLayer::loadLevelsFinished(CCArray* levels, const char*) {
 
 void RecommendedLayer::loadLevelsFailed(const char*) {
 
-	if (m_loadingCancelled) { return; }
+	if (m_loadingCancelled) return;
 
 	m_levelsLoaded = true;
 
 	m_loadCircle->fadeAndRemove();
 
-	if (m_IDs.size() > 0) {
-		m_errorText->setCString("Something went wrong...");
-	}
-	else {
-		m_errorText->setCString("Beat a level to generate Recommendations!");
-	}
+	if (m_IDs.size() > 0) m_errorText->setCString("Something went wrong...");
+	else m_errorText->setCString("Beat a level to generate Recommendations!");
 
 	/*auto alert = FLAlertLayer::create("ERROR", "Failed to load levels. Please try again later.", "OK");
 	alert->setParent(this);
@@ -257,6 +261,21 @@ void RecommendedLayer::loadLevelsFailed(const char*) {
 
 	m_errorText->setVisible(true);
 
+	return;
+}
+
+void RecommendedLayer::update(float) {
+	auto recommendations = Mod::get()->getSavedValue<matjson::Value>("recommended-levels");
+	std::vector<std::string> levelIDs = {};
+
+	for (auto [key, value] : XPUtils::skills) {
+		for (auto l : recommendations[key].as<std::vector<int>>().unwrapOrDefault()) {
+			if (!DPUtils::containsString(levelIDs, std::to_string(l))) levelIDs.push_back(std::to_string(l));
+		}
+	}
+
+	if (levelIDs != m_IDs) reloadLevels(new CCObject);
+	
 	return;
 }
 
@@ -271,5 +290,7 @@ RecommendedLayer* RecommendedLayer::create() {
 }
 
 RecommendedLayer::~RecommendedLayer() {
+	auto glm = GameLevelManager::sharedState();
+	if (glm->m_levelManagerDelegate == this) glm->m_levelManagerDelegate = nullptr;
 	this->removeAllChildrenWithCleanup(true);
 }

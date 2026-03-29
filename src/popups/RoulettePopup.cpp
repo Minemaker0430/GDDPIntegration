@@ -56,6 +56,7 @@ void RoulettePopup::onClose(CCObject *sender) {
 void RoulettePopup::onBack(CCObject* sender) {
 	saveProgress(false);
 	m_loadingCancelled = true;
+	m_name = std::string();
 	Mod::get()->setSavedValue<bool>("in-roulette", false);
 	loadSaveMenu();
 
@@ -83,8 +84,7 @@ void RoulettePopup::loadSaveMenu() {
 	m_mainLayer->addChild(newMenu);
 
 	// list
-	if (rouletteSaves.empty())
-	{
+	if (rouletteSaves.empty()) {
 		auto emptyText = CCLabelBMFont::create("No Saves Found!\nCreate or Import One to Start!", "bigFont.fnt");
 		emptyText->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
 		emptyText->setScale(0.65f);
@@ -92,11 +92,9 @@ void RoulettePopup::loadSaveMenu() {
 		emptyText->setID("empty-text");
 		m_mainLayer->addChild(emptyText);
 	}
-	else
-	{
+	else {
 		int id = 0;
-		for (auto save : rouletteSaves)
-		{
+		for (auto save : rouletteSaves) {
 			CCNode *cell = ListCell::create();
 			cell->setTag(id);
 
@@ -137,26 +135,14 @@ void RoulettePopup::loadSaveMenu() {
 			// add labels for certain settings (skips enabled, perfect run enabled, etc)
 			std::vector<std::string> settingTags = {"Skips", "Skips (+ Points)", "Perfect", "Gauntlet", "Completed Only", "Uncompleted Only"};
 			std::string settingsTxt = "";
-			if (settingsBool[0] && !settingsBool[1]) { 
-				settingsTxt = settingTags[0];
-			} 
-			else if (settingsBool[1]) {
-				settingsTxt = settingTags[1];
-			}
+			if (settingsBool[0] && !settingsBool[1]) settingsTxt = settingTags[0];
+			else if (settingsBool[1]) settingsTxt = settingTags[1];
 
-			if (settingsBool[5]) {
-				settingsTxt = fmt::format("{}\n{}", settingsTxt, settingTags[3]);
-			}
-			else if (settingsBool[4]) {
-				settingsTxt = fmt::format("{}\n{}", settingsTxt, settingTags[2]);
-			}
+			if (settingsBool[5]) settingsTxt = fmt::format("{}\n{}", settingsTxt, settingTags[3]);
+			else if (settingsBool[4]) settingsTxt = fmt::format("{}\n{}", settingsTxt, settingTags[2]);
 
-			if (settingsBool[2] && !settingsBool[3]) {
-				settingsTxt = fmt::format("{}\n{}", settingsTxt, settingTags[4]);
-			}
-			else if (!settingsBool[2] && settingsBool[3]) {
-				settingsTxt = fmt::format("{}\n{}", settingsTxt, settingTags[5]);
-			}
+			if (settingsBool[2] && !settingsBool[3]) settingsTxt = fmt::format("{}\n{}", settingsTxt, settingTags[4]);
+			else if (!settingsBool[2] && settingsBool[3]) settingsTxt = fmt::format("{}\n{}", settingsTxt, settingTags[5]);
 
 			auto settingsLabel = CCLabelBMFont::create(settingsTxt.c_str(), "chatFont.fnt");
 			settingsLabel->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
@@ -167,8 +153,7 @@ void RoulettePopup::loadSaveMenu() {
 			cell->addChild(settingsLabel);
 
 			// if completed, change to gold text
-			if (progress >= 100)
-			{
+			if (progress >= 100) {
 				nameLabel->setFntFile("goldFont.fnt");
 				progressLabel->setFntFile("goldFont.fnt");
 				scoreLabel->setFntFile("goldFont.fnt");
@@ -271,6 +256,7 @@ void RoulettePopup::loadSettingsMenu() {
 	m_value->setCommonFilter(CommonFilter::Name);
 	m_value->setMaxCharCount(16);
 	m_value->setPosition({210.f, 225.f});
+	if (!m_name.empty()) m_value->setString(m_name);
 	m_value->setID("name-value");
 	m_mainLayer->addChild(m_value);
 
@@ -348,206 +334,76 @@ void RoulettePopup::loadSettingsMenu() {
 	// set up pack selection
 	auto cells = CCArray::create();
 
-	// just copy stuff from the GDDP SearchPopup :v
-	// main packs header
-	auto mainPacksHeader = CCNode::create();
-	auto mainPacksText = CCLabelBMFont::create("Main Packs", "bigFont.fnt");
-	mainPacksText->setScale(0.4f);
-	mainPacksText->setPosition({315.f / 2.f, 25.f / 2.f});
-	mainPacksHeader->addChild(mainPacksText);
-	cells->addObject(mainPacksHeader);
+	std::vector<std::string> index = { "main", "legacy", "bonus" };
+	std::vector<std::string> names = {"Main", "Legacy", "Bonus"};
 
-	int offs = 0;
+	int offs = 6;
+	int nameIndex = 0;
 
-	// main packs
-	for (int i = 0; i < data["main"].asArray().unwrap().size(); i++)
-	{
-		auto packNode = CCNode::create();
-		packNode->setID(fmt::format("main-pack-{}", i));
-		packNode->setScale(0.75f);
+	for (auto id : index) {
+		auto packs = data[id].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
+	
+		//header
+		auto header = CCNode::create();
+		auto headerText = CCLabelBMFont::create(fmt::format("{} Packs", names[nameIndex]).c_str(), "bigFont.fnt");
+		headerText->setScale(0.4f);
+		headerText->setPosition({315.f / 2.f, 25.f / 2.f});
+		header->addChild(headerText);
+		cells->addObject(header);
 
-		auto packData = data["main"][i];
+		for (int i = 0; i < packs.size(); i++) {
+			auto packNode = CCNode::create();
+			packNode->setID(fmt::format("{}-pack-{}", id, i));
+			packNode->setScale(0.75f);
 
-		// sprite
-		auto spriteName = fmt::format("{}.png", packData["plusSprite"].asString().unwrapOr("DP_Beginner")); // use plus sprite for main packs, normal for legacy
-		CCSprite *sprite;
-		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr || spriteName == "DP_Invisible.png")
-		{
-			sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName("DP_Beginner.png").data());
-			sprite->setVisible(false);
+			auto packData = packs[i];
+
+			// sprite
+			auto spriteName = fmt::format("{}.png", ((id == "main") ? packData["plusSprite"].asString().unwrapOr("DP_Unknown") : packData["sprite"].asString().unwrapOr("DP_Unknown"))); // use plus sprite for main packs, normal for legacy
+			CCSprite *sprite;
+			if (spriteName == "DP_Invisible.png") {
+				sprite = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
+				sprite->setVisible(false);
+			}
+			else sprite = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(spriteName).data(), CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr));
+			sprite->setID("sprite");
+			sprite->setScale(0.75f);
+			sprite->setAnchorPoint({0.f, 0.5f});
+			sprite->setPosition({5.f, 15.5f});
+
+			// label
+			auto label = CCLabelBMFont::create((id == "bonus") ? packData["name"].asString().unwrapOr("null").c_str() : fmt::format("{} Demons", packData["name"].asString().unwrapOr("null")).c_str(), "bigFont.fnt");
+			label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
+			label->setID("label");
+			label->setScale(0.5f);
+			label->setAnchorPoint({0.f, 0.5f});
+			label->setPosition({40.f, 17.5f});
+
+			// togglebox
+			auto toggleMenu = CCMenu::create();
+			toggleMenu->setScale(0.75f);
+			toggleMenu->setPosition({330.f, -25.f});
+			toggleMenu->setID("toggle-menu");
+
+			auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
+			auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+			auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(RoulettePopup::onPackToggle));
+			toggle->setTag(i + offs);
+			toggle->setID("toggle");
+			toggle->toggle(m_storedSettings[i + offs]);
+
+			toggleMenu->addChild(toggle);
+
+			// add children
+			packNode->addChild(label);
+			packNode->addChild(toggleMenu);
+			packNode->addChild(sprite);
+
+			cells->addObject(packNode);
 		}
-		else
-		{
-			sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
-		}
-		sprite->setID("sprite");
-		sprite->setScale(0.75f);
-		sprite->setAnchorPoint({0.f, 0.5f});
-		sprite->setPosition({5.f, 15.5f});
 
-		// label
-		auto label = CCLabelBMFont::create(fmt::format("{} Demons", packData["name"].asString().unwrapOr("null")).c_str(), "bigFont.fnt");
-		label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-		label->setID("label");
-		label->setScale(0.5f);
-		label->setAnchorPoint({0.f, 0.5f});
-		label->setPosition({40.f, 17.5f});
-
-		// togglebox
-		auto toggleMenu = CCMenu::create();
-		toggleMenu->setScale(0.75f);
-		toggleMenu->setPosition({330.f, -25.f});
-		toggleMenu->setID("toggle-menu");
-
-		auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
-		auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
-		auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(RoulettePopup::onPackToggle));
-		toggle->setTag(i);
-		toggle->setID("toggle");
-		toggle->toggle(m_storedSettings[6 + i]);
-
-		toggleMenu->addChild(toggle);
-
-		// add children
-		packNode->addChild(label);
-		packNode->addChild(toggleMenu);
-		packNode->addChild(sprite);
-
-		cells->addObject(packNode);
-	}
-
-	offs = data["main"].asArray().unwrap().size();
-
-	// legacy packs header
-	auto legacyPacksHeader = CCNode::create();
-	auto legacyPacksText = CCLabelBMFont::create("Legacy Packs", "bigFont.fnt");
-	legacyPacksText->setScale(0.4f);
-	legacyPacksText->setPosition({315.f / 2.f, 25.f / 2.f});
-	legacyPacksHeader->addChild(legacyPacksText);
-	cells->addObject(legacyPacksHeader);
-
-	// legacy packs
-	for (int i = 0; i < data["legacy"].asArray().unwrap().size(); i++)
-	{
-		auto packNode = CCNode::create();
-		packNode->setID(fmt::format("legacy-pack-{}", i));
-		packNode->setScale(0.75f);
-
-		auto packData = data["legacy"][i];
-
-		// sprite
-		auto spriteName = fmt::format("{}.png", packData["sprite"].asString().unwrapOr("DP_Beginner")); // use plus sprite for main packs, normal for legacy
-		CCSprite *sprite;
-		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr || spriteName == "DP_Invisible.png")
-		{
-			sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName("DP_Beginner.png").data());
-			sprite->setVisible(false);
-		}
-		else
-		{
-			sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
-		}
-		sprite->setID("sprite");
-		sprite->setScale(0.75f);
-		sprite->setAnchorPoint({0.f, 0.5f});
-		sprite->setPosition({5.f, 15.5f});
-
-		// label
-		auto label = CCLabelBMFont::create(fmt::format("{} Demons", packData["name"].asString().unwrapOr("null")).c_str(), "bigFont.fnt");
-		label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-		label->setID("label");
-		label->setScale(0.5f);
-		label->setAnchorPoint({0.f, 0.5f});
-		label->setPosition({40.f, 17.5f});
-
-		// togglebox
-		auto toggleMenu = CCMenu::create();
-		toggleMenu->setScale(0.75f);
-		toggleMenu->setPosition({330.f, -25.f});
-		toggleMenu->setID("toggle-menu");
-
-		auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
-		auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
-		auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(RoulettePopup::onPackToggle));
-		toggle->setTag(i + offs);
-		toggle->setID("toggle");
-		toggle->toggle(m_storedSettings[6 + i + offs]);
-
-		toggleMenu->addChild(toggle);
-
-		// add children
-		packNode->addChild(label);
-		packNode->addChild(toggleMenu);
-		packNode->addChild(sprite);
-
-		cells->addObject(packNode);
-	}
-
-	offs = offs + data["legacy"].asArray().unwrap().size();
-
-	// bonus packs header
-	auto bonusPacksHeader = CCNode::create();
-	auto bonusPacksText = CCLabelBMFont::create("Bonus Packs", "bigFont.fnt");
-	bonusPacksText->setScale(0.4f);
-	bonusPacksText->setPosition({315.f / 2.f, 25.f / 2.f});
-	bonusPacksHeader->addChild(bonusPacksText);
-	cells->addObject(bonusPacksHeader);
-
-	// bonus packs
-	for (int i = 0; i < data["bonus"].asArray().unwrap().size(); i++)
-	{
-		auto packNode = CCNode::create();
-		packNode->setID(fmt::format("bonus-pack-{}", i));
-		packNode->setScale(0.75f);
-
-		auto packData = data["bonus"][i];
-
-		// sprite
-		auto spriteName = fmt::format("{}.png", packData["sprite"].asString().unwrapOr("DP_Beginner"));
-		CCSprite *sprite;
-		if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr || spriteName == "DP_Invisible.png")
-		{
-			sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName("DP_Beginner.png").data());
-			sprite->setVisible(false);
-		}
-		else
-		{
-			sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
-		}
-		sprite->setID("sprite");
-		sprite->setScale(0.75f);
-		sprite->setAnchorPoint({0.f, 0.5f});
-		sprite->setPosition({5.f, 15.5f});
-
-		// label
-		auto label = CCLabelBMFont::create(packData["name"].asString().unwrapOr("null").c_str(), "bigFont.fnt");
-		label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-		label->setID("label");
-		label->setScale(0.5f);
-		label->setAnchorPoint({0.f, 0.5f});
-		label->setPosition({40.f, 17.5f});
-
-		// togglebox
-		auto toggleMenu = CCMenu::create();
-		toggleMenu->setScale(0.75f);
-		toggleMenu->setPosition({330.f, -25.f});
-		toggleMenu->setID("toggle-menu");
-
-		auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
-		auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
-		auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(RoulettePopup::onPackToggle));
-		toggle->setTag(i + offs);
-		toggle->setID("toggle");
-		toggle->toggle(m_storedSettings[6 + i + offs]);
-
-		toggleMenu->addChild(toggle);
-
-		// add children
-		packNode->addChild(label);
-		packNode->addChild(toggleMenu);
-		packNode->addChild(sprite);
-
-		cells->addObject(packNode);
+		offs += packs.size();
+		nameIndex += 1;
 	}
 
 	auto packsMenu = CCMenu::create();
@@ -573,7 +429,7 @@ void RoulettePopup::onPackToggle(CCObject* sender) {
 	auto btn = static_cast<CCMenuItemToggler*>(sender);
 	auto id = btn->getTag();
 
-	m_storedSettings[id + 6] = !btn->isToggled();
+	m_storedSettings[id] = !btn->isToggled();
 	
 	return;
 }
@@ -582,11 +438,14 @@ void RoulettePopup::onPackCheckAll(CCObject*) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	auto totalPacks = data["main"].asArray().unwrap().size() + data["legacy"].asArray().unwrap().size() + data["bonus"].asArray().unwrap().size();
 	
-	for (int i = 0; i < totalPacks; i++) {
-		m_storedSettings[i + 6] = true;
-	}
+	for (int i = 0; i < totalPacks; i++) m_storedSettings[i + 6] = true;
+
+	m_name = m_value->getString();
+	auto offs = m_list->m_tableView->m_contentLayer->getPositionY();
 
 	loadSettingsMenu();
+
+	m_list->m_tableView->m_contentLayer->setPositionY(offs);
 	
 	return;
 }
@@ -595,11 +454,14 @@ void RoulettePopup::onPackUncheckAll(CCObject*) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	auto totalPacks = data["main"].asArray().unwrap().size() + data["legacy"].asArray().unwrap().size() + data["bonus"].asArray().unwrap().size();
 	
-	for (int i = 0; i < totalPacks; i++) {
-		m_storedSettings[i + 6] = false;
-	}
+	for (int i = 0; i < totalPacks; i++) m_storedSettings[i + 6] = false;
+
+	m_name = m_value->getString();
+	auto offs = m_list->m_tableView->m_contentLayer->getPositionY();
 
 	loadSettingsMenu();
+
+	m_list->m_tableView->m_contentLayer->setPositionY(offs);
 	
 	return;
 }
@@ -611,6 +473,7 @@ void RoulettePopup::onImportSettings(CCObject*) {
 }
 
 void RoulettePopup::onFinalizeSave(CCObject*) {
+	m_name = std::string();
 	
 	//check if at least one pack is selected
 	auto packsOk = false;
@@ -632,40 +495,20 @@ void RoulettePopup::onFinalizeSave(CCObject*) {
 
 	//create the save
 
-	std::string name = "New Roulette";
-	if (m_value->getString() != "") {
-		name = m_value->getString();
-	}
-
+	std::string name = (m_value->getString() != "") ? m_value->getString() : "New Roulette";
 	auto settings = RouletteUtils::toFlags(m_storedSettings);
-
-	auto seed = rand();
-	if (m_storedSeed != -1) {
-		seed = m_storedSeed;
-	}
+	auto seed = (m_storedSeed != -1) ? m_storedSeed : rand();
 
 	//get packs and levels
     auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-    auto mainPacks = data["main"].asArray().unwrap();
-    auto legacyPacks = data["legacy"].asArray().unwrap();
-    auto bonusPacks = data["bonus"].asArray().unwrap();
+    auto mainPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
+    auto legacyPacks = data["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
+    auto bonusPacks = data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
 
     std::vector<matjson::Value> packs = {};
-    for (int i = 0; i < mainPacks.size(); i++) {
-        if (m_storedSettings[6 + i]) {
-            packs.push_back(mainPacks[i]);
-        }
-    }
-    for (int i = 0; i < legacyPacks.size(); i++) {
-        if (m_storedSettings[6 + mainPacks.size() + i]) {
-            packs.push_back(legacyPacks[i]);
-        }
-    }
-    for (int i = 0; i < bonusPacks.size(); i++) {
-        if (m_storedSettings[6 + mainPacks.size() + legacyPacks.size() + i]) {
-            packs.push_back(bonusPacks[i]);
-        }
-    }
+    for (int i = 0; i < mainPacks.size(); i++) if (m_storedSettings[6 + i]) packs.push_back(mainPacks[i]);
+    for (int i = 0; i < legacyPacks.size(); i++) if (m_storedSettings[6 + mainPacks.size() + i]) packs.push_back(legacyPacks[i]);
+    for (int i = 0; i < bonusPacks.size(); i++) if (m_storedSettings[6 + mainPacks.size() + legacyPacks.size() + i]) packs.push_back(bonusPacks[i]);
 
 	auto levels = RouletteUtils::setupLevels(packs, settings, seed);
 
@@ -710,8 +553,7 @@ void RoulettePopup::loadRouletteSave(int id) {
 	m_saveID = id;
 	m_settings = RouletteUtils::fromFlags(settings);
 
-	if (save.progress == 100 || (m_settings[5] && score + skips >= levels.size()) )
-	{
+	if (save.progress == 100 || (m_settings[5] && score + skips >= levels.size())) {
 		loadWinScreen(id);
 		return;
 	}
@@ -720,15 +562,13 @@ void RoulettePopup::loadRouletteSave(int id) {
 	// if skips off or skips give points on: lvl = score
 	// if skips give points off: lvl = score + skips
 	int lvlIndex = score;
-	if (m_settings[0] && !m_settings[1]) {
-		lvlIndex += skips;
-	}
+	if (m_settings[0] && !m_settings[1]) lvlIndex += skips;
 	Mod::get()->setSavedValue<int>("roulette-lvl-id", levels[std::min(lvlIndex, static_cast<int>(levels.size() - 1))]);
 
 	// calculate next percentage
 	int percentJump = ceil(100.f / static_cast<float>(levels.size()));
 	Mod::get()->setSavedValue<int>("roulette-next-goal", std::min(progress + percentJump, 100));
-	if (lvlIndex == levels.size() - 1) { Mod::get()->setSavedValue<int>("roulette-next-goal", 100); }
+	if (lvlIndex == levels.size() - 1) Mod::get()->setSavedValue<int>("roulette-next-goal", 100);
 
 	// set roulette vars
 	Mod::get()->setSavedValue<bool>("in-roulette", true);
@@ -808,9 +648,9 @@ void RoulettePopup::loadRouletteSave(int id) {
 
 	// progress text
 	int rouletteGoal = Mod::get()->getSavedValue<int>("roulette-next-goal", 100);
-	if (m_settings[5]) { rouletteGoal = 100; }
+	if (m_settings[5]) rouletteGoal = 100;
 	auto progressText = CCLabelBMFont::create(fmt::format("Get to {}%\nScore: {}", rouletteGoal, save.score).c_str(), "goldFont.fnt");
-	if (m_settings[0]) { progressText->setCString(fmt::format("Get to {}%\nScore: {}\nSkips Used: {}", rouletteGoal, save.score, save.skips).c_str()); }
+	if (m_settings[0]) progressText->setCString(fmt::format("Get to {}%\nScore: {}\nSkips Used: {}", rouletteGoal, save.score, save.skips).c_str());
 	progressText->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
 	progressText->setPosition(210.f, 5.f);
 	progressText->setScale(0.55f);
@@ -888,21 +728,15 @@ void RoulettePopup::loadWinScreen(int id)
 
 	std::map<int, int> rankReq = {{100, 0}, {95, 1}, {90, 2}, {80, 3}, {70, 4}, {0, 5}};
 	auto letterGrade = 5; // F by default
-	for (auto [req, grade] : rankReq)
-	{
-		if (percent >= req)
-		{
-			letterGrade = grade;
-		}
-	}
+	for (auto [req, grade] : rankReq) if (percent >= req) letterGrade = grade;
 
 	std::vector<std::string> ranks = {"S", "A", "B", "C", "D", "F"};
 	std::vector<std::string> subtitle = {"Perfect!", "Excellent", "Good", "Okay", "Poor", "Fail!"};
 	std::vector<ccColor3B> rankColors = {{255, 0, 0}, {255, 135, 0}, {255, 255, 0}, {0, 255, 0}, {41, 41, 255}, {255, 255, 255}};
 
 	auto rankStr = ranks[letterGrade];
-	if (m_settings[4] || m_settings[5]) { rankStr = fmt::format("{}+", ranks[letterGrade]); }
-	if (m_settings[1]) { rankStr = fmt::format("{}-", ranks[letterGrade]); }
+	if (m_settings[4] || m_settings[5]) rankStr = fmt::format("{}+", ranks[letterGrade]);
+	if (m_settings[1]) rankStr = fmt::format("{}-", ranks[letterGrade]);
 
 	auto rankText = CCLabelBMFont::create(rankStr.c_str(), "bigFont.fnt");
 	auto subtitleText = CCLabelBMFont::create(subtitle[letterGrade].c_str(), "bigFont.fnt");
@@ -930,9 +764,7 @@ void RoulettePopup::loadWinScreen(int id)
 
 	// skips text
 	auto skipsText = CCLabelBMFont::create(fmt::format("Skips Used: {}", save.skips).c_str(), "goldFont.fnt");
-	if (!m_settings[0]) {
-		skipsText->setVisible(false);
-	}
+	if (!m_settings[0]) skipsText->setVisible(false);
 	skipsText->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
 	skipsText->setPosition(210.f, 5.f);
 	skipsText->setScale(0.55f);
@@ -953,22 +785,14 @@ void RoulettePopup::onSafe(CCObject *sender)
 	{
 		if (save.progress == 100) {
 			if (m_settings[0] && !m_settings[1]) {
-				if (safeLevels.size() == (save.score + save.skips)) { 
-					break; 
-				}
+				if (safeLevels.size() == (save.score + save.skips)) break; 
 			}
-			else if (safeLevels.size() == save.score) { 
-				break;
-			}
+			else if (safeLevels.size() == save.score) break;
 		}
 		else if (m_settings[0] && !m_settings[1]) {
-			if (safeLevels.size() > (save.score + save.skips)) { 
-				break; 
-			}
+			if (safeLevels.size() > (save.score + save.skips)) break; 
 		}
-		else if (safeLevels.size() > save.score) { 
-			break;
-		}
+		else if (safeLevels.size() > save.score) break;
 		
 		safeLevels.push_back(id);
 	}
@@ -1000,10 +824,7 @@ void RoulettePopup::fetchLevel(int levelID) {
 	lvlLabel->setVisible(false);
 	creatorLabel->setVisible(false);
 
-	if (m_mainLayer->getChildByID("difficulty-sprite"))
-	{
-		m_mainLayer->getChildByID("difficulty-sprite")->removeMeAndCleanup();
-	}
+	if (m_mainLayer->getChildByID("difficulty-sprite")) m_mainLayer->getChildByID("difficulty-sprite")->removeMeAndCleanup();
 
 	// borrowed some stuff from integrated demon list
 	auto glm = GameLevelManager::sharedState();
@@ -1011,20 +832,14 @@ void RoulettePopup::fetchLevel(int levelID) {
 	auto searchObject = GJSearchObject::create(SearchType::Type19, std::to_string(levelID));
 	auto storedLevels = glm->getStoredOnlineLevels(searchObject->getKey());
 
-	if (storedLevels)
-	{
-		loadLevelsFinished(storedLevels, "");
-	}
-	else
-	{
-		glm->getOnlineLevels(searchObject);
-	}
+	if (storedLevels) loadLevelsFinished(storedLevels, "");
+	else glm->getOnlineLevels(searchObject);
 
 	return;
 }
 
-void RoulettePopup::loadLevelsFinished(CCArray* levels, const char *) {
-	if (m_loadingCancelled) { return; }
+void RoulettePopup::loadLevelsFinished(CCArray* levels, const char*) {
+	if (m_loadingCancelled) return;
 
 	auto level = typeinfo_cast<GJGameLevel*>(levels->objectAtIndex(0));
 	m_currentLevel = level;
@@ -1034,7 +849,7 @@ void RoulettePopup::loadLevelsFinished(CCArray* levels, const char *) {
 
 	CCLabelBMFont* lvlLabel = typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("level-label"));
 	CCLabelBMFont* creatorLabel = typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("creator-label"));
-	CCSprite* diffSpr = CCSprite::createWithSpriteFrameName("DP_Beginner.png"_spr);
+	CCSprite* diffSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 
 	auto featuredSpr = CCSprite::createWithSpriteFrameName("GJ_featuredCoin_001.png");
 	featuredSpr->setPosition({0.75f, -0.25f});
@@ -1080,136 +895,45 @@ void RoulettePopup::loadLevelsFinished(CCArray* levels, const char *) {
 
 	auto levelFound = false;
 
-	for (auto pack : mainPacks)
-	{
-		for (auto lvl : pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault())
-		{
-			if (level->m_levelID == lvl)
-			{
-				// change sprite
-				if (pack["sprite"].asString().unwrapOr("DP_Invisible") != "DP_Invisible" && pack["plusSprite"].asString().unwrapOr("DP_Invisible") != "DP_Invisible")
-				{
-					if (level->m_isEpic && Mod::get()->getSettingValue<bool>("replace-epic"))
-					{
-						auto sprite = fmt::format("{}.png", pack["plusSprite"].asString().unwrapOr("DP_Beginner"));
-						diffSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprite).data());
-					}
-					else
-					{
-						auto sprite = fmt::format("{}.png", pack["sprite"].asString().unwrapOr("DP_Beginner"));
-						diffSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprite).data());
+	for (std::string index : {"main", "legacy", "bonus"}) {
+		for (auto pack : data[index]) {
+			for (auto lvl : pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault()) {
+				if (level->m_levelID.value() == lvl) {
+					levelFound = true;
+					
+					auto unkSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
+					auto spr = pack["sprite"].asString().unwrapOr("DP_Unknown");
+					auto plusSpr = pack["plusSprite"].asString().unwrapOr("DP_Unknown");
 
-						if (level->m_isEpic)
-						{
+					if (spr == "DP_Invisible" || plusSpr == "DP_Invisible") {
+						diffSpr->setVisible(false);
+						break;
+					}
+
+					diffSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", spr)).data());
+
+					if (level->m_isEpic) {
+						if (index != "bonus" && Mod::get()->getSettingValue<bool>("replace-epic")) {
+							diffSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSpr)).data());
+						}
+						else {
 							epicSpr->setVisible(true);
 							diffSpr->addChild(epicSpr);
 						}
-						else if (level->m_featured != 0)
-						{
-							featuredSpr->setVisible(true);
-							diffSpr->addChild(featuredSpr);
-						}
 					}
-				}
-				else
-				{
-					diffSpr->setOpacity(0);
-				}
-
-				levelFound = true;
-				break;
-			}
-		}
-
-		if (levelFound)
-		{
-			break;
-		}
-	}
-
-	for (auto pack : legacyPacks)
-	{
-		if (levelFound)
-		{
-			break;
-		}
-
-		for (auto lvl : pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault())
-		{
-			if (level->m_levelID == lvl)
-			{
-				// change sprite
-				if (pack["sprite"].asString().unwrapOr("DP_Invisible") != "DP_Invisible" && data["main"][pack["mainPack"].asInt().unwrapOr(0)]["plusSprite"].asString().unwrapOr("DP_Invisible") != "DP_Invisible")
-				{
-					if (level->m_isEpic && Mod::get()->getSettingValue<bool>("replace-epic"))
-					{
-						auto sprite = fmt::format("{}.png", data["main"][pack["mainPack"].asInt().unwrapOr(0)]["plusSprite"].asString().unwrapOr("DP_Beginner"));
-						diffSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprite).data());
-					}
-					else
-					{
-						auto sprite = fmt::format("{}.png", pack["sprite"].asString().unwrapOr("DP_Beginner"));
-						diffSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprite).data());
-
-						if (level->m_isEpic)
-						{
-							epicSpr->setVisible(true);
-							diffSpr->addChild(epicSpr);
-						}
-						else if (level->m_featured != 0)
-						{
-							featuredSpr->setVisible(true);
-							diffSpr->addChild(featuredSpr);
-						}
-					}
-				}
-				else
-				{
-					diffSpr->setOpacity(0);
-				}
-
-				levelFound = true;
-				break;
-			}
-		}
-	}
-
-	for (auto pack : bonusPacks)
-	{
-		if (levelFound)
-		{
-			break;
-		}
-		for (auto lvl : pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault())
-		{
-			if (level->m_levelID == lvl)
-			{
-				// change sprite
-				if (pack["sprite"].asString().unwrapOr("DP_Invisible") != "DP_Invisible")
-				{
-					auto sprite = fmt::format("{}.png", pack["sprite"].asString().unwrapOr("DP_Beginner"));
-					diffSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprite).data());
-
-					if (level->m_isEpic)
-					{
-						epicSpr->setVisible(true);
-						diffSpr->addChild(epicSpr);
-					}
-					else if (level->m_featured != 0)
-					{
+					else if (level->m_featured != 0) {
 						featuredSpr->setVisible(true);
 						diffSpr->addChild(featuredSpr);
 					}
-				}
-				else
-				{
-					diffSpr->setOpacity(0);
-				}
 
-				levelFound = true;
-				break;
+					break;
+				}
 			}
+
+			if (levelFound) break;
 		}
+
+		if (levelFound) break;
 	}
 
 	diffSpr->setPosition({210.f, 135.f});
@@ -1224,10 +948,7 @@ void RoulettePopup::loadLevelsFinished(CCArray* levels, const char *) {
 
 void RoulettePopup::loadLevelsFailed(const char *)
 {
-	if (m_loadingCancelled)
-	{
-		return;
-	}
+	if (m_loadingCancelled) return;
 
 	m_levelLoaded = true;
 	m_loadcircle->fadeAndRemove();
@@ -1278,24 +999,19 @@ void RoulettePopup::onSkip(CCObject *sender)
 
 				Mod::get()->setSavedValue<int>("roulette-progress", 0);
 
-				if (gauntletEnabled) { rouletteGoal = 100; }
+				if (gauntletEnabled) rouletteGoal = 100;
 				progressText->setCString(fmt::format("Get to {}%\nScore: {}", rouletteGoal, save.score).c_str());
-				if (m_settings[0]) { progressText->setCString(fmt::format("Get to {}%\nScore: {}\nSkips Used: {}", rouletteGoal, save.score, save.skips).c_str()); }
+				if (m_settings[0]) progressText->setCString(fmt::format("Get to {}%\nScore: {}\nSkips Used: {}", rouletteGoal, save.score, save.skips).c_str());
 
 				int lvlIndex = save.score;
-				if (m_settings[0] && !m_settings[1])
-				{
-					lvlIndex += save.skips;
-				}
+				if (m_settings[0] && !m_settings[1]) lvlIndex += save.skips;
 				auto levelID = save.levels[std::min(lvlIndex, static_cast<int>(save.levels.size() - 1))];
 
-				if (save.progress < 100)
-				{
+				if (save.progress < 100) {
 					fetchLevel(levelID);
 					Mod::get()->setSavedValue<int>("roulette-lvl-id", levelID);
 				}
-				else
-				{
+				else {
 					// you beat the roulette :D
 					log::info("GG, you skipped the last level though :v");
 					loadWinScreen(m_saveID);
@@ -1320,17 +1036,13 @@ void RoulettePopup::onNext(CCObject *sender) {
 
 	// check if the player is able to move on
 	bool canProceed = false;
-	if (gauntletEnabled && rouletteProgress >= rouletteGoal) {
-		canProceed = true;
-	}
-	else if (perfectEnabled && rouletteProgress == rouletteGoal) {
-		canProceed = true;
-	}
-	else if (!gauntletEnabled && !perfectEnabled && rouletteProgress >= rouletteGoal) {
-		canProceed = true;
-	}
+	if (gauntletEnabled && (rouletteProgress >= rouletteGoal)) canProceed = true;
+	else if (perfectEnabled && (rouletteProgress == rouletteGoal)) canProceed = true;
+	else if (!(gauntletEnabled && perfectEnabled) && (rouletteProgress >= rouletteGoal)) canProceed = true;
 
 	if (canProceed) {
+		saveProgress(false);
+
 		rouletteSaves = Mod::get()->getSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", {});
 		save = rouletteSaves[m_saveID];
 
@@ -1339,14 +1051,11 @@ void RoulettePopup::onNext(CCObject *sender) {
 
 		auto progressText = typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("progress-label"));
 
-		if (gauntletEnabled) { rouletteGoal = 100; }
-		progressText->setCString(fmt::format("Get to {}%\nScore: {}", rouletteGoal, save.score).c_str());
-		if (m_settings[0]) { progressText->setCString(fmt::format("Get to {}%\nScore: {}\nSkips Used: {}", rouletteGoal, save.score, save.skips).c_str()); }
+		if (gauntletEnabled) rouletteGoal = 100;
+		progressText->setCString( (m_settings[0]) ? fmt::format("Get to {}%\nScore: {}\nSkips Used: {}", rouletteGoal, save.score, save.skips).c_str() : fmt::format("Get to {}%\nScore: {}", rouletteGoal, save.score).c_str());
 
 		int lvlIndex = save.score;
-		if (m_settings[0] && !m_settings[1]) { 
-			lvlIndex += save.skips;
-		}
+		if (m_settings[0] && !m_settings[1]) lvlIndex += save.skips;
 		auto levelID = save.levels[std::min(lvlIndex, static_cast<int>(save.levels.size() - 1))];
 
 		if (save.progress < 100) {
@@ -1358,11 +1067,9 @@ void RoulettePopup::onNext(CCObject *sender) {
 			log::info("GG");
 			loadWinScreen(m_saveID);
 		}
-
-		saveProgress(false);
 	}
 	else {
-		if (gauntletEnabled) { rouletteGoal = 100; }
+		if (gauntletEnabled) rouletteGoal = 100;
 
 		std::vector<std::string> titleStrings = {
 			"You shall not pass!",
@@ -1428,7 +1135,7 @@ void RoulettePopup::saveProgress(bool skip) {
 	bool perfectEnabled = Mod::get()->getSavedValue<bool>("roulette-perfect", false);
 	bool gauntletEnabled = Mod::get()->getSavedValue<bool>("roulette-gauntlet", false);
 
-	if (!inRoulette) { return; }
+	if (!inRoulette) return;
 
 	auto rouletteSaves = Mod::get()->getSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", {});
 	auto save = rouletteSaves[m_saveID];
@@ -1442,14 +1149,13 @@ void RoulettePopup::saveProgress(bool skip) {
 	if (skip) {
 		save.skips += 1;
 		save.progress = rouletteGoal;
-		if (m_settings[1]) { save.score += 1; }
+		if (m_settings[1]) save.score += 1;
 	}
 	else if (gauntletEnabled && rouletteProgress == 100) {
 		save.score += 1;
 		save.progress = rouletteGoal;
 	}
-	else if ((rouletteProgress >= rouletteGoal) || (perfectEnabled && rouletteProgress == rouletteGoal))
-	{
+	else if ((rouletteProgress >= rouletteGoal) || (perfectEnabled && rouletteProgress == rouletteGoal)) {
 		save.score += 1;
 		save.progress = rouletteProgress;
 	}
@@ -1457,7 +1163,7 @@ void RoulettePopup::saveProgress(bool skip) {
 	// calculate next percentage
 	int percentJump = ceil(100.f / static_cast<float>(save.levels.size()));
 	Mod::get()->setSavedValue<int>("roulette-next-goal", std::min(save.progress + percentJump, 100));
-	if (currentLvlID == save.levels[save.levels.size() - 1]) { Mod::get()->setSavedValue<int>("roulette-next-goal", 100); }
+	if (currentLvlID == save.levels[save.levels.size() - 1]) Mod::get()->setSavedValue<int>("roulette-next-goal", 100);
 
 	rouletteSaves[m_saveID] = save;
 	Mod::get()->setSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", rouletteSaves);
@@ -1532,7 +1238,7 @@ void RoulettePopup::onExport(CCObject *sender)
 	matjson::Value save = rouletteSaves[id];
 	RouletteUtils::exportSave(save);
 
-	auto tap = TextAlertPopup::create("Save Copied to Clipboard", 2.f, .6f, 0x96, "bigFont.fnt");
+	auto tap = TextAlertPopup::create("Save Copied to Clipboard", 2.f, .6f, 150, "bigFont.fnt");
 	this->addChild(tap);
 }
 
@@ -1583,8 +1289,9 @@ RoulettePopup *RoulettePopup::create()
 	return nullptr;
 }
 
-RoulettePopup::~RoulettePopup()
-{
+RoulettePopup::~RoulettePopup() {
+	auto glm = GameLevelManager::sharedState();
+	if (glm->m_levelManagerDelegate == this) glm->m_levelManagerDelegate = nullptr;
 	this->removeAllChildrenWithCleanup(true);
 }
 
@@ -1656,7 +1363,7 @@ void RouletteRenamePopup::onExportSettings(CCObject *)
 	RouletteSaveFormat save = rouletteSaves[m_saveID];
 	RouletteUtils::exportSettings(save.settings, save.seed);
 
-	auto tap = TextAlertPopup::create("Settings Copied to Clipboard", 2.f, .6f, 0x96, "bigFont.fnt");
+	auto tap = TextAlertPopup::create("Settings Copied to Clipboard", 2.f, .6f, 150, "bigFont.fnt");
 	this->addChild(tap);
 
 	return;
@@ -1667,14 +1374,7 @@ void RouletteRenamePopup::onConfirm(CCObject *)
 	auto rouletteSaves = Mod::get()->getSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", {});
 	RouletteSaveFormat save = rouletteSaves[m_saveID];
 
-	if (m_value->getString() == "")
-	{
-		save.name = "New Roulette";
-	}
-	else
-	{
-		save.name = m_value->getString();
-	}
+	save.name = (m_value->getString() == "") ? "New Roulette" : m_value->getString();
 
 	rouletteSaves[m_saveID] = save;
 	Mod::get()->setSavedValue<std::vector<RouletteSaveFormat>>("roulette-saves", rouletteSaves);
@@ -1687,8 +1387,7 @@ void RouletteRenamePopup::onConfirm(CCObject *)
 	return;
 }
 
-RouletteRenamePopup *RouletteRenamePopup::create(int id)
-{
+RouletteRenamePopup *RouletteRenamePopup::create(int id) {
 	auto ret = new RouletteRenamePopup();
 	ret->m_saveID = id;
 	if (ret && ret->init())
@@ -1700,8 +1399,7 @@ RouletteRenamePopup *RouletteRenamePopup::create(int id)
 	return nullptr;
 }
 
-RouletteRenamePopup::~RouletteRenamePopup()
-{
+RouletteRenamePopup::~RouletteRenamePopup() {
 	this->removeAllChildrenWithCleanup(true);
 }
 
@@ -1798,7 +1496,7 @@ bool RouletteImportPopup::init()
 	auto winSize = CCDirector::sharedDirector()->getWinSize();
 
 	this->setTitle("Enter Save Text");
-	if (m_isSettings) { this->setTitle("Enter Settings Text"); }
+	if (m_isSettings) this->setTitle("Enter Settings Text");
 
 	auto layer = typeinfo_cast<CCLayer *>(this->getChildren()->objectAtIndex(0));
 
@@ -1811,7 +1509,7 @@ bool RouletteImportPopup::init()
 	m_mainLayer = mainLayer;
 
 	m_value = TextInput::create(400.f, "Enter Save Text", "bigFont.fnt");
-	if (m_isSettings) { m_value->setPlaceholder("Enter Settings Text"); }
+	if (m_isSettings) m_value->setPlaceholder("Enter Settings Text");
 	m_value->setString(clipboard::read());
 	m_value->setCommonFilter(CommonFilter::Base64URL);
 	m_value->setMaxCharCount(0);
@@ -1919,7 +1617,7 @@ bool RouletteSettingsPopup::init() {
 
 	// seed value
 	m_value = TextInput::create(350.f, "Custom Seed (Leave Blank for Random)", "bigFont.fnt");
-	if (m_seed > -1) { m_value->setString(std::to_string(m_seed)); }
+	if (m_seed > -1) m_value->setString(std::to_string(m_seed));
 	m_value->setCommonFilter(CommonFilter::Int);
 	m_value->setMaxCharCount(9);
 	m_value->setPosition({210.f, 200.f});
@@ -2019,18 +1717,14 @@ bool RouletteSettingsPopup::init() {
 }
 
 void RouletteSettingsPopup::onClose(CCObject *sender) {
-	if (m_value->getString() == "" || m_value->getString().size() > 9) {
-		m_seed = -1;
-	}
-	else {
-		m_seed = abs(numFromString<int>(m_value->getString()).unwrapOr(-1));
-	}
+	if (m_value->getString() == "" || m_value->getString().size() > 9) m_seed = -1;
+	else m_seed = abs(numFromString<int>(m_value->getString()).unwrapOr(-1));
 
 	RoulettePopup *popup = this->getParent()->getChildByType<RoulettePopup>(0);
 	popup->m_storedSeed = m_seed;
 
-	if (!m_settings[0] && m_settings[1]) { m_settings[0] = true; }
-	if (m_settings[5] == m_settings[4]) { m_settings[4] = false; }
+	if (!m_settings[0] && m_settings[1]) m_settings[0] = true;
+	if (m_settings[5] == m_settings[4]) m_settings[4] = false;
 	if (m_settings[2] == m_settings[3]) { 
 		m_settings[2] = true; 
 		m_settings[3] = true;

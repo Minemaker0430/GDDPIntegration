@@ -8,6 +8,7 @@
 
 #include "DPLayer.hpp"
 #include "DPSearchLayer.hpp"
+#include "../popups/RandomLevelPopup.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -59,9 +60,7 @@ std::vector<int> DPSearchLayer::compareName(matjson::Value data, std::vector<int
 
 	//convert to int vector and return
 	std::vector<int> result;
-	for (CompareName value : out) {
-		result.push_back(value.key);
-	}
+	for (CompareName value : out) result.push_back(value.key);
 
 	return result;
 }
@@ -79,9 +78,7 @@ bool DPSearchLayer::init(std::vector<int> IDs) {
 	auto size = director->getWinSize();
 
 	auto bg = createLayerBG();
-	if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
-		bg->setColor({ 18, 18, 86 });
-	}
+	if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) bg->setColor({ 18, 18, 86 });
 	bg->setZOrder(-10);
 	bg->setID("bg");
 	this->addChild(bg);
@@ -136,6 +133,12 @@ bool DPSearchLayer::init(std::vector<int> IDs) {
 	reloadMenu->addChild(reloadBtn);
 	reloadMenu->setID("reload-menu");
 	this->addChild(reloadMenu);
+
+	auto randomSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
+	auto randomBtn = CCMenuItemSpriteExtra::create(randomSpr, this, menu_selector(DPSearchLayer::onRandomLevel));
+	randomBtn->setPositionY(-50.f);
+	randomBtn->setID("random-btn");
+	if (Mod::get()->getSettingValue<bool>("enable-random-level-picker")) reloadMenu->addChild(randomBtn);
 
 	//pages menu
 	m_pagesMenu = CCMenu::create();
@@ -264,12 +267,17 @@ bool DPSearchLayer::init(std::vector<int> IDs) {
 	return true;
 }
 
+void DPSearchLayer::onRandomLevel(CCObject*) {
+	std::vector<int> ids;
+	for (auto i : m_IDs) ids.push_back(numFromString<int>(i).unwrapOr(0));
+	RandomLevelPopup::create(ids)->show();
+	return;
+}
+
 void DPSearchLayer::reloadLevels(CCObject* sender) {
 	m_errorText->setVisible(false);
 
-	if (m_levelsLoaded) {
-		loadLevels(m_page);
-	}
+	if (m_levelsLoaded) loadLevels(m_page);
 
 	return;
 }
@@ -327,8 +335,6 @@ void DPSearchLayer::setFilter(CCObject* sender) {
 		loadLevels(m_page);
 	}
 	else if (tag == static_cast<int>(SearchFilter::Pack)) {
-
-		//m_packBtn->toggle(false);
 		m_difficultyBtn->toggle(false);
 		m_nameBtn->toggle(false);
 		m_ageBtn->toggle(false);
@@ -341,9 +347,7 @@ void DPSearchLayer::setFilter(CCObject* sender) {
 	else if (tag == static_cast<int>(SearchFilter::Difficulty)) {
 
 		//sort by difficulty
-		if (m_filterDifficulty.empty()) {
-			m_filterDifficulty = compareDifficulty(m_data, m_filterPacks); //had to make a custom sort function because std::sort takes too long for these
-		}
+		if (m_filterDifficulty.empty()) m_filterDifficulty = compareDifficulty(m_data, m_filterPacks); //had to make a custom sort function because std::sort takes too long for these
 
 		m_packBtn->toggle(false);
 		m_nameBtn->toggle(false);
@@ -357,9 +361,7 @@ void DPSearchLayer::setFilter(CCObject* sender) {
 	else if (tag == static_cast<int>(SearchFilter::Alphabetic)) {
 
 		//sort by name
-		if (m_filterAlphabetic.empty()) {
-			m_filterAlphabetic = compareName(m_data, m_searchList); //had to make a custom sort function because std::sort takes too long for these
-		}
+		if (m_filterAlphabetic.empty()) m_filterAlphabetic = compareName(m_data, m_searchList); //had to make a custom sort function because std::sort takes too long for these
 
 		m_packBtn->toggle(false);
 		m_difficultyBtn->toggle(false);
@@ -423,20 +425,11 @@ void DPSearchLayer::loadLevels(int page) {
 	m_IDs.clear();
 
 	auto searchResults = m_searchList;
-	std::vector<int> reversedResults;
-	for (int i = m_searchList.size() - 1; i >= 0; i--) {
-		reversedResults.push_back(m_searchList[i]);
-	}
+	if (m_reversed) std::reverse(searchResults.begin(), searchResults.end());
 
-	if (m_reversed) {
-		searchResults = reversedResults;
-	}
+	for (auto const& level : searchResults) m_IDs.push_back(std::to_string(level));
 
-	for (auto const& level : searchResults) {
-		m_IDs.push_back(std::to_string(level));
-	}
-
-	log::info("{}", m_IDs);
+	//log::info("{}", m_IDs);
 
 	m_right->setVisible(m_IDs.size() > 10);
 
@@ -458,20 +451,15 @@ void DPSearchLayer::loadLevels(int page) {
 	auto searchObject = GJSearchObject::create(SearchType::Type19, string::join(results, ","));
 	auto storedLevels = glm->getStoredOnlineLevels(searchObject->getKey());
 
-	if (storedLevels) {
-		loadLevelsFinished(storedLevels, "");
-	}
-	else
-	{
-		glm->getOnlineLevels(searchObject);
-	}
+	if (storedLevels) loadLevelsFinished(storedLevels, "");
+	else glm->getOnlineLevels(searchObject);
 
 	return;
 }
 
 void DPSearchLayer::loadLevelsFinished(CCArray* levels, const char*) {
 
-	if (m_loadingCancelled) { return; }
+	if (m_loadingCancelled) return;
 
 	auto listSize = m_IDs.size();
 	auto maxPage = (listSize % 10 == 0 ? listSize : listSize + (10 - (listSize % 10))) / 10 - 1;
@@ -489,7 +477,7 @@ void DPSearchLayer::loadLevelsFinished(CCArray* levels, const char*) {
 	auto director = CCDirector::sharedDirector();
 	auto size = director->getWinSize();
 
-	if (m_list->getParent() == this) { this->removeChild(m_list); }
+	if (m_list->getParent() == this) this->removeChild(m_list);
 
 	m_list = GJListLayer::create(CustomListView::create(levels, BoomListType::Level, 220.0f, 358.0f), "Search Results", { 194, 114, 62, 255 }, 358.0f, 220.0f, 0);
 	m_list->setZOrder(2);
@@ -501,18 +489,14 @@ void DPSearchLayer::loadLevelsFinished(CCArray* levels, const char*) {
 
 void DPSearchLayer::loadLevelsFailed(const char*) {
 	
-	if (m_loadingCancelled) { return; }
+	if (m_loadingCancelled) return;
 	
 	m_levelsLoaded = true;
 
 	m_loadCircle->fadeAndRemove();
 
-	if (m_searchList.empty()) {
-		m_errorText->setCString("No Results Found");
-	}
-	else {
-		m_errorText->setCString("Something Went Wrong...");
-	}
+	if (m_searchList.empty()) m_errorText->setCString("No Results Found");
+	else m_errorText->setCString("Something Went Wrong...");
 
 	m_errorText->setVisible(true);
 
@@ -530,6 +514,8 @@ DPSearchLayer* DPSearchLayer::create(std::vector<int> IDs) {
 }
 
 DPSearchLayer::~DPSearchLayer() {
+	auto glm = GameLevelManager::sharedState();
+	if (glm->m_levelManagerDelegate == this) glm->m_levelManagerDelegate = nullptr;
 	this->removeAllChildrenWithCleanup(true);
 }
 

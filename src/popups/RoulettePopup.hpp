@@ -17,6 +17,7 @@ protected:
 
 	bool m_levelLoaded = false;
 	bool m_loadingCancelled = false;
+	std::string m_name;
 
 	/*
 	0 = Skips Enabled

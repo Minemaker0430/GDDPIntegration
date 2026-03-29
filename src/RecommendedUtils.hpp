@@ -8,18 +8,19 @@ class RecommendedUtils {
 public:
 	static void validateLevels();
 	static void generateRecommendations();
+    static void getSkillsForRecommendation(int);
 
-	static std::vector<int> sortSkills(std::vector<float>);
+	static std::vector<std::string> sortSkills(matjson::Value);
 
-	static bool hasPartial(int);
+    static int cycleRating(int, int);
 };
 
 struct SkillSort
 {
-    int key;
+    std::string key;
     float value;
 
-    SkillSort(int k, const float& s) : key(k), value(s) {}
+    SkillSort(std::string k, const float& v) : key(k), value(v) {}
 
     bool operator > (const SkillSort& str) const
     {

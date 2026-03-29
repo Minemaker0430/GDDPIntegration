@@ -24,7 +24,7 @@ public:
 
 struct RouletteSaveFormat {
 	std::string name = "New Roulette"; //Name of the Save File, can be anything
-	std::string settings = "001100"; //Settings flags string
+	std::string settings = "12,"; //Settings flags string
     int seed = rand(); //Random Seed. By default a randomized seed will be provided but you can have set seeds as well.
     std::vector<int> levels = {}; //Levels chosen by the initial Seed. Cannot and will not be changed (unless you edit the save data ig)
     int progress = 0; //Progress in %, base value is 0, clamped at 100
@@ -37,7 +37,7 @@ struct matjson::Serialize<RouletteSaveFormat> {
 	static Result<RouletteSaveFormat> fromJson(matjson::Value const& value) {
 		auto rsf = RouletteSaveFormat{
 			.name = value["name"].asString().unwrapOr("New Roulette"),
-			.settings = value["settings"].asString().unwrapOr("001100"),
+			.settings = value["settings"].asString().unwrapOr("12,"),
 			.seed = value["seed"].as<int>().unwrapOr(rand()),
 			.levels = value["levels"].as<std::vector<int>>().unwrapOrDefault(),
 			.progress = value["progress"].as<int>().unwrapOr(0),

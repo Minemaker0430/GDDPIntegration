@@ -1,3 +1,30 @@
+# v1.1.0
+
+* Cleaned up codebase by A LOT
+* Reworked Recommendations system to match the website
+* Added a Button next to Recommended Levels to tell you what Skill they were Recommended for (Can be disabled)
+* Check/Uncheck All no longer scrolls the menu back to the top
+* Merged Skillsets and most hardcoded data to the Main List
+* XP now shows your progress to the Max Level for a Skill
+* XP now displays the Correct Progress to your Next Level
+* You can now view your projected XP Value on an uncompleted level
+* Added a Random Level Selector in Packs
+	* Completed & Uncompleted Filters
+	* Customizable Weight & Offset for more fine-tuned results
+* Progress Bars on Packs and Recommendations now Automatically Update
+* Added Achievement Popups for Packs and Medals (Can be Disabled/Customized)
+* Improved Stats Menu UI and made it update Dynamically
+* Highest/Next Highest now show the actual Highest/Next Highest you have or don't have/skipped in Stats
+* Fixed Roulette Name Entry being cleared on Check All/Uncheck All
+* Added Fancy Medals (And an Option to Toggle Them)
+* Removed "Reduce Demon Label Effects" as it didn't do much to help anyway
+	* Alternative option is to disable "Fancy Demon Labels"
+* Patched up some crashes thanks to Jasmine
+
+# v1.0.16
+
+* Fixed Roulette not working
+
 # v1.0.15
 
 * Fixed monthly timer desync

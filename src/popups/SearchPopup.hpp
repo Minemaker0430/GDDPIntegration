@@ -13,17 +13,27 @@ protected:
 	CCLayer* m_mainLayer;
 	ListView* m_list;
 
-	int m_currentTab = 0;
-	float m_offset = 1.f;
+	CCArrayExt<CCMenuItemToggler*> m_tabBtns;
 
-	std::vector<bool> m_difficulties = { true };
+	int m_currentTab = 0;
+
+	matjson::Value m_filter = matjson::makeObject({
+		{"completed", true},
+		{"uncompleted", true},
+		{"difficulties", matjson::Value()},
+		{"packs", matjson::Value()},
+		{"skills", matjson::Value()},
+		{"xp", matjson::Value()}
+	});
+
+	/*std::vector<bool> m_difficulties = { true };
 	std::vector<bool> m_packs = { true };
 	std::vector<bool> m_skills = { true };
 	std::vector<int> m_xp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // 0 = Min, 3 = Max
 	std::vector<bool> m_xpToggle = { false, false, false, false, false, false, false, false, false, false };
 	std::vector<int> m_xpMode = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 }; //0 = GreaterEquals, 1 = Greater, 2 = Equals, 3 = Less, 4 = LessEquals
 	bool m_completed = true;
-	bool m_uncompleted = true;
+	bool m_uncompleted = true;*/
 public:
 	static SearchPopup* create();
 	void loadTab(int);
@@ -44,4 +54,23 @@ enum class SearchModes {
 	Packs,
 	Skills,
 	XP
+};
+
+struct SetToggleValue : public CCObject {
+    std::string m_id;
+
+    SetToggleValue(std::string id) : m_id(id) {
+        // Always remember to call autorelease on your classes!
+        this->autorelease();
+    }
+};
+
+struct SetXPValue : public CCObject {
+    std::string m_id;
+	int m_value;
+
+    SetXPValue(std::string id, int value) : m_id(id), m_value(value) {
+        // Always remember to call autorelease on your classes!
+        this->autorelease();
+    }
 };

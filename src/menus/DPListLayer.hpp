@@ -10,6 +10,7 @@ protected:
 	virtual bool init(const char* type, int id); //add stuff to the layer
 	void backButton(CCObject*); //when you press back
 	virtual void keyBackClicked() override; //when you press escape
+	virtual void update(float) override;
 
 	async::TaskHolder<web::WebResponse> m_listener;
 
@@ -27,6 +28,9 @@ protected:
 	bool m_levelsLoaded = true;
 	int m_page = 0;
 	bool m_loadingCancelled = false;
+	std::vector<int> m_completedLvls;
+
+	void onRandomLevel(CCObject*);
 
 	virtual ~DPListLayer();
 public:
@@ -37,7 +41,6 @@ public:
 	void pageLeft(CCObject*);
 
 	void updateProgressBar();
-	void updateSave();
 	void loadLevels(int);
 	void loadLevelsFinished(CCArray*, const char*) override;
 	void loadLevelsFailed(const char*) override;

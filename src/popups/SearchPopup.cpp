@@ -6,9 +6,9 @@
 
 #include "../menus/DPLayer.hpp"
 #include "../XPUtils.hpp"
-#include "../popups/XPPopup.hpp"
 #include "SearchPopup.hpp"
 #include "../menus/DPSearchLayer.hpp"
+#include "../DPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -20,17 +20,16 @@ bool SearchPopup::init() {
 	auto layer = typeinfo_cast<CCLayer*>(this->getChildren()->objectAtIndex(0));
 
 	//restore filters
-	restoreFilters();
+	m_filter = Mod::get()->getSavedValue<matjson::Value>("search-filter", m_filter);
 
 	//create main layer
-	auto mainLayer = CCLayer::create();
-	mainLayer->setID("main-layer");
+	m_mainLayer = CCLayer::create();
+	m_mainLayer->setID("main-layer");
 
-	layer->addChild(mainLayer);
-	m_mainLayer = mainLayer;
+	layer->addChild(m_mainLayer);
 
 	//create tabs
-	auto tabs = CCMenu::create();
+	auto m_tabs = CCMenu::create();
 
 	auto difficultiesBtnSprOff = ButtonSprite::create("Difficulties", "bigFont.fnt", "GJ_button_01.png", 0.65f);
 	difficultiesBtnSprOff->m_BGSprite->setContentSize({ 145.f, 25.f });
@@ -42,9 +41,10 @@ bool SearchPopup::init() {
 	difficultiesBtn->setContentSize({ 145.f, 25.f });
 	difficultiesBtn->setPosition({ 75.f, 45.f });
 	difficultiesBtn->setID("difficulty");
-	difficultiesBtn->setTag(static_cast<int>(SearchModes::Difficulty));
+	difficultiesBtn->setTag((int)SearchModes::Difficulty);
 	difficultiesBtn->toggle(true);
-	tabs->addChild(difficultiesBtn);
+	m_tabs->addChild(difficultiesBtn);
+	m_tabBtns.push_back(difficultiesBtn);
 
 	auto packsBtnSprOff = ButtonSprite::create("Packs", "bigFont.fnt", "GJ_button_01.png", 0.65f);
 	packsBtnSprOff->m_BGSprite->setContentSize({ 145.f, 25.f });
@@ -56,9 +56,10 @@ bool SearchPopup::init() {
 	packsBtn->setContentSize({ 145.f, 25.f });
 	packsBtn->setPosition({ 75.f, 15.f });
 	packsBtn->setID("packs");
-	packsBtn->setTag(static_cast<int>(SearchModes::Packs));
+	packsBtn->setTag((int)SearchModes::Packs);
 	packsBtn->toggle(false);
-	tabs->addChild(packsBtn);
+	m_tabs->addChild(packsBtn);
+	m_tabBtns.push_back(packsBtn);
 
 	auto skillsBtnSprOff = ButtonSprite::create("Skills", "bigFont.fnt", "GJ_button_01.png", 0.65f);
 	skillsBtnSprOff->m_BGSprite->setContentSize({ 145.f, 25.f });
@@ -70,9 +71,10 @@ bool SearchPopup::init() {
 	skillsBtn->setContentSize({ 145.f, 25.f });
 	skillsBtn->setPosition({ 75.f, -15.f });
 	skillsBtn->setID("skills");
-	skillsBtn->setTag(static_cast<int>(SearchModes::Skills));
+	skillsBtn->setTag((int)SearchModes::Skills);
 	skillsBtn->toggle(false);
-	tabs->addChild(skillsBtn);
+	m_tabs->addChild(skillsBtn);
+	m_tabBtns.push_back(skillsBtn);
 
 	auto xpBtnSprOff = ButtonSprite::create("XP", "bigFont.fnt", "GJ_button_01.png", 0.65f);
 	xpBtnSprOff->m_BGSprite->setContentSize({ 145.f, 25.f });
@@ -84,17 +86,16 @@ bool SearchPopup::init() {
 	xpBtn->setContentSize({ 145.f, 25.f });
 	xpBtn->setPosition({ 75.f, -45.f });
 	xpBtn->setID("xp");
-	xpBtn->setTag(static_cast<int>(SearchModes::XP));
+	xpBtn->setTag((int)SearchModes::XP);
 	xpBtn->toggle(false);
-	tabs->addChild(xpBtn);
+	m_tabs->addChild(xpBtn);
+	m_tabBtns.push_back(xpBtn);
 
-	tabs->setPosition({ 0.f, 125.f });
-	tabs->setContentSize({ 420.f, 50.f });
+	m_tabs->setPosition({ 0.f, 125.f });
+	m_tabs->setContentSize({ 420.f, 50.f });
 
-	tabs->setID("search-tabs");
-	layer->addChild(tabs);
-
-	m_tabs = tabs;
+	m_tabs->setID("search-tabs");
+	layer->addChild(m_tabs);
 
 	//check and uncheck buttons
 	auto checkMenu = CCMenu::create();
@@ -149,14 +150,16 @@ bool SearchPopup::init() {
 	CCSprite* toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
 
 	auto completedToggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
-	completedToggle->toggle(m_completed);
+	completedToggle->toggle(m_filter["completed"].as<bool>().unwrapOr(true));
 	completedToggle->setPositionX(-40.f);
 	completedToggle->setID("complete-btn");
+	completedToggle->setUserObject(new SetToggleValue("completed"));
 
 	auto uncompletedToggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
-	uncompletedToggle->toggle(m_uncompleted);
+	uncompletedToggle->toggle(m_filter["uncompleted"].as<bool>().unwrapOr(false));
 	uncompletedToggle->setPositionX(40.f);
 	uncompletedToggle->setID("uncomplete-btn");
+	uncompletedToggle->setUserObject(new SetToggleValue("uncompleted"));
 
 	completeMenu->addChild(completedLabel);
 	completeMenu->addChild(uncompletedLabel);
@@ -181,7 +184,6 @@ bool SearchPopup::init() {
 
 void SearchPopup::restoreFilters() {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	auto skillsets = Mod::get()->getSavedValue<matjson::Value>("skillset-info");
 
 	//check for errors
 	auto jsonCheck = checkJson(data, "");
@@ -192,65 +194,15 @@ void SearchPopup::restoreFilters() {
 		return;
 	}
 
-	auto jsonCheck2 = checkJson(skillsets, "");
-
-	if (!jsonCheck2.ok()) {
-		log::info("Something went wrong validating the skillset data.");
-
-		return;
-	}
-
 	//fix filters if they're incorrect but otherwise restore them to what they were
-	m_difficulties = Mod::get()->getSavedValue<std::vector<bool>>("search-difficulty", { true });
-	m_packs = Mod::get()->getSavedValue<std::vector<bool>>("search-packs", { true });
-	m_skills = Mod::get()->getSavedValue<std::vector<bool>>("search-skills", { true });
-	m_xp = Mod::get()->getSavedValue<std::vector<int>>("search-xp", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-	m_xpToggle = Mod::get()->getSavedValue<std::vector<bool>>("search-xp-toggle", { false, false, false, false, false, false, false, false, false, false });
-	m_xpMode = Mod::get()->getSavedValue<std::vector<int>>("search-xp-modes", { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 });
-	m_completed = Mod::get()->getSavedValue<bool>("search-completed", true);
-	m_uncompleted = Mod::get()->getSavedValue<bool>("search-uncompleted", true);
-
-	//check difficulties
-	if (m_difficulties.size() < data["main"].asArray().unwrap().size()) {
-		if (m_difficulties.empty()) { m_difficulties = { true }; }
-
-		for (int i = m_difficulties.size(); i < data["main"].asArray().unwrap().size(); i++) {
-			m_difficulties.push_back(true);
-		}
-	}
-
-	//check packs
-	auto totalPacks = data["main"].asArray().unwrap().size() + data["legacy"].asArray().unwrap().size() + data["bonus"].asArray().unwrap().size(); //Monthly does not count
-	if (m_packs.size() < totalPacks) {
-		if (m_packs.empty()) { m_packs = { true }; }
-
-		for (int i = m_packs.size(); i < totalPacks; i++) {
-			m_packs.push_back(true);
-		}
-	}
-
-	//check skills
-	if (m_skills.size() < skillsets.size()) {
-		if (m_skills.empty()) { m_skills = { true }; }
-
-		for (int i = m_skills.size(); i < skillsets.size(); i++) {
-			m_skills.push_back(true);
-		}
-	}
+	m_filter = Mod::get()->getSavedValue<matjson::Value>("search-filter", m_filter);
 
 	//all filters should be restored/fixed now, so it's time to save them again
 	saveFilters();
 }
 
 void SearchPopup::saveFilters() {
-	Mod::get()->setSavedValue<std::vector<bool>>("search-difficulty", m_difficulties);
-	Mod::get()->setSavedValue<std::vector<bool>>("search-packs", m_packs);
-	Mod::get()->setSavedValue<std::vector<bool>>("search-skills", m_skills);
-	Mod::get()->setSavedValue<std::vector<int>>("search-xp", m_xp);
-	Mod::get()->setSavedValue<std::vector<bool>>("search-xp-toggle", m_xpToggle);
-	Mod::get()->setSavedValue<std::vector<int>>("search-xp-modes", m_xpMode);
-	Mod::get()->setSavedValue<bool>("search-completed", m_completed);
-	Mod::get()->setSavedValue<bool>("search-uncompleted", m_uncompleted);
+	Mod::get()->setSavedValue<matjson::Value>("search-filter", m_filter);
 }
 
 void SearchPopup::loadTab(int id) {
@@ -258,21 +210,12 @@ void SearchPopup::loadTab(int id) {
 	m_currentTab = id;
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	auto skillsets = Mod::get()->getSavedValue<matjson::Value>("skillset-info");
 
 	//check for errors
 	auto jsonCheck = checkJson(data, "");
 
 	if (!jsonCheck.ok()) {
 		log::info("Something went wrong validating the GDDP list data.");
-
-		return;
-	}
-
-	auto jsonCheck2 = checkJson(skillsets, "");
-
-	if (!jsonCheck2.ok()) {
-		log::info("Something went wrong validating the skillset data.");
 
 		return;
 	}
@@ -296,32 +239,30 @@ void SearchPopup::loadTab(int id) {
 	auto cells = CCArray::create();
 
 	switch (id) {
-		case static_cast<int>(SearchModes::Difficulty):
+		case (int)SearchModes::Difficulty:
 		{
-			for (int i = 0; i < data["main"].asArray().unwrap().size(); i++) {
+			for (auto pack : data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+				auto saveID = pack["saveID"].asString().unwrapOr("null");
+				auto sprite = fmt::format("{}.png", pack["sprite"].asString().unwrapOr("DP_Unknown"));
+				auto name = pack["name"].asString().unwrapOr("null");
+
+				auto filterToggle = m_filter["difficulties"][saveID].asBool().unwrapOr(true);
+				
 				auto packNode = CCNode::create();
-				packNode->setID(fmt::format("difficulty-{}", i));
+				packNode->setID(fmt::format("difficulty-{}", saveID));
 				packNode->setScale(0.75f);
 
-				auto packData = data["main"][i];
-
 				//sprite
-				auto spriteName = fmt::format("{}.png", packData["sprite"].asString().unwrapOr("DP_Beginner"));
-				CCSprite* sprite;
-				if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr || spriteName == "DP_Invisible.png") {
-					sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName("DP_Beginner.png").data());
-					sprite->setVisible(false);
-				}
-				else {
-					sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
-				}
-				sprite->setID("sprite");
-				sprite->setScale(0.75f);
-				sprite->setAnchorPoint({ 0.f, 0.5f });
-				sprite->setPosition({ 5.f, 15.5f });
+				auto unkSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
+				CCSprite* spr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(sprite).data(), unkSpr);
+				if (sprite == "DP_Invisible.png") spr->setVisible(false);
+				spr->setID("sprite");
+				spr->setScale(0.75f);
+				spr->setAnchorPoint({ 0.f, 0.5f });
+				spr->setPosition({ 5.f, 15.5f });
 
 				//label
-				auto label = CCLabelBMFont::create(packData["name"].asString().unwrapOr("null").c_str(), "bigFont.fnt");
+				auto label = CCLabelBMFont::create(name.c_str(), "bigFont.fnt");
 				label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
 				label->setID("label");
 				label->setScale(0.5f);
@@ -337,255 +278,121 @@ void SearchPopup::loadTab(int id) {
 				auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
 				auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
 				auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
-				toggle->setTag(i);
 				toggle->setID("toggle");
-				toggle->toggle(m_difficulties[i]);
+				toggle->toggle(filterToggle);
+				toggle->setUserObject(new SetToggleValue(saveID));
 
 				toggleMenu->addChild(toggle);
 
 				//add children
 				packNode->addChild(label);
 				packNode->addChild(toggleMenu);
-				packNode->addChild(sprite);
+				packNode->addChild(spr);
 
 				cells->addObject(packNode);
 			}
 			break;
 		}
-		case static_cast<int>(SearchModes::Packs):
+		case (int)SearchModes::Packs:
 		{
-			//main packs header
-			auto mainPacksHeader = CCNode::create();
-			auto mainPacksText = CCLabelBMFont::create("Main Packs", "bigFont.fnt");
-			mainPacksText->setScale(0.4f);
-			mainPacksText->setPosition({ filterMenu->getContentWidth() / 2.f, 25.f / 2.f });
-			mainPacksHeader->addChild(mainPacksText);
-			cells->addObject(mainPacksHeader);
+			std::vector<std::string> headerTitles = {"Main", "Legacy", "Bonus"};
+			std::vector<std::string> indexIDs = {"main", "legacy", "bonus"};
 
-			int offs = 0;
+			for (int i = 0; i < indexIDs.size(); i++) {
+				auto index = indexIDs[i];
 
-			//main packs
-			for (int i = 0; i < data["main"].asArray().unwrap().size(); i++) {
-				auto packNode = CCNode::create();
-				packNode->setID(fmt::format("main-pack-{}", i));
-				packNode->setScale(0.75f);
+				// packs header
+				auto packsHeader = CCNode::create();
+				auto packsText = CCLabelBMFont::create(fmt::format("{} Packs", headerTitles[i]).c_str(), "bigFont.fnt");
+				packsText->setScale(0.4f);
+				packsText->setPosition({ filterMenu->getContentWidth() / 2.f, 25.f / 2.f });
+				packsHeader->addChild(packsText);
+				cells->addObject(packsHeader);
 
-				auto packData = data["main"][i];
+				// packs
+				for (auto pack : data[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+					auto saveID = pack["saveID"].asString().unwrapOr("null");
+					auto sprite = fmt::format("{}.png", pack[(index == "main") ? "plusSprite" : "sprite"].asString().unwrapOr("DP_Unknown"));
+					auto name = pack["name"].asString().unwrapOr("null");
 
-				//sprite
-				auto spriteName = fmt::format("{}.png", packData["plusSprite"].asString().unwrapOr("DP_Beginner")); //use plus sprite for main packs, normal for legacy
-				CCSprite* sprite;
-				if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr || spriteName == "DP_Invisible.png") {
-					sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName("DP_Beginner.png").data());
-					sprite->setVisible(false);
+					auto filterToggle = m_filter["packs"][saveID].asBool().unwrapOr(true);
+					
+					auto packNode = CCNode::create();
+					packNode->setID(fmt::format("{}-pack-{}", index, saveID));
+					packNode->setScale(0.75f);
+
+					//sprite
+					auto unkSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
+					CCSprite* spr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(sprite).data(), unkSpr);
+					if (sprite == "DP_Invisible.png") spr->setVisible(false);
+					spr->setID("sprite");
+					spr->setScale(0.75f);
+					spr->setAnchorPoint({ 0.f, 0.5f });
+					spr->setPosition({ 5.f, 15.5f });
+
+					//label
+					auto label = CCLabelBMFont::create((index == "bonus") ? name.c_str() : fmt::format("{} Demons", name).c_str(), "bigFont.fnt");
+					label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
+					label->setID("label");
+					label->setScale(0.5f);
+					label->setAnchorPoint({ 0.f, 0.5f });
+					label->setPosition({ 40.f, 17.5f });
+
+					//togglebox
+					auto toggleMenu = CCMenu::create();
+					toggleMenu->setScale(0.75f);
+					toggleMenu->setPosition({ 250.f, -25.f });
+					toggleMenu->setID("toggle-menu");
+
+					auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
+					auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+					auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
+					toggle->setID("toggle");
+					toggle->toggle(filterToggle);
+					toggle->setUserObject(new SetToggleValue(saveID));
+
+					toggleMenu->addChild(toggle);
+
+					//add children
+					packNode->addChild(label);
+					packNode->addChild(toggleMenu);
+					packNode->addChild(spr);
+
+					cells->addObject(packNode);
 				}
-				else {
-					sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
-				}
-				sprite->setID("sprite");
-				sprite->setScale(0.75f);
-				sprite->setAnchorPoint({ 0.f, 0.5f });
-				sprite->setPosition({ 5.f, 15.5f });
-
-				//label
-				auto label = CCLabelBMFont::create(fmt::format("{} Demons", packData["name"].asString().unwrapOr("null")).c_str(), "bigFont.fnt");
-				label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-				label->setID("label");
-				label->setScale(0.5f);
-				label->setAnchorPoint({ 0.f, 0.5f });
-				label->setPosition({ 40.f, 17.5f });
-
-				//togglebox
-				auto toggleMenu = CCMenu::create();
-				toggleMenu->setScale(0.75f);
-				toggleMenu->setPosition({ 250.f, -25.f });
-				toggleMenu->setID("toggle-menu");
-
-				auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
-				auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
-				auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
-				toggle->setTag(i);
-				toggle->setID("toggle");
-				toggle->toggle(m_packs[i]);
-
-				toggleMenu->addChild(toggle);
-
-				//add children
-				packNode->addChild(label);
-				packNode->addChild(toggleMenu);
-				packNode->addChild(sprite);
-
-				cells->addObject(packNode);
-			}
-
-			offs = data["main"].asArray().unwrap().size();
-
-			//legacy packs header
-			auto legacyPacksHeader = CCNode::create();
-			auto legacyPacksText = CCLabelBMFont::create("Legacy Packs", "bigFont.fnt");
-			legacyPacksText->setScale(0.4f);
-			legacyPacksText->setPosition({ filterMenu->getContentWidth() / 2.f, 25.f / 2.f });
-			legacyPacksHeader->addChild(legacyPacksText);
-			cells->addObject(legacyPacksHeader);
-
-			//legacy packs
-			for (int i = 0; i < data["legacy"].asArray().unwrap().size(); i++) {
-				auto packNode = CCNode::create();
-				packNode->setID(fmt::format("legacy-pack-{}", i));
-				packNode->setScale(0.75f);
-
-				auto packData = data["legacy"][i];
-
-				//sprite
-				auto spriteName = fmt::format("{}.png", packData["sprite"].asString().unwrapOr("DP_Beginner")); //use plus sprite for main packs, normal for legacy
-				CCSprite* sprite;
-				if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr || spriteName == "DP_Invisible.png") {
-					sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName("DP_Beginner.png").data());
-					sprite->setVisible(false);
-				}
-				else {
-					sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
-				}
-				sprite->setID("sprite");
-				sprite->setScale(0.75f);
-				sprite->setAnchorPoint({ 0.f, 0.5f });
-				sprite->setPosition({ 5.f, 15.5f });
-
-				//label
-				auto label = CCLabelBMFont::create(fmt::format("{} Demons", packData["name"].asString().unwrapOr("null")).c_str(), "bigFont.fnt");
-				label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-				label->setID("label");
-				label->setScale(0.5f);
-				label->setAnchorPoint({ 0.f, 0.5f });
-				label->setPosition({ 40.f, 17.5f });
-
-				//togglebox
-				auto toggleMenu = CCMenu::create();
-				toggleMenu->setScale(0.75f);
-				toggleMenu->setPosition({ 250.f, -25.f });
-				toggleMenu->setID("toggle-menu");
-
-				auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
-				auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
-				auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
-				toggle->setTag(i + offs);
-				toggle->setID("toggle");
-				toggle->toggle(m_packs[i + offs]);
-
-				toggleMenu->addChild(toggle);
-
-				//add children
-				packNode->addChild(label);
-				packNode->addChild(toggleMenu);
-				packNode->addChild(sprite);
-
-				cells->addObject(packNode);
-			}
-
-			offs = offs + data["legacy"].asArray().unwrap().size();
-
-			//bonus packs header
-			auto bonusPacksHeader = CCNode::create();
-			auto bonusPacksText = CCLabelBMFont::create("Bonus Packs", "bigFont.fnt");
-			bonusPacksText->setScale(0.4f);
-			bonusPacksText->setPosition({ filterMenu->getContentWidth() / 2.f, 25.f / 2.f });
-			bonusPacksHeader->addChild(bonusPacksText);
-			cells->addObject(bonusPacksHeader);
-
-			//bonus packs
-			for (int i = 0; i < data["bonus"].asArray().unwrap().size(); i++) {
-				auto packNode = CCNode::create();
-				packNode->setID(fmt::format("bonus-pack-{}", i));
-				packNode->setScale(0.75f);
-
-				auto packData = data["bonus"][i];
-
-				//sprite
-				auto spriteName = fmt::format("{}.png", packData["sprite"].asString().unwrapOr("DP_Beginner"));
-				CCSprite* sprite;
-				if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr || spriteName == "DP_Invisible.png") {
-					sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName("DP_Beginner.png").data());
-					sprite->setVisible(false);
-				}
-				else {
-					sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
-				}
-				sprite->setID("sprite");
-				sprite->setScale(0.75f);
-				sprite->setAnchorPoint({ 0.f, 0.5f });
-				sprite->setPosition({ 5.f, 15.5f });
-
-				//label
-				auto label = CCLabelBMFont::create(packData["name"].asString().unwrapOr("null").c_str(), "bigFont.fnt");
-				label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-				label->setID("label");
-				label->setScale(0.5f);
-				label->setAnchorPoint({ 0.f, 0.5f });
-				label->setPosition({ 40.f, 17.5f });
-
-				//togglebox
-				auto toggleMenu = CCMenu::create();
-				toggleMenu->setScale(0.75f);
-				toggleMenu->setPosition({ 250.f, -25.f });
-				toggleMenu->setID("toggle-menu");
-
-				auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
-				auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
-				auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
-				toggle->setTag(i + offs);
-				toggle->setID("toggle");
-				toggle->toggle(m_packs[i + offs]);
-
-				toggleMenu->addChild(toggle);
-
-				//add children
-				packNode->addChild(label);
-				packNode->addChild(toggleMenu);
-				packNode->addChild(sprite);
-
-				cells->addObject(packNode);
 			}
 			break;
 		}
-		case static_cast<int>(SearchModes::Skills):
+		case (int)SearchModes::Skills:
 		{
 			std::vector<std::string> skillsetTypes = {"none", "gamemode", "misc", "platformer", "special"};
 
 			int i = 0;
-			for (auto type : skillsetTypes)
+			for (auto skillType : skillsetTypes)
 			{
-				for (auto [key, value] : skillsets) {
+				for (auto [key, value] : data["skillset-data"]) {
 					auto skillNode = CCNode::create();
 					skillNode->setID(fmt::format("skill-{}", key));
 					skillNode->setScale(0.75f);
 
-					//log::info("i: {}", i);
-					//log::info("key: {}", key);
-					//log::info("value: {}", value);
+					auto type = value["type"].asString().unwrapOr("none");
+					auto sprite = value["sprite"].asString().unwrapOr("DP_Skill_Unknown");
+					auto name = value["display-name"].asString().unwrapOr("Unknown");
+					auto filterToggle = m_filter["skills"][key].asBool().unwrapOr(true);
 
-					auto skillData = value;
-
-					if (skillData["type"].asString().unwrapOr("none") != type) {
-						continue;
-					}
+					if (type != skillType) continue;
 
 					//sprite
-					auto spriteName = fmt::format("{}.png", skillData["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
-					CCSprite* sprite;
-					if (CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data()) == nullptr) {
-						spriteName = fmt::format("{}.png", skillsets["unknown"]["sprite"].asString().unwrapOr("DP_Skill_Unknown"));
-						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
-					}
-					else {
-						sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(spriteName).data());
-					}
-					sprite->setID("sprite");
-					sprite->setScale(0.75f);
-					sprite->setAnchorPoint({ 0.f, 0.5f });
-					sprite->setPosition({ 5.f, 17.5f });
+					auto unkSpr = CCSprite::createWithSpriteFrameName("DP_Skill_Unknown.png"_spr);
+					auto spSpr = CCSprite::createWithSpriteFrameName("DP_Skill_Special.png"_spr);
+					CCSprite* spr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data(), (type == "special") ? spSpr : unkSpr);
+					spr->setID("sprite");
+					spr->setScale(0.75f);
+					spr->setAnchorPoint({ 0.f, 0.5f });
+					spr->setPosition({ 5.f, 17.5f });
 
 					//label
-					auto label = CCLabelBMFont::create(skillData["display-name"].asString().unwrapOr("null").c_str(), "bigFont.fnt");
+					auto label = CCLabelBMFont::create(name.c_str(), "bigFont.fnt");
 					label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
 					label->setID("label");
 					label->setScale(0.5f);
@@ -601,25 +408,23 @@ void SearchPopup::loadTab(int id) {
 					auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
 					auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
 					auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
-					toggle->setTag(i);
 					toggle->setID("toggle");
-					toggle->toggle(m_skills[i]);
+					toggle->toggle(filterToggle);
+					toggle->setUserObject(new SetToggleValue(key));
 
 					toggleMenu->addChild(toggle);
 
 					//add children
-					skillNode->addChild(sprite);
+					skillNode->addChild(spr);
 					skillNode->addChild(label);
 					skillNode->addChild(toggleMenu);
 
 					cells->addObject(skillNode);
-
-					i += 1;
 				}
 			}
 			break;
 		}
-		case static_cast<int>(SearchModes::XP):
+		case (int)SearchModes::XP:
 		{
 			auto modeHeader = CCLabelBMFont::create("Mode", "goldFont.fnt");
 			modeHeader->setScale(0.5f);
@@ -632,15 +437,21 @@ void SearchPopup::loadTab(int id) {
 			filterMenu->addChild(modeHeader);
 			filterMenu->addChild(valueHeader);
 			
-			for (int i = 0; i < XPUtils::skillIDs.size(); i++) {
+			for (auto [key, value] : XPUtils::skills) {
+				auto name = value["name"].asString().unwrapOr("???");
+				auto color = value["color"].as<ccColor3B>().unwrapOrDefault();
+				auto filterToggle = m_filter["xp"][key]["toggled"].asBool().unwrapOr(false);
+				auto filterValue = m_filter["xp"][key]["value"].as<int>().unwrapOr(0);
+				auto filterMode = m_filter["xp"][key]["mode"].as<int>().unwrapOr(2);
+				
 				auto xpBox = CCNode::create();
-				xpBox->setID(fmt::format("xp-{}", XPUtils::skillIDs[i]));
+				xpBox->setID(fmt::format("xp-{}", key));
 				xpBox->setScale(0.75f);
 
 				//label
-				auto label = CCLabelBMFont::create(skillNames[i].c_str(), "bigFont.fnt");
+				auto label = CCLabelBMFont::create(name.c_str(), "bigFont.fnt");
 				label->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-				label->setColor(skillColors[i]);
+				label->setColor(color);
 				label->setID("label");
 				label->setScale(0.5f);
 				label->setAnchorPoint({ 0.f, 0.5f });
@@ -655,9 +466,9 @@ void SearchPopup::loadTab(int id) {
 				auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
 				auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
 				auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
-				toggle->setTag(i);
 				toggle->setID("toggle");
-				toggle->toggle(m_xpToggle[i]);
+				toggle->toggle(filterToggle);
+				toggle->setUserObject(new SetToggleValue(key));
 				
 				toggleMenu->addChild(toggle);
 
@@ -669,24 +480,24 @@ void SearchPopup::loadTab(int id) {
 
 				auto valLeftSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
 				auto valLeft = CCMenuItemSpriteExtra::create(valLeftSpr, this, menu_selector(SearchPopup::onXpValue));
-				valLeft->setTag(i);
 				valLeft->setID("value-left");
-				valLeft->setVisible(m_xp[i] > 0);
+				valLeft->setVisible(filterValue > 0);
+				valLeft->setUserObject(new SetXPValue(key,  -1));
 				valLeft->setPositionX(-60.f);
 				valueMenu->addChild(valLeft);
 
 				auto valRightSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
 				valRightSpr->setFlipX(true);
 				auto valRight = CCMenuItemSpriteExtra::create(valRightSpr, this, menu_selector(SearchPopup::onXpValue));
-				valRight->setTag(i);
 				valRight->setID("value-right");
-				valRight->setVisible(m_xp[i] < 3);
+				valRight->setVisible(filterValue < 3);
+				valRight->setUserObject(new SetXPValue(key, 1));
 				valRight->setPositionX(60.f);
 				valueMenu->addChild(valRight);
 
 				std::vector<std::string> valueStrings = { "None", "Low", "Avg", "Max" };
 
-				auto valLabel = CCLabelBMFont::create(valueStrings[m_xp[i]].c_str(), "bigFont.fnt");
+				auto valLabel = CCLabelBMFont::create(valueStrings[filterValue].c_str(), "bigFont.fnt");
 				valLabel->setID("value-label");
 				valLabel->setPositionY(2.f);
 				valueMenu->addChild(valLabel);
@@ -699,24 +510,24 @@ void SearchPopup::loadTab(int id) {
 
 				auto modeLeftSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
 				auto modeLeft = CCMenuItemSpriteExtra::create(modeLeftSpr, this, menu_selector(SearchPopup::onXpMode));
-				modeLeft->setTag(i);
 				modeLeft->setID("mode-left");
-				modeLeft->setVisible(m_xpMode[i] > 0);
+				modeLeft->setVisible(filterMode > 0);
+				modeLeft->setUserObject(new SetXPValue(key, -1));
 				modeLeft->setPositionX(-30.f);
 				modeMenu->addChild(modeLeft);
 
 				auto modeRightSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
 				modeRightSpr->setFlipX(true);
-				auto modeRight = CCMenuItemSpriteExtra::create(valRightSpr, this, menu_selector(SearchPopup::onXpMode));
-				modeRight->setTag(i);
+				auto modeRight = CCMenuItemSpriteExtra::create(modeRightSpr, this, menu_selector(SearchPopup::onXpMode));
 				modeRight->setID("mode-right");
-				modeRight->setVisible(m_xpMode[i] < 4);
+				modeRight->setVisible(filterMode < 4);
+				modeRight->setUserObject(new SetXPValue(key, 1));
 				modeRight->setPositionX(30.f);
 				modeMenu->addChild(modeRight);
 
 				std::vector<std::string> modeStrings = {">=", ">", "=", "<", "<="};
 
-				auto modeLabel = CCLabelBMFont::create(modeStrings[m_xpMode[i]].c_str(), "bigFont.fnt");
+				auto modeLabel = CCLabelBMFont::create(modeStrings[filterMode].c_str(), "bigFont.fnt");
 				modeLabel->setID("mode-label");
 				modeLabel->setPositionY(2.f);
 				modeMenu->addChild(modeLabel);
@@ -745,112 +556,61 @@ void SearchPopup::onTab(CCObject* sender) {
 	auto btn = static_cast<CCMenuItemToggler*>(sender);
 	auto menuType = btn->getTag();
 
-	auto difficultybtn = m_tabs->getChildByID("difficulty");
-	auto packsbtn = m_tabs->getChildByID("packs");
-	auto skillsbtn = m_tabs->getChildByID("skills");
-	auto xpbtn = m_tabs->getChildByID("xp");
+	for (auto b : m_tabBtns) if (b) static_cast<CCMenuItemToggler*>(b)->toggle(false);
+	btn->m_toggled = false;
 
-	if (btn->isToggled()) {
-		btn->toggle(false);
-	}
-
-	if (m_mainLayer) {
-		m_mainLayer->removeAllChildrenWithCleanup(true);
-	}
-
-	if (menuType == static_cast<int>(SearchModes::Difficulty)) {
-
-		static_cast<CCMenuItemToggler*>(packsbtn)->toggle(false);
-		static_cast<CCMenuItemToggler*>(skillsbtn)->toggle(false);
-		static_cast<CCMenuItemToggler*>(xpbtn)->toggle(false);
-
-		loadTab(static_cast<int>(SearchModes::Difficulty));
-	}
-	else if (menuType == static_cast<int>(SearchModes::Packs)) {
-
-		static_cast<CCMenuItemToggler*>(difficultybtn)->toggle(false);
-		static_cast<CCMenuItemToggler*>(skillsbtn)->toggle(false);
-		static_cast<CCMenuItemToggler*>(xpbtn)->toggle(false);
-
-		loadTab(static_cast<int>(SearchModes::Packs));
-	}
-	else if (menuType == static_cast<int>(SearchModes::Skills)) {
-
-		static_cast<CCMenuItemToggler*>(difficultybtn)->toggle(false);
-		static_cast<CCMenuItemToggler*>(packsbtn)->toggle(false);
-		static_cast<CCMenuItemToggler*>(xpbtn)->toggle(false);
-
-		loadTab(static_cast<int>(SearchModes::Skills));
-	}
-	else if (menuType == static_cast<int>(SearchModes::XP)) {
-
-		static_cast<CCMenuItemToggler*>(difficultybtn)->toggle(false);
-		static_cast<CCMenuItemToggler*>(packsbtn)->toggle(false);
-		static_cast<CCMenuItemToggler*>(skillsbtn)->toggle(false);
-
-		loadTab(static_cast<int>(SearchModes::XP));
-	}
+	if (m_mainLayer) m_mainLayer->removeAllChildrenWithCleanup(true);
+	
+	loadTab(menuType);
 
 	return;
 }
 
 void SearchPopup::onSearch(CCObject* sender) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	auto skillsets = Mod::get()->getSavedValue<matjson::Value>("skillset-info");
 	
 	std::vector<int> selectedLevels = {};
 
-	//get all packs
-	auto mainPackSize = data["main"].asArray().unwrap().size();
-	auto legacyPackSize = data["legacy"].asArray().unwrap().size();
-	auto bonusPackSize = data["bonus"].asArray().unwrap().size();
-	std::vector<matjson::Value> packs(mainPackSize + legacyPackSize + bonusPackSize, data["main"][0]);
+	auto completed = m_filter["completed"].asBool().unwrapOr(true);
+	auto uncompleted = m_filter["uncompleted"].asBool().unwrapOr(true);
 
-	auto offs = 0;
+	// get difficulties
+	std::vector<bool> difficulties = {};
+	for (auto [key, value] : m_filter["difficulties"]) difficulties.push_back(value.asBool().unwrapOr(true));
 
-	for (int i = 0; i < mainPackSize; i++) {
-		packs[i + offs] = data["main"][i];
-	}
+	// get all packs
+	matjson::Value packs;
+	for (auto p : data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) packs.set(p["saveID"].asString().unwrapOr("null"), p);
+	for (auto p : data["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) packs.set(p["saveID"].asString().unwrapOr("null"), p);
+	for (auto p : data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) packs.set(p["saveID"].asString().unwrapOr("null"), p);
 
-	offs = mainPackSize;
+	// iterate through packs
+	for (auto [key, value] : m_filter["packs"]) {
 
-	for (int i = 0; i < legacyPackSize; i++) {
-		packs[i + offs] = data["legacy"][i];
-	}
+		// if pack isn't checked, skip
+		if (!value.asBool().unwrapOr(true)) continue; 
 
-	offs += legacyPackSize;
+		auto pack = packs[key];
 
-	for (int i = 0; i < bonusPackSize; i++) {
-		packs[i + offs] = data["bonus"][i];
-	}
-
-	//iterate through packs
-	for (int i = 0; i < packs.size(); i++) {
-
-		//if pack isn't checked, skip
-		if (!m_packs[i]) { continue; }
-
-		//iterate through levels
-		auto levels = packs[i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+		// iterate through levels
+		auto levels = pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 		for (auto lvlID : levels) {
 			auto lvlData = data["level-data"][std::to_string(lvlID)];
 
-			//check if difficulty is ok
-			if (!m_difficulties[lvlData["difficulty"].as<int>().unwrapOr(0)]) { continue; }
+			// check if difficulty is ok
+			if (!difficulties[lvlData["difficulty"].as<int>().unwrapOr(0)]) continue;
 
-			//check if skillsets are ok
+			// check if skillsets are ok
 			auto skillsetsOk = false;
-			int j = 0;
 			auto lvlSkillsets = lvlData["skillsets"].as<std::vector<std::string>>().unwrapOrDefault();
-			for (auto& [key, value] : skillsets) {
-				
+			for (auto [key, value] : data["skillset-data"]) {
+				if (skillsetsOk) break;
 				for (auto skillsetID : lvlSkillsets) {
-					if (key == skillsetID && m_skills[j]) {
-						skillsetsOk = true;
+					if (key == skillsetID && m_filter["skills"][key].asBool().unwrapOr(true)) {
+						skillsetsOk = true; 
+						break;
 					}
 				}
-
-				j += 1;
 			}
 			if (!skillsetsOk) { continue; }
 
@@ -859,69 +619,64 @@ void SearchPopup::onSearch(CCObject* sender) {
 			// 2. completely skip any disabled filter
 			// 3. check if filters are satisfied, if not, don't accept level
 			auto xpOk = true;
-			for (int skill = 0; skill < XPUtils::skillIDs.size(); skill++) {
+			for (auto [key, value] : XPUtils::skills) {
 
-				if (m_xpToggle.size() < XPUtils::skillIDs.size()) { m_xpToggle.push_back(false); }
-				if (m_xpMode.size() < XPUtils::skillIDs.size()) { m_xpMode.push_back(2); }
-				if (m_xp.size() < XPUtils::skillIDs.size()) { m_xp.push_back(0); }
+				auto toggled = m_filter["xp"][key]["toggled"].asBool().unwrapOr(false);
+				auto mode = m_filter["xp"][key]["mode"].as<int>().unwrapOr(2);
+				auto val = m_filter["xp"][key]["value"].as<int>().unwrapOr(0);
 
-				if (m_xpToggle[skill]) {
-					if (!lvlData["xp"][XPUtils::skillIDs[skill]].isNumber()) { 
+				if (toggled) {
+					if (!lvlData.contains("xp")) { 
 						xpOk = false; 
 						break;
 					}
-					else {
-						auto xpValue = lvlData["xp"][XPUtils::skillIDs[skill]].as<int>().unwrapOr(0);
-            			switch (m_xpMode[skill]) {
-                			case 0: // >=
-                    			if (!(xpValue >= m_xp[skill])) {
-                        			xpOk = false;
-                        			break;
-                    			}
-                    			break;
-                			case 1: // >
-                    			if (!(xpValue > m_xp[skill])) {
-                        			xpOk = false;
-                        			break;
-                    			}
-                    			break;
-                			case 2: // ==
-                    			if (!(xpValue == m_xp[skill])) {
-                        			xpOk = false;
-                        			break;
-                    			}
-                    			break;
-                			case 3: // <
-                    			if (!(xpValue < m_xp[skill])) {
-                       				xpOk = false;
-                        			break;
-                    			}
-                    			break;
-                			case 4: // <=
-                    			if (!(xpValue <= m_xp[skill])) {
-                        			xpOk = false;
-                        			break;
-                    			}
-                    			break;
-            			}
-					}
+					
+					auto xpValue = lvlData["xp"][key].as<int>().unwrapOr(0);
+            		switch (mode) {
+                		case 0: // >=
+                    		if (!(xpValue >= val)) {
+                        		xpOk = false;
+                        		break;
+                    		}
+                    		break;
+                		case 1: // >
+                    		if (!(xpValue > val)) {
+                        		xpOk = false;
+                        		break;
+                    		}
+                    		break;
+                		case 2: // ==
+                    		if (!(xpValue == val)) {
+                     			xpOk = false;
+                     			break;
+                    		}
+                    		break;
+                		case 3: // <
+                    		if (!(xpValue < val)) {
+                    				xpOk = false;
+                     			break;
+                    		}
+                    		break;
+                		case 4: // <=
+                    		if (!(xpValue <= val)) {
+                     			xpOk = false;
+                     			break;
+                    		}
+                    		break;
+            		}
 				}
 			}
-			if (!xpOk) { continue; }
+			if (!xpOk) continue;
 
 			//check if completed/uncompleted and completed/uncompleted filter is on
 			auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-			if (!(m_completed == m_uncompleted)) {
-				if (m_uncompleted && std::find(completedLvls.begin(), completedLvls.end(), lvlID) != completedLvls.end()) {
-					continue;
-				}
-				else if (m_completed && std::find(completedLvls.begin(), completedLvls.end(), lvlID) == completedLvls.end()) {
-					continue;
-				}
+			if (!(completed == uncompleted)) {
+				if (uncompleted && DPUtils::containsInt(completedLvls, lvlID)) continue;
+				else if (completed && !DPUtils::containsInt(completedLvls, lvlID)) continue;
 			}
 
 			//check if level is already in the list
-			if (std::find(selectedLevels.begin(), selectedLevels.end(), lvlID) != selectedLevels.end()) { continue; }
+			if (DPUtils::containsInt(selectedLevels, lvlID)) continue;
 
 			//if all checks are ok, add it to the list
 			selectedLevels.push_back(lvlID);
@@ -940,48 +695,43 @@ void SearchPopup::onSearch(CCObject* sender) {
 }
 void SearchPopup::onToggle(CCObject* sender) {
 	auto btn = typeinfo_cast<CCMenuItemToggler*>(sender);
-	auto id = btn->getID();
-	auto tag = btn->getTag();
+	auto parameters = static_cast<SetToggleValue*>(static_cast<CCNode*>(sender)->getUserObject());
 
-	if (id == "complete-btn") {
-		m_completed = !m_completed;
-	}
-	else if (id == "uncomplete-btn") {
-		m_uncompleted = !m_uncompleted;
-	}
+	if (parameters->m_id == "completed") m_filter.set("completed", !btn->isToggled());
+	else if (parameters->m_id == "uncompleted") m_filter.set("uncompleted", !btn->isToggled());
 	else {
 		switch (m_currentTab) {
     		case static_cast<int>(SearchModes::Difficulty):
-        		m_difficulties[tag] = !m_difficulties[tag];
+        		m_filter["difficulties"].set(parameters->m_id, !btn->isToggled());
         		break;
     		case static_cast<int>(SearchModes::Packs):
-        		m_packs[tag] = !m_packs[tag];
+        		m_filter["packs"].set(parameters->m_id, !btn->isToggled());
         		break;
     		case static_cast<int>(SearchModes::Skills):
-        		m_skills[tag] = !m_skills[tag];
+        		m_filter["skills"].set(parameters->m_id, !btn->isToggled());
         		break;
     		case static_cast<int>(SearchModes::XP):
-        		m_xpToggle[tag] = !m_xpToggle[tag];
+        		m_filter["xp"][parameters->m_id].set("toggled", !btn->isToggled());
         		break;
 		}
 	}
 
 	//save filters
-	saveFilters();
+	Mod::get()->setSavedValue<matjson::Value>("search-filter", m_filter);
 
 	return;
 }
+
 void SearchPopup::onXpValue(CCObject* sender) {
 	auto btn = typeinfo_cast<CCMenuItemSpriteExtra*>(sender);
-	auto id = btn->getID();
-	auto tag = btn->getTag();
+	auto parameters = static_cast<SetXPValue*>(static_cast<CCNode*>(sender)->getUserObject());
 
-	if (id == "value-left" && m_xp[tag] > 0) {
-		m_xp[tag] = m_xp[tag] - 1;
-	}
-	else if (id == "value-right" && m_xp[tag] < 3) {
-		m_xp[tag] = m_xp[tag] + 1;
-	}
+	auto id = parameters->m_id;
+	auto oldValue = m_filter["xp"][id]["value"].as<int>().unwrapOr(0);
+	auto newValue = oldValue + parameters->m_value;
+	m_filter["xp"][id].set("value", newValue);
+
+	log::info("{}: {}", id, newValue);
 
 	//update nodes
 	auto menu = btn->getParent();
@@ -991,26 +741,25 @@ void SearchPopup::onXpValue(CCObject* sender) {
 
 	std::vector<std::string> valueStrings = { "None", "Low", "Avg", "Max" };
 
-	left->setVisible(m_xp[tag] > 0);
-	right->setVisible(m_xp[tag] < 3);
-	label->setCString(valueStrings[m_xp[tag]].c_str());
+	left->setVisible(newValue > 0);
+	right->setVisible(newValue < 3);
+	label->setCString(valueStrings[newValue].c_str());
 	
 	//save filters
-	saveFilters();
+	Mod::get()->setSavedValue<matjson::Value>("search-filter", m_filter);
 
 	return;
 }
 void SearchPopup::onXpMode(CCObject* sender) {
 	auto btn = typeinfo_cast<CCMenuItemSpriteExtra*>(sender);
-	auto id = btn->getID();
-	auto tag = btn->getTag();
+	auto parameters = static_cast<SetXPValue*>(static_cast<CCNode*>(sender)->getUserObject());
 
-	if (id == "mode-left" && m_xpMode[tag] > 0) {
-		m_xpMode[tag] = m_xpMode[tag] - 1;
-	}
-	else if (id == "mode-right" && m_xpMode[tag] < 4) {
-		m_xpMode[tag] = m_xpMode[tag] + 1;
-	}
+	auto id = parameters->m_id;
+	auto oldValue = m_filter["xp"][id]["mode"].as<int>().unwrapOr(0);
+	auto newValue = oldValue + parameters->m_value;
+	m_filter["xp"][id].set("mode", newValue);
+
+	log::info("{}: {}", id, newValue);
 
 	//update nodes
 	auto menu = btn->getParent();
@@ -1020,84 +769,72 @@ void SearchPopup::onXpMode(CCObject* sender) {
 
 	std::vector<std::string> modeStrings = { ">=", ">", "=", "<", "<=" };
 
-	left->setVisible(m_xpMode[tag] > 0);
-	right->setVisible(m_xpMode[tag] < 4);
-	label->setCString(modeStrings[m_xpMode[tag]].c_str());
+	left->setVisible(newValue > 0);
+	right->setVisible(newValue < 4);
+	label->setCString(modeStrings[newValue].c_str());
 
 	//save filters
-	saveFilters();
+	Mod::get()->setSavedValue<matjson::Value>("search-filter", m_filter);
 
 	return;
 }
 void SearchPopup::checkAll(CCObject* sender) {
-	if (m_mainLayer) {
-		m_mainLayer->removeAllChildrenWithCleanup(true);
-	}
+	if (m_mainLayer) m_mainLayer->removeAllChildrenWithCleanup(true);
 
 	switch (m_currentTab) {
     	case static_cast<int>(SearchModes::Difficulty):
-        	for (int i = 0; i < m_difficulties.size(); i++) {
-				m_difficulties[i] = true;
-			}
+        	for (auto [key, value] : m_filter["difficulties"]) m_filter["difficulties"].set(key, true);
         	break;
    		case static_cast<int>(SearchModes::Packs):
-        	for (int i = 0; i < m_packs.size(); i++) {
-				m_packs[i] = true;
-			}
+        	for (auto [key, value] : m_filter["packs"]) m_filter["packs"].set(key, true);
         	break;
     	case static_cast<int>(SearchModes::Skills):
-        	for (int i = 0; i < m_skills.size(); i++) {
-				m_skills[i] = true;
-			}
+        	for (auto [key, value] : m_filter["skills"]) m_filter["skills"].set(key, true);
         	break;
     	case static_cast<int>(SearchModes::XP):
-        	for (int i = 0; i < m_xpToggle.size(); i++) {
-				m_xpToggle[i] = true;
-			}
+        	for (auto [key, value] : m_filter["xp"]) m_filter["xp"][key].set("toggled", true);
         	break;
 	}
 
 	//save filters
-	saveFilters();
+	Mod::get()->setSavedValue<matjson::Value>("search-filter", m_filter);
+
+	//save offset
+	auto offs = m_list->m_tableView->m_contentLayer->getPositionY();
 
 	//reload tab
 	loadTab(m_currentTab);
+	m_list->m_tableView->m_contentLayer->setPositionY(offs);
 
 	return;
 }
 void SearchPopup::uncheckAll(CCObject* sender) {
-	if (m_mainLayer) {
-		m_mainLayer->removeAllChildrenWithCleanup(true);
-	}
+	if (m_mainLayer) m_mainLayer->removeAllChildrenWithCleanup(true);
 	
 	switch (m_currentTab) {
     	case static_cast<int>(SearchModes::Difficulty):
-        	for (int i = 0; i < m_difficulties.size(); i++) {
-				m_difficulties[i] = false;
-			}
+        	for (auto [key, value] : m_filter["difficulties"]) m_filter["difficulties"].set(key, false);
         	break;
    		case static_cast<int>(SearchModes::Packs):
-        	for (int i = 0; i < m_packs.size(); i++) {
-				m_packs[i] = false;
-			}
+        	for (auto [key, value] : m_filter["packs"]) m_filter["packs"].set(key, false);
         	break;
     	case static_cast<int>(SearchModes::Skills):
-        	for (int i = 0; i < m_skills.size(); i++) {
-				m_skills[i] = false;
-			}
+        	for (auto [key, value] : m_filter["skills"]) m_filter["skills"].set(key, false);
         	break;
     	case static_cast<int>(SearchModes::XP):
-        	for (int i = 0; i < m_xpToggle.size(); i++) {
-				m_xpToggle[i] = false;
-			}
+        	for (auto [key, value] : m_filter["xp"]) m_filter["xp"][key].set("toggled", false);
         	break;
 	}
 
 	//save filters
-	saveFilters();
+	Mod::get()->setSavedValue<matjson::Value>("search-filter", m_filter);
+
+	//save offset
+	auto offs = m_list->m_tableView->m_contentLayer->getPositionY();
 
 	//reload tab
 	loadTab(m_currentTab);
+	m_list->m_tableView->m_contentLayer->setPositionY(offs);
 	
 	return;
 }

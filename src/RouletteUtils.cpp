@@ -17,26 +17,8 @@ std::string RouletteUtils::toFlags(std::vector<bool> settings) {
     
     for (int i = 0; i < settings.size(); i++) {
         if (settings[i]) {
-            switch(i % 6) {
-                case 0:
-                    flag |= 0b000001;
-                    break;
-                case 1:
-                    flag |= 0b000010;
-                    break;
-                case 2:
-                    flag |= 0b000100;
-                    break;
-                case 3:
-                    flag |= 0b001000;
-                    break;
-                case 4:
-                    flag |= 0b010000;
-                    break;
-                case 5:
-                    flag |= 0b100000;
-                    break;
-            }
+            std::vector<int> flags = {0b000001, 0b000010, 0b000100, 0b001000, 0b010000, 0b100000};
+            flag |= flags[i % 6];
         }
 
         if ((i % 6 == 5) || (i == settings.size() - 1)) { //convert flag to string and push
@@ -53,24 +35,19 @@ std::string RouletteUtils::toFlags(std::vector<bool> settings) {
 
 std::vector<bool> RouletteUtils::fromFlags(std::string flags) {
 
-    //find the size of the settings by getting the number of main/legacy/bonus packs and adding 4
+    //find the size of the settings by getting the number of main/legacy/bonus packs and adding 6
     auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-    auto mainPacks = data["main"].asArray().unwrap().size();
-    auto legacyPacks = data["legacy"].asArray().unwrap().size();
-    auto bonusPacks = data["bonus"].asArray().unwrap().size();
+    auto mainPacks = data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
+    auto legacyPacks = data["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
+    auto bonusPacks = data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size();
     auto size = (6 + mainPacks + legacyPacks + bonusPacks);
 
     std::vector<bool> result = {};
     std::vector<std::string> flagArray = DPUtils::substring(flags, ",");
 
     if (flagArray.size() <= 1) { // if using the old settings system, convert to bools this way 
-        for (auto c : flags) {
-            result.push_back(c == '1');
-        }
-
-        for (int i = result.size(); i < size; i++) {
-            result.push_back(false); // fill in remaining settings
-        }
+        for (auto c : flags) result.push_back(c == '1');
+        for (int i = result.size(); i < size; i++) result.push_back(false); // fill in remaining settings
 
         return result;
     }
@@ -78,26 +55,8 @@ std::vector<bool> RouletteUtils::fromFlags(std::string flags) {
     auto f = numFromString<int>(flagArray[0]).unwrapOr(0b000000);
     int fIndex = 0;
     for (int i = 0; i < size; i++) {
-        switch(i % 6) {
-            case 0:
-                result.push_back((f & 0b000001) > 0);
-                break;
-            case 1:
-                result.push_back((f & 0b000010) > 0);
-                break;
-            case 2:
-                result.push_back((f & 0b000100) > 0);
-                break;
-            case 3:
-                result.push_back((f & 0b001000) > 0);
-                break;
-            case 4:
-                result.push_back((f & 0b010000) > 0);
-                break;
-            case 5:
-                result.push_back((f & 0b100000) > 0);
-                break;
-        }
+        std::vector<int> flags = {0b000001, 0b000010, 0b000100, 0b001000, 0b010000, 0b100000};
+        result.push_back((f & flags[i % 6]) > 0);
 
         if (i % 6 == 5) {
             fIndex += 1;
@@ -106,9 +65,7 @@ std::vector<bool> RouletteUtils::fromFlags(std::string flags) {
         }
     }
 
-    for (int i = result.size(); i < size; i++) {
-        result.push_back(false); // fill in remaining settings
-    }
+    for (int i = result.size(); i < size; i++)  result.push_back(false); // fill in remaining settings
 
     return result;
 }
@@ -126,15 +83,15 @@ std::vector<int> RouletteUtils::setupLevels(std::vector<matjson::Value> packs, s
     for (auto pack : packs) {
         for (auto lvl : pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault()) {
             if (completedFlag != uncompletedFlag) {
-                if (completedFlag && std::find(completedLvls.begin(), completedLvls.end(), lvl) != completedLvls.end()) {
+                if (completedFlag && DPUtils::containsInt(completedLvls, lvl)) {
                     levels.push_back(lvl);
                 } 
-                else if (uncompletedFlag && std::find(completedLvls.begin(), completedLvls.end(), lvl) == completedLvls.end()) {
+                else if (uncompletedFlag && !DPUtils::containsInt(completedLvls, lvl)) {
                     levels.push_back(lvl);
                 }
             }
             else {
-                if (std::find(levels.begin(), levels.end(), lvl) == levels.end()) {
+                if (!DPUtils::containsInt(levels, lvl)) {
                     levels.push_back(lvl);
                 }
             }
@@ -152,7 +109,7 @@ std::vector<int> RouletteUtils::setupLevels(std::vector<matjson::Value> packs, s
     int i = 0;
     while (i < std::min(100, int(levels.size()))) {
         auto lvl = distribution(gen);
-        if (std::find(order.begin(), order.end(), lvl) == order.end()) {
+        if (!DPUtils::containsInt(order, lvl)) {
             order.push_back(lvl);
             i += 1;
         }

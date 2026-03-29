@@ -69,7 +69,7 @@ special (String) - custom effects
 */
 
 // Yes, all of these are hardcoded, they pretty much have to be to avoid any issues.
-const matjson::Value DPTextEffects = matjson::parse(R"(
+/*const matjson::Value DPTextEffects = matjson::parse(R"(
     {
         "beginner": {
             "textColor": [0, 134, 168],
@@ -454,4 +454,4 @@ const matjson::Value DPTextEffects = matjson::parse(R"(
             "crystal": true
         }
     }
-)").unwrapOrDefault();
+)").unwrapOrDefault();*/

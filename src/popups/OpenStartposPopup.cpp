@@ -25,18 +25,14 @@ bool OpenStartposPopup::init() {
 	auto searchObject = GJSearchObject::create(SearchType::Type19, std::to_string(m_levelID));
 	auto storedLevels = glm->getStoredOnlineLevels(searchObject->getKey());
 
-	if (storedLevels)
-	{
+	if (storedLevels) {
 		loadLevelsFinished(storedLevels, "");
 
         m_loadCircle->fadeAndRemove();
         this->removeAllChildrenWithCleanup(true);
         this->removeMeAndCleanup();
 	}
-	else
-	{
-		glm->getOnlineLevels(searchObject);
-	}
+	else glm->getOnlineLevels(searchObject);
 
     return true;
 }
@@ -71,6 +67,8 @@ void OpenStartposPopup::loadLevelsFailed(const char*) {
 }
 
 OpenStartposPopup::~OpenStartposPopup() {
+	auto glm = GameLevelManager::sharedState();
+	if (glm->m_levelManagerDelegate == this) glm->m_levelManagerDelegate = nullptr;
 	this->removeAllChildrenWithCleanup(true);
 }
 

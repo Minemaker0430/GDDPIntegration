@@ -8,6 +8,7 @@
 
 #include "DPLayer.hpp"
 #include "RouletteSafeLayer.hpp"
+#include "../popups/RandomLevelPopup.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -95,6 +96,12 @@ bool RouletteSafeLayer::init(std::vector<int> IDs) {
 	reloadMenu->setID("reload-menu");
 	this->addChild(reloadMenu);
 
+	auto randomSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
+	auto randomBtn = CCMenuItemSpriteExtra::create(randomSpr, this, menu_selector(RouletteSafeLayer::onRandomLevel));
+	randomBtn->setPositionY(-50.f);
+	randomBtn->setID("random-btn");
+	if (Mod::get()->getSettingValue<bool>("enable-random-level-picker")) reloadMenu->addChild(randomBtn);
+
 	//pages menu
 	m_pagesMenu = CCMenu::create();
 	m_pagesMenu->setPosition({ 0, 0 });
@@ -125,6 +132,11 @@ bool RouletteSafeLayer::init(std::vector<int> IDs) {
 	this->setKeypadEnabled(true);
 
 	return true;
+}
+
+void RouletteSafeLayer::onRandomLevel(CCObject*) {
+	RandomLevelPopup::create(m_IDs)->show();
+	return;
 }
 
 void RouletteSafeLayer::reloadLevels(CCObject* sender) {
@@ -248,5 +260,7 @@ RouletteSafeLayer* RouletteSafeLayer::create(std::vector<int> IDs) {
 }
 
 RouletteSafeLayer::~RouletteSafeLayer() {
+	auto glm = GameLevelManager::sharedState();
+	if (glm->m_levelManagerDelegate == this) glm->m_levelManagerDelegate = nullptr;
     this->removeAllChildrenWithCleanup(true);
 }

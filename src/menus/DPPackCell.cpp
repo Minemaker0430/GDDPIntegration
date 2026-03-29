@@ -42,34 +42,9 @@ bool DPPackCell::init() {
     // get pack save file
     auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
-	// get completed levels
-	auto progress = 0;
-	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-	for (auto level : levelIDs) {
-		if (std::find(completedLvls.begin(), completedLvls.end(), level) != completedLvls.end()) {
-			progress += 1;
-		}
-	}
-
-    // update status
-    auto hasRank = listSave.hasRank || ((progress >= reqLevels) && (reqLevels > -1));
-	auto completed = (progress == levelIDs.size());
-
-	if (m_index == "monthly" && progress >= 5) {
-		auto completedMonthlies = Mod::get()->getSavedValue<std::vector<std::string>>("monthly-completions");
-
-		if (std::find(completedMonthlies.begin(), completedMonthlies.end(), saveID) == completedMonthlies.end()) {
-			completedMonthlies.insert(completedMonthlies.begin(), saveID);
-			Mod::get()->setSavedValue<std::vector<std::string>>("monthly-completions", completedMonthlies);
-		}
-	}
-
-	//save
-	Mod::get()->setSavedValue<ListSaveFormat>(saveID, ListSaveFormat{ .progress = progress, .completed = completed, .hasRank = hasRank });
-
     // get full name
     std::string fullName = name + 
-    ((m_index == "main" && hasRank) ? "+ " :" ") + 
+    ((m_index == "main" && listSave.hasRank) ? "+ " :" ") + 
     ((m_index == "main" || m_index == "legacy") ? "Demons" : "") +
     ((m_index == "monthly" && listSave.progress > 5) ? " +" : "");
 
@@ -77,39 +52,38 @@ bool DPPackCell::init() {
 
     CCLabelBMFont* packText = CCLabelBMFont::create(fullName.c_str(), "bigFont.fnt");
 	packText->setScale(0.65f);
-	if (fullName.length() > 18) { packText->setScale(0.50f); }
-	if (fullName.length() > 25) { packText->setScale(0.425f); }
+	if (fullName.length() > 18) packText->setScale(0.50f);
+	if (fullName.length() > 25) packText->setScale(0.425f);
 	packText->setAnchorPoint({ 0.f, 1.f });
 	packText->setPosition({ 53.f, 49.f });
 	packText->setID("pack-text");
 
     //custom pack text
 	auto customPackText = CustomText::create(fullName);
-	if (Mod::get()->getSettingValue<bool>("custom-pack-text") && DPTextEffects.contains(saveID)) {
-		customPackText->addEffectsFromProperties(DPTextEffects[saveID].as<matjson::Value>().unwrapOrDefault());
+	if (Mod::get()->getSettingValue<bool>("custom-pack-text") && (m_pack.contains("textEffects") || data["main"][mainPack].contains("textEffects"))) {
+		customPackText->addEffectsFromProperties((m_index == "legacy") ? data["main"][mainPack]["textEffects"] : m_pack["textEffects"]);
 		customPackText->setScale(0.65f);
-		if (fullName.length() > 18) { customPackText->setScale(0.50f); }
-		if (fullName.length() > 25) { customPackText->setScale(0.425f); }
+		if (fullName.length() > 18) customPackText->setScale(0.50f);
+		if (fullName.length() > 25) customPackText->setScale(0.425f);
 		customPackText->setAnchorPoint({ 0, 1 });
 		customPackText->setPosition({ 53, 49 });
 		customPackText->setID("custom-pack-text");
 
 		packText->setVisible(false);
 	}
-	else {
-		customPackText->setVisible(false);
-	}
+	else customPackText->setVisible(false);
 
-	if (m_index == "bonus" && Mod::get()->getSettingValue<bool>("disable-fancy-bonus-text")) {
+	if ((m_index == "bonus" && Mod::get()->getSettingValue<bool>("disable-fancy-bonus-text")) ||
+		(m_index == "monthly" && Mod::get()->getSettingValue<bool>("disable-fancy-monthly-text"))) {
 		packText->setVisible(true);
 		customPackText->setVisible(false);	
 	}
 
-	if (completed) {
+	if (listSave.completed) {
 		packText->setFntFile("goldFont.fnt");
 		packText->setScale(0.85f);
-		if (fullName.length() > 18) { packText->setScale(0.65f); }
-		if (fullName.length() > 25) { packText->setScale(0.55f); }
+		if (fullName.length() > 18) packText->setScale(0.65f);
+		if (fullName.length() > 25) packText->setScale(0.55f);
 
 		if (!Mod::get()->getSettingValue<bool>("override-gold-text")) {
 			customPackText->setVisible(false);
@@ -117,20 +91,19 @@ bool DPPackCell::init() {
 		}
 	}
 
-	auto spr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data());
-    auto packSpr = (spr) ? spr : CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
+	auto unkSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
+	auto packSpr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", sprite)).data(), unkSpr);
 	packSpr->setScale(1.0f);
 	packSpr->setAnchorPoint({ 0.5f, 0.5f });
 	packSpr->setPosition({ 28.5f, 25.f });
 	packSpr->setVisible(sprite != "DP_Invisible");
 	packSpr->setID("pack-sprite");
 
-	auto plusSpr = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSprite)).data());
-	auto packPlusSpr = (plusSpr) ? plusSpr : CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
+	auto packPlusSpr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(fmt::format("{}.png", plusSprite)).data(), unkSpr);
 	packPlusSpr->setScale(1.0f);
 	packPlusSpr->setAnchorPoint({ 0.5f, 0.5f });
 	packPlusSpr->setPosition({ 28.5f, 25.f });
-	packPlusSpr->setVisible(sprite != "DP_Invisible" && ((m_index == "main" && hasRank) || (m_index == "legacy" && completed)));
+	packPlusSpr->setVisible(sprite != "DP_Invisible" && ((m_index == "main" && listSave.hasRank) || (m_index == "legacy" && listSave.completed)));
 	packPlusSpr->setID("pack-plus-sprite");
 
     auto packProgressBack = CCSprite::create("GJ_progressBar_001.png");
@@ -147,17 +120,11 @@ bool DPPackCell::init() {
 	packProgressFront->setScaleY(0.75f);
 	packProgressFront->setZOrder(1);
 
-	if (completed) {
-		packProgressFront->setColor({ 255, 255, 0 });
-	}
-	else if ((m_index == "main" && !hasRank) || (m_index == "monthly" && progress < 5)) {
-		packProgressFront->setColor({ 255, 84, 50 });
-	}
-	else {
-		packProgressFront->setColor({ 80, 190, 255 });
-	}
+	if (listSave.completed) packProgressFront->setColor({ 255, 255, 0 });
+	else if ((m_index == "main" && !listSave.hasRank) || (m_index == "monthly" && listSave.progress < 5)) packProgressFront->setColor({ 255, 84, 50 });
+	else packProgressFront->setColor({ 80, 190, 255 });
 
-	auto progressPercent = (float)progress / ((m_index == "monthly") ? ((progress >= 5) ? 6.f : 5.f) : ((hasRank || m_index != "main") ? (float)levelIDs.size() : (float)reqLevels));
+	auto progressPercent = (float)listSave.progress / ((m_index == "monthly") ? ((listSave.progress >= 5) ? 6.f : 5.f) : ((listSave.hasRank || m_index != "main") ? (float)levelIDs.size() : (float)reqLevels));
 
     auto clippingNode = CCClippingNode::create();
 	auto stencil = CCScale9Sprite::create("square02_001.png");
@@ -215,26 +182,22 @@ bool DPPackCell::init() {
     epicSprite->setAnchorPoint({ 0.f, 0.f });
 	epicSprite->setZOrder(-1);
 
-	if (!listSave.hasRank && m_index == "main") {
-		progStr = fmt::format("{}/{} to {} Tier", progress, reqLevels, data[m_index][m_id + 1]["name"].asString().unwrapOr("???"));
-	}
-	else if (listSave.completed && progressPercent == 1.0f) {
+	if (listSave.completed && progressPercent == 1.0f) {
 		progStr = "100% Complete!";
 		progText->setFntFile("goldFont.fnt");
 		packPlusSpr->setVisible(m_index == "main" || m_index == "legacy");
 		if (m_index == "monthly") packSpr->addChild(epicSprite);
 	}
+	else if (!listSave.hasRank && m_index == "main") progStr = fmt::format("{}/{} to {} Tier", listSave.progress, reqLevels, data[m_index][m_id + 1]["name"].asString().unwrapOr("???"));
 	else if (m_index == "monthly") {
-		if (progress < 5) {
-			progStr = fmt::format("{}/5 to Partial Completion", progress);
-		}
+		if (listSave.progress < 5) progStr = fmt::format("{}/5 to Partial Completion", listSave.progress);
 		else {
-			progStr = fmt::format("{}/6 to Completion", progress);
+			progStr = fmt::format("{}/6 to Completion", listSave.progress);
 			packSpr->addChild(epicSprite);
 		}
 	}
 	else {
-		progStr = fmt::format("{}/{} to Completion", progress, levelIDs.size());
+		progStr = fmt::format("{}/{} to Completion", listSave.progress, levelIDs.size());
 		if (m_index == "main") packPlusSpr->setVisible(true);
 	}
 
@@ -242,7 +205,7 @@ bool DPPackCell::init() {
 	progText->setPosition({ 155.f, 16.f });
 	progText->setAnchorPoint({ 0.5f, 0.5f });
 	progText->setScale(0.35f);
-	if (completed) { progText->setScale(0.45f); }
+	if (listSave.completed) { progText->setScale(0.45f); }
 	progText->setID("progress-text");
 
 	//extra monthly things
@@ -267,8 +230,8 @@ bool DPPackCell::init() {
 		this->addChild(monthlyText);
 
 		// add placeholder levels if it's empty or missing some
-		if (levelIDs.empty()) { levelIDs = std::vector<int>(6, 0); }
-		for (int i = levelIDs.size(); i <= 6; i++) { levelIDs.push_back(0); }
+		if (levelIDs.empty()) levelIDs = std::vector<int>(6, 0);
+		for (int i = levelIDs.size(); i <= 6; i++) levelIDs.push_back(0);
 		if (levelIDs != m_pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault()) m_pack.set("levelIDs", levelIDs);
 	}
 
@@ -308,7 +271,6 @@ bool DPPackCell::init() {
 
 	if (m_id == 0 && m_index == "monthly") {
 		auto goldBG = CCLayerColor::create({ 255, 200, 0, 255 });
-		//if (Loader::get()->isModLoaded("alphalaneous.transparent_lists")) { goldBG->setOpacity(50); }
 		goldBG->setID("gold-bg");
 		goldBG->setContentHeight(50.f);
 		goldBG->setZOrder(-1);

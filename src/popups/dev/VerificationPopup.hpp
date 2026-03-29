@@ -19,10 +19,6 @@ class VerificationPopup : public Popup {
         LoadingCircle* m_loadcircle;
         CCLabelBMFont* m_loadText;
         CCMenu* m_tabs;
-        ListView* m_list;
-        ListView* m_levelList; //only used in pack settings
-
-        int m_currentTab = 0;
         
         std::string m_deviceCode;
         std::string m_verificationCode = "XXXX-XXXX";
@@ -35,20 +31,13 @@ class VerificationPopup : public Popup {
         matjson::Value m_dataTemp;
         std::string m_dataMainSha;
         std::string m_dataDevSha;
-        matjson::Value m_skillsetsMain;
-        matjson::Value m_skillsetsDev;
-        matjson::Value m_skillsetsTemp;
-        std::string m_skillsetsMainSha;
-        std::string m_skillsetsDevSha;
 
         async::TaskHolder<web::WebResponse> m_listener;
         async::TaskHolder<web::WebResponse> m_listener2;
-        async::TaskHolder<web::WebResponse> m_listener3;
-        async::TaskHolder<web::WebResponse> m_listener4;
-
-        float m_scroll = 0.f;
     
         void parseResponse(std::string res);
+
+        void onDocs(CCObject*);
 
         //Auth Stuff
         void reqCode();
@@ -65,7 +54,15 @@ class VerificationPopup : public Popup {
         void onDelete(CCObject*);
         void onChangeLevelSkill(CCObject*);
         void onPushChanges(CCObject*);
+        void onDifficulty(CCObject*);
+        void onColor(CCObject*);
+
+        void onDBSync(CCObject*); // currently only reserved for mocha rn
     public:
+        ListView* m_list;
+        ListView* m_levelList; //only used in pack settings    
+        TextInput* m_searchInput;
+
         std::string m_clientID;
 
         matjson::Value m_dataDev;
@@ -73,14 +70,19 @@ class VerificationPopup : public Popup {
         std::string m_index;
         int m_packID;
         int m_levelID = -1;
+        
+        int m_currentTab = 0;
 
         bool m_practiceToggle = false; // "true" means editing startpos copies
 
         matjson::Value m_currentData; //Use for packs and skillsets
         matjson::Value m_levelData; //ONLY used in packs as there's no need for levels to be used with skillsets
 
-        void removeObject(std::string type, std::string id, int pos);
-        void refreshLevelSkillsets();
+        void moveToLegacy(std::string);
+        void removeObject(std::string type, std::string id, int pos = 0);
+        void refreshLevel();
+        
+        void onUpdateSearch(std::string);
 
         //GUI
         void loadMain(int tab);
@@ -108,6 +110,46 @@ class AddLevelPopup : public Popup {
         static AddLevelPopup* create();
 
         int m_practiceIndex = -1; // -1 = Not a startpos level
+    };
+
+//===================
+//  RenamePopup
+//===================
+
+class RenamePopup : public Popup {
+    protected:
+        bool init() override;
+        virtual ~RenamePopup();
+
+        TextInput* m_value;
+        std::string m_string;
+        geode::Function<void(std::string const&)> m_callback;
+
+        void onConfirm(CCObject*);
+        void onPaste(CCObject*);
+    public:
+        void setCallback(geode::Function<void(std::string const&)>);
+
+        static RenamePopup* create(std::string str = "");
+    };
+
+//===================
+//  DifficultyPopup
+//===================
+
+class DifficultyPopup : public Popup {
+    protected:
+        bool init() override;
+        virtual ~DifficultyPopup();
+
+        geode::Function<void(int const&)> m_callback;
+        matjson::Value m_data;
+
+        void onSelect(CCObject*);
+    public:
+        void setCallback(geode::Function<void(int const&)>);
+
+        static DifficultyPopup* create(matjson::Value);
     };
 
 //===================
@@ -163,6 +205,20 @@ class NewPackPopup : public Popup {
     };
 
 //===================
+//  NewMedalPopup
+//===================
+
+class NewMedalPopup : public Popup {
+    protected:
+        bool init() override;
+        virtual ~NewMedalPopup();
+
+        void onConfirm(CCObject*);
+    public:
+        static NewMedalPopup* create();
+    };
+
+//===================
 //  MovePopup
 //===================
 
@@ -201,6 +257,7 @@ class MovePopup : public Popup {
         std::string saveID = "null";
         std::vector<int> levelIDs = {0};
         int reqLevels = 999;
+        matjson::Value textEffects; // always initializes blank
     };
 
     template <>
@@ -215,7 +272,9 @@ class MovePopup : public Popup {
                 .plusSprite = value["plusSprite"].as<std::string>().unwrapOr("DP_Unknown"),
                 .saveID = value["saveID"].as<std::string>().unwrapOr("null"),
                 .levelIDs = value["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
-                .reqLevels = value["reqLevels"].as<int>().unwrapOr(999)};
+                .reqLevels = value["reqLevels"].as<int>().unwrapOr(999),
+                .textEffects = value["textEffects"]
+            };
 
             return Ok(f);
         }
@@ -228,7 +287,9 @@ class MovePopup : public Popup {
                                             {"plusSprite", value.plusSprite},
                                             {"saveID", value.saveID},
                                             {"levelIDs", value.levelIDs},
-                                            {"reqLevels", value.reqLevels}});
+                                            {"reqLevels", value.reqLevels},
+                                            {"textEffects", value.textEffects}
+                                        });
             return obj;
         }
     };
@@ -260,7 +321,8 @@ struct matjson::Serialize<GDDPLegacyPackFormat>
             .plusSprite = value["plusSprite"].as<std::string>().unwrapOr("DP_Unknown"),
             .saveID = value["saveID"].as<std::string>().unwrapOr("null"),
             .levelIDs = value["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
-            .mainPack = value["mainPack"].as<int>().unwrapOr(0)};
+            .mainPack = value["mainPack"].as<int>().unwrapOr(0)
+        };
 
         return Ok(f);
     }
@@ -273,7 +335,8 @@ struct matjson::Serialize<GDDPLegacyPackFormat>
                                         {"plusSprite", value.plusSprite},
                                         {"saveID", value.saveID},
                                         {"levelIDs", value.levelIDs},
-                                        {"mainPack", value.mainPack}});
+                                        {"mainPack", value.mainPack}
+                                        });
         return obj;
     }
 };
@@ -289,6 +352,7 @@ struct GDDPBonusPackFormat
     std::string sprite = "DP_Unknown";
     std::string saveID = "null";
     std::vector<int> levelIDs = {0};
+    matjson::Value textEffects; // always initializes blank
 };
 
 template <>
@@ -301,7 +365,9 @@ struct matjson::Serialize<GDDPBonusPackFormat>
             .description = value["description"].as<std::string>().unwrapOr("Description"),
             .sprite = value["sprite"].as<std::string>().unwrapOr("DP_Unknown"),
             .saveID = value["saveID"].as<std::string>().unwrapOr("null"),
-            .levelIDs = value["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0))};
+            .levelIDs = value["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
+            .textEffects = value["textEffects"]
+        };
 
         return Ok(f);
     }
@@ -312,7 +378,9 @@ struct matjson::Serialize<GDDPBonusPackFormat>
                                         {"description", value.description},
                                         {"sprite", value.sprite},
                                         {"saveID", value.saveID},
-                                        {"levelIDs", value.levelIDs}});
+                                        {"levelIDs", value.levelIDs},
+                                        {"textEffects", value.textEffects}
+                                        });
         return obj;
     }
 };
@@ -329,6 +397,7 @@ struct GDDPMonthlyPackFormat
     int month = 1;
     int year = 1987;
     std::vector<int> levelIDs = {0};
+    matjson::Value textEffects; // always initializes blank
 };
 
 template <>
@@ -342,7 +411,9 @@ struct matjson::Serialize<GDDPMonthlyPackFormat>
             .sprite = value["sprite"].as<std::string>().unwrapOr("DP_Unknown"),
             .month = value["month"].as<int>().unwrapOr(11),
             .year = value["year"].as<int>().unwrapOr(1987),
-            .levelIDs = value["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0))};
+            .levelIDs = value["levelIDs"].as<std::vector<int>>().unwrapOr(std::vector<int>(1, 0)),
+            .textEffects = value["textEffects"]
+        };
 
         return Ok(f);
     }
@@ -354,7 +425,9 @@ struct matjson::Serialize<GDDPMonthlyPackFormat>
                                         {"sprite", value.sprite},
                                         {"month", value.month},
                                         {"year", value.year},
-                                        {"levelIDs", value.levelIDs}});
+                                        {"levelIDs", value.levelIDs},
+                                        {"textEffects", value.textEffects}
+                                        });
         return obj;
     }
 };
@@ -369,6 +442,7 @@ struct GDDPLevelFormat
     int difficulty = 0;
     std::vector<std::string> skillsets;
     matjson::Value xp; //Will always initialize blank since not all levels will have XP.
+    int startposCopy;
 };
 
 template <>
@@ -380,7 +454,9 @@ struct matjson::Serialize<GDDPLevelFormat>
             .name = value["name"].as<std::string>().unwrapOr("Name"),
             .difficulty = value["difficulty"].as<int>().unwrapOr(0),
             .skillsets = value["skillsets"].as<std::vector<std::string>>().unwrapOrDefault(),
-            .xp = value["xp"].as<matjson::Value>().unwrapOrDefault()};
+            .xp = value["xp"].as<matjson::Value>().unwrapOrDefault(),
+            .startposCopy = value["startpos-copy"].as<int>().unwrapOr(0)
+        };
         return Ok(f);
     }
 
@@ -389,7 +465,8 @@ struct matjson::Serialize<GDDPLevelFormat>
         auto obj = matjson::makeObject({{"name", value.name},
                                         {"difficulty", value.difficulty},
                                         {"skillsets", value.skillsets},
-                                        {"xp", value.xp}});
+                                        {"xp", value.xp},
+                                        {"startpos-copy", value.startposCopy}});
         return obj;
     }
 };
@@ -426,5 +503,56 @@ struct matjson::Serialize<GDDPSkillsetFormat>
                                         {"description", value.description},
                                         {"sprite", value.sprite}});
         return obj;
+    }
+};
+
+//===================
+//  Medal Format
+//===================
+
+struct GDDPMedalFormat
+{
+    std::string name = "MEDAL";
+    int requirement = 0;
+    ccColor3B color = {255, 255, 255};
+};
+
+template <>
+struct matjson::Serialize<GDDPMedalFormat>
+{
+    static Result<GDDPMedalFormat> fromJson(matjson::Value const &value)
+    {
+        auto f = GDDPMedalFormat{
+            .name = value["name"].as<std::string>().unwrapOr("MEDAL"),
+            .requirement = value["requirement"].as<int>().unwrapOr(0),
+            .color = value["color"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255})
+        };
+        return Ok(f);
+    }
+
+    static matjson::Value toJson(GDDPMedalFormat const &value)
+    {
+        auto obj = matjson::makeObject({{"name", value.name},
+                                        {"requirement", value.requirement},
+                                        {"color", value.color}
+                                    });
+        return obj;
+    }
+};
+
+//===================
+//  Sort Medals
+//===================
+
+struct SortMedals
+{
+    int index;
+    int req;
+
+    SortMedals(const int& i, const int& r) : index(i), req(r) {}
+
+    bool operator < (const SortMedals& val) const
+    {
+        return (req < val.req);
     }
 };

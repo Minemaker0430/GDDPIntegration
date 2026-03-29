@@ -33,6 +33,8 @@ public:
 	void pageRight(CCObject*);
 	void pageLeft(CCObject*);
 
+	void onRandomLevel(CCObject*);
+
 	void loadLevels(int);
 	void loadLevelsFinished(CCArray*, const char*) override;
 	void loadLevelsFailed(const char*) override;

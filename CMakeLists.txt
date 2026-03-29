@@ -10,36 +10,9 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 project(GDDPIntegration VERSION 1.0.0)
 
-# Set up the mod binary
-add_library(${PROJECT_NAME} SHARED
-    #src/main.cpp
-    # Add your cpp files here
-    src/hooks/CreatorLayer.cpp
-    src/hooks/LevelInfoLayer.cpp
-    src/hooks/LevelCell.cpp
-    src/hooks/PlayLayer.cpp
-    src/popups/StatsPopup.cpp
-    src/DPUtils.cpp
-    src/menus/DPListLayer.cpp
-    src/menus/DPLayer.cpp
-    src/menus/DPPackCell.cpp
-    src/menus/RecommendedLayer.cpp
-    src/popups/SupportPopup.cpp
-    src/XPUtils.cpp
-    src/popups/XPPopup.cpp
-    src/RecommendedUtils.cpp
-    src/menus/DPSearchLayer.cpp
-    src/popups/SearchPopup.cpp
-    src/RouletteUtils.cpp
-    src/popups/RoulettePopup.cpp
-    src/menus/RouletteSafeLayer.cpp
-    src/popups/dev/VerificationPopup.cpp
-    src/popups/dev/SaveContentsPopup.cpp
-    src/base64.cpp
-    src/CustomText.cpp
-    src/RefreshStats.cpp
-    src/popups/OpenStartposPopup.cpp
-)
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
+
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 if (NOT DEFINED ENV{GEODE_SDK})
     message(FATAL_ERROR "Unable to find Geode SDK! Please define GEODE_SDK environment variable to point to Geode")

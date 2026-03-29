@@ -13,10 +13,13 @@ protected:
 	virtual bool init(); //add stuff to the layer
 	void backButton(CCObject*); //when you press back
 	virtual void keyBackClicked(); //when you press escape
+	virtual void update(float) override;
+
 	ListView* m_list;
 	CCMenu* m_tabs;
 	CCMenu* m_backMenu;
 	matjson::Value m_data;
+	std::vector<int> m_completedLvls;
 	LoadingCircle* m_loadcircle;
 	int m_currentTab = 0;
 	CCMenu* m_reload;
@@ -25,6 +28,8 @@ protected:
 	bool m_error = false;
 	CCLabelBMFont* m_errorText;
 	CCLabelBMFont* m_monthlyTimer;
+
+	CCArrayExt<TabButton*> m_tabBtns;
 
 	std::string m_devSecret;
 
@@ -42,9 +47,10 @@ public:
 	void callback(CCObject*); //callback for the button to go to this layer
 	void onTab(CCObject*); //tabs switched?
 	void openList(CCObject*); //open list with the id tagged on the btn
+	void onDevToggle(CCObject*); //toggles dev preview mode for staff
 	
 	void reloadCallback(CCObject*); //when reload is pressed
-	void reloadData(bool); //reload all data
+	void reloadData(bool isInit = false); //reload all data
 	void reloadList(int type);
 	
 	void soonCallback(CCObject*); //Coming Soon

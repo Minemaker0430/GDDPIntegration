@@ -55,7 +55,7 @@ void SaveContentsPopup::getContents()
 
     //initialize listeners based on upload type
     if (m_uploadType == (int)UploadType::Dev) {
-        m_loadText->setCString("Getting Dev List... (1/2)");
+        m_loadText->setCString("Getting Dev List... (1/1)");
 
 	    auto req = web::WebRequest();
 	    req.userAgent("GDDP Mod Database");
@@ -65,7 +65,7 @@ void SaveContentsPopup::getContents()
 	    m_listener.spawn(req.get(DEV_LIST), [&](web::WebResponse value){fetchDevList(value);});
     }
     else if (m_uploadType == (int)UploadType::Main || m_uploadType == (int)UploadType::Revert) {
-        m_loadText->setCString("Getting Main List... (1/4)");
+        m_loadText->setCString("Getting Main List... (1/2)");
 
 	    auto req = web::WebRequest();
 	    req.userAgent("GDDP Mod Database");
@@ -92,14 +92,14 @@ void SaveContentsPopup::fetchMainList(web::WebResponse& value) {
             }
         }
 
-        m_loadText->setCString("Getting Main Skillsets... (2/4)");
+        m_loadText->setCString("Getting Dev List... (2/2)");
     
         auto req = web::WebRequest();
         req.userAgent("GDDP Mod Database");
         req.header("Accept", "application/vnd.github+json");
         req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
         req.header("X-GitHub-Api-Version", "2022-11-28");
-        m_listener2.spawn(req.get(SKILLSET_LIST), [&](web::WebResponse value){fetchMainSkills(value);});
+        m_listener2.spawn(req.get(DEV_LIST), [&](web::WebResponse value){fetchDevList(value);});
 				
     }
     else {
@@ -129,19 +129,9 @@ void SaveContentsPopup::fetchDevList(web::WebResponse& value) {
             }
         }
     
-        if (m_uploadType == (int)UploadType::Dev) {
-            m_loadText->setCString("Getting Dev Skillsets... (2/2)");
-        }
-        else {
-            m_loadText->setCString("Getting Dev Skillsets... (4/4)");
-        }
-    
-        auto req = web::WebRequest();
-        req.userAgent("GDDP Mod Database");
-        req.header("Accept", "application/vnd.github+json");
-        req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-        req.header("X-GitHub-Api-Version", "2022-11-28");
-        m_listener2.spawn(req.get(DEV_SKILLSET_LIST), [&](web::WebResponse value){fetchDevSkills(value);});
+        compareChanges();
+            
+        //stops here since all other data is defined by user
     }
     else {
 		FLAlertLayer::create(
@@ -156,82 +146,11 @@ void SaveContentsPopup::fetchDevList(web::WebResponse& value) {
     return;
 }
 
-void SaveContentsPopup::fetchMainSkills(web::WebResponse& value) {
-    if (value.ok() && value.json().isOk() && !value.json().isErr()) {
-        auto list = value.json().unwrapOrDefault();
-        
-        if (list.contains("content")) {
-            if (m_uploadType == (int)UploadType::Revert) {
-                m_skillsetsNew = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-            }
-            else {
-                m_skillsetsOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                m_skillsetsSha = list["sha"].asString().unwrapOr("");
-            }
-        }
-            
-        m_loadText->setCString("Getting Dev List... (3/4)");
-            
-        auto req = web::WebRequest();
-        req.userAgent("GDDP Mod Database");
-        req.header("Accept", "application/vnd.github+json");
-        req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-        req.header("X-GitHub-Api-Version", "2022-11-28");
-        m_listener3.spawn(req.get(DEV_LIST), [&](web::WebResponse value){fetchDevList(value);});
-    }
-    else {
-		FLAlertLayer::create(
-			"ERROR",
-			fmt::format("Something went wrong...\nAt: Get Main Skills\nCode: {}", value.code()).c_str(),
-			"OK"
-		)->show();
-
-		this->removeMeAndCleanup();
-    }
-    
-    return;
-}
-
-void SaveContentsPopup::fetchDevSkills(web::WebResponse& value) {
-    if (value.ok() && value.json().isOk() && !value.json().isErr()) {
-        auto list = value.json().unwrapOrDefault();
-                        
-        if (list.contains("content")) {
-            if (m_uploadType == (int)UploadType::Main) {
-                m_skillsetsNew = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-            } 
-            else {
-                m_skillsetsOld = matjson::parse(base64_decode(list["content"].asString().unwrapOr(""), true)).unwrapOrDefault();
-                m_skillsetsSha = list["sha"].asString().unwrapOr("");
-            }
-        }
-
-        compareChanges();
-            
-        //stops here since all other data is defined by user
-    }
-    else {
-		FLAlertLayer::create(
-			"ERROR",
-			fmt::format("Something went wrong...\nAt: Get Dev Skills\nCode: {}", value.code()).c_str(),
-			"OK"
-		)->show();
-
-		this->removeMeAndCleanup();
-    }
-    
-    return;
-}
-
 void SaveContentsPopup::compareChanges() {
     m_loadText->setCString("Trimming List...");
 
-    if (m_uploadType == (int)UploadType::Dev) {
-        m_dataNew.set("database-version", m_dataOld["database-version"].as<int>().unwrapOr(0) + 1);
-    }
-    else {
-        m_dataNew.set("database-version", m_dataNew["database-version"].as<int>().unwrapOr(0));
-    }
+    if (m_uploadType == (int)UploadType::Dev) m_dataNew.set("database-version", m_dataOld["database-version"].as<int>().unwrapOr(0) + 1);
+    else m_dataNew.set("database-version", m_dataNew["database-version"].as<int>().unwrapOr(0));
 
     //find all levels and trim down unused ones
     std::vector<std::string> usedLevels = {};
@@ -248,7 +167,7 @@ void SaveContentsPopup::compareChanges() {
     for (auto lvl : usedLevels) {
         auto isMain = false;
 
-        if (!m_dataNew["level-data"][lvl].contains("xp")) { continue; }
+        if (!m_dataNew["level-data"][lvl].contains("xp")) continue;
         
         for (auto pack : m_dataNew["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
             for (auto id : pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault()) {
@@ -258,12 +177,10 @@ void SaveContentsPopup::compareChanges() {
                 }
             }
 
-            if (isMain) { break; }
+            if (isMain) break;
         }
         
-        if (!isMain) {
-            m_dataNew["level-data"][lvl].erase("xp");
-        }
+        if (!isMain) m_dataNew["level-data"][lvl].erase("xp");
     }
 
     for (auto [key, value] : m_dataNew["level-data"]) {
@@ -275,13 +192,38 @@ void SaveContentsPopup::compareChanges() {
             }
         }
 
-        if (!exists) {
-            m_dataNew["level-data"].erase(key);
-        }
+        if (!exists) m_dataNew["level-data"].erase(key);
     }
 
     // erase level data for id 0 since that's an issue now apparently
     if (m_dataNew["level-data"].contains("0")) m_dataNew["level-data"].erase("0");
+
+    // erase default values for text effects
+    for (auto index : {"main", "legacy", "bonus", "monthly"}) {
+        for (auto pack : m_dataNew[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+            if (!pack.contains("textEffects")) continue;
+
+            if (pack["textEffects"]["textColor"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}) == ccColor3B{255, 255, 255}) pack["textEffects"].erase("textColor");
+            if (pack["textEffects"]["outlineColor"].as<ccColor3B>().unwrapOr(ccColor3B{0, 0, 0}) == ccColor3B{0, 0, 0}) pack["textEffects"].erase("outlineColor");
+            if (pack["textEffects"]["shadowColor"].as<ccColor3B>().unwrapOr(ccColor3B{0, 0, 0}) == ccColor3B{0, 0, 0}) pack["textEffects"].erase("shadowColor");
+
+            if (pack["textEffects"]["gradientColor"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}) == ccColor3B{255, 255, 255}) pack["textEffects"].erase("gradientColor");
+            if (pack["textEffects"]["crystalColor"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}) == ccColor3B{255, 255, 255}) pack["textEffects"].erase("crystalColor");
+            if (pack["textEffects"]["starsColor"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}) == ccColor3B{255, 255, 255}) pack["textEffects"].erase("starsColor");
+
+            if (pack["textEffects"]["gradientOpacity"].as<float>().unwrapOr(1.f) == 1.f) pack["textEffects"].erase("gradientOpacity");
+            if (pack["textEffects"]["crystalOpacity"].as<float>().unwrapOr(1.f) == 1.f) pack["textEffects"].erase("crystalOpacity");
+            if (pack["textEffects"]["starsOpacity"].as<float>().unwrapOr(1.f) == 1.f) pack["textEffects"].erase("starsOpacity");
+
+            if (pack["textEffects"]["gradientType"].asString().unwrapOr("none") == "none") pack["textEffects"].erase("gradientType");
+            if (pack["textEffects"]["special"].asString().unwrapOr(std::string()).empty()) pack["textEffects"].erase("special");
+
+            if (!pack["textEffects"]["gradient"].asBool().unwrapOrDefault()) pack["textEffects"].erase("gradient");
+            if (!pack["textEffects"]["crystal"].asBool().unwrapOrDefault()) pack["textEffects"].erase("crystal");
+            if (!pack["textEffects"]["stars"].asBool().unwrapOrDefault()) pack["textEffects"].erase("stars");
+            if (!pack["textEffects"]["bevel"].asBool().unwrapOrDefault()) pack["textEffects"].erase("bevel");
+        }
+    }
 
     m_loadText->setCString("Comparing Changes...");
 
@@ -313,38 +255,71 @@ void SaveContentsPopup::compareChanges() {
 
                 int packID = 0;
                 for (auto pack : m_dataOld[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
-                    auto newPack = m_dataNew[index][packID].as<matjson::Value>().unwrapOrDefault();
+                    auto newPack = m_dataNew[index][packID];
                     
                     if (pack != newPack) {
-                        changesList.push_back(fmt::format("- Pack {}-{} Changed", index, packID));
+                        if (!DPUtils::containsJson(m_dataOld[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()), newPack) && sizeDiff < 0) {
+                            changesList.push_back(fmt::format("- Pack {}-{} Added", index, packID));
+                            packID += 1;
+                        }
+                        else if (!DPUtils::containsJson(m_dataNew[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()), pack) && sizeDiff > 0) {
+                            changesList.push_back(fmt::format("- Pack {}-{} Removed", index, packID));
+                            packID -= 1;
+                        }
+                        else if (DPUtils::containsJson(m_dataNew[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()), pack)) {
+                            changesList.push_back(fmt::format("- Pack {}-{} Moved", index, packID));
+                        }
+                        else {
+                            changesList.push_back(fmt::format("- Pack {}-{} Changed", index, packID));
 
-                        for (auto [key, value] : pack) {
-                            if (value != newPack[key]) {
-                                if (key == "reqLevels" ||
-                                    key == "mainPack" ||
-                                    key == "month" ||
-                                    key == "year"
-                                ) {
-                                    auto newValue = newPack[key].as<int>().unwrapOr(-999);
-                                    changesList.push_back(fmt::format("   {} Changed: {} -> {}", key, value.as<int>().unwrapOr(-999), newValue));
-                                }
-                                else if (key == "levelIDs") {
-                                    auto newValue = newPack[key].as<std::vector<int>>().unwrapOrDefault();
-                                    auto oldValue = value.as<std::vector<int>>().unwrapOrDefault();
-                                    changesList.push_back(fmt::format("   {} Changed:", key));
-                                    auto pos = 0;
-                                    for (auto id : newValue) {
-                                        if (pos < oldValue.size()) {
-                                            changesList.push_back(fmt::format("     - {} -> {}", oldValue.at(pos), id));
-                                        } else {
-                                            changesList.push_back(fmt::format("     - {}", id));
-                                        }
-                                        pos += 1;
+                            for (auto [key, value] : pack) {
+                                if (value != newPack[key]) {
+                                    if (key == "reqLevels" ||
+                                        key == "mainPack" ||
+                                        key == "month" ||
+                                        key == "year"
+                                    ) {
+                                        auto newValue = newPack[key].as<int>().unwrapOr(-999);
+                                        changesList.push_back(fmt::format("   {} Changed: {} -> {}", key, value.as<int>().unwrapOr(-999), newValue));
                                     }
-                                }
-                                else {
-                                    auto newValue = newPack[key].as<std::string>().unwrapOr("?");
-                                    changesList.push_back(fmt::format("   {} Changed: {} -> {}", key, value.as<std::string>().unwrapOr("?"), newValue));
+                                    else if (key == "levelIDs") {
+                                        auto newValue = newPack[key].as<std::vector<int>>().unwrapOrDefault();
+                                        auto oldValue = value.as<std::vector<int>>().unwrapOrDefault();
+                                        changesList.push_back(fmt::format("   {} Changed:", key));
+                                        auto pos = 0;
+                                        auto sizeDiff = newValue.size() - oldValue.size();
+                                        for (auto id : newValue) {
+                                            if (sizeDiff > 0 && !DPUtils::containsInt(oldValue, id)) {
+                                                changesList.push_back(fmt::format("     - {} Added.", id));
+                                                pos += 1;
+                                            }
+                                            else if (sizeDiff < 0 && DPUtils::containsInt(oldValue, id)) {
+                                                changesList.push_back(fmt::format("     - {} Removed.", id));
+                                                pos -= 1;
+                                            }
+                                            else if (oldValue.at(pos) != id) {
+                                                changesList.push_back(fmt::format("     - {} -> {}", oldValue.at(pos), id));
+                                            }
+
+                                            pos += 1;
+                                        }
+                                    }
+                                    else if (key == "textEffects") {
+                                        auto newValue = newPack[key];
+                                        changesList.push_back(fmt::format("   {} Changed:", key));
+                                        for (auto [key2, value2] : value) {
+                                            if (newValue[key2] == value[key2]) continue;
+                                            if (!newValue.contains(key2)) changesList.push_back(fmt::format("     {} Erased", key2));
+                                            else changesList.push_back(fmt::format("     {} Changed: {} -> {}", key2, value2.dump(), newValue[key2].dump()));
+                                        }
+                                        for (auto [key2, value2] : newValue) {
+                                            if (!value.contains(key2) && !(value2.dump() == "{}")) changesList.push_back(fmt::format("     {} Changed: {}", key2, value2.dump()));
+                                        }
+                                    }
+                                    else {
+                                        auto newValue = newPack[key].as<std::string>().unwrapOr("?");
+                                        changesList.push_back(fmt::format("   {} Changed: {} -> {}", key, value.as<std::string>().unwrapOr("?"), newValue));
+                                    }
                                 }
                             }
                         }
@@ -357,7 +332,7 @@ void SaveContentsPopup::compareChanges() {
         
         //check levels
         if (m_dataOld["level-data"] != m_dataNew["level-data"]) {
-            changesList.push_back("Levels:");
+            changesList.push_back("--Level Changes--");
 
             int sizeDiff = (m_dataOld["level-data"].size() - m_dataNew["level-data"].size());
             if (sizeDiff > 0) { //Levels were removed
@@ -368,7 +343,10 @@ void SaveContentsPopup::compareChanges() {
             }
 
             for (auto [key, value] : m_dataOld["level-data"]) {
-                if (!m_dataNew["level-data"].contains(key)) {
+                if (!m_dataOld["level-data"].contains(key)) {
+                    changesList.push_back(fmt::format("- {} Added", key));
+                }
+                else if (!m_dataNew["level-data"].contains(key)) {
                     changesList.push_back(fmt::format("- {} Removed", key));
                 }
                 else if (value != m_dataNew["level-data"][key]) {
@@ -384,7 +362,7 @@ void SaveContentsPopup::compareChanges() {
                         }
 
                         if (value2 != m_dataNew["level-data"][key][key2]) {
-                            if (key2 == "difficulty") {
+                            if (key2 == "difficulty" || key2 == "startpos-copy") {
                                 auto newValue = m_dataNew["level-data"][key][key2].as<int>().unwrapOrDefault();
                                 changesList.push_back(fmt::format("   {} Changed: {} -> {}", key2, value2.as<int>().unwrapOrDefault(), newValue));
                             }
@@ -396,12 +374,13 @@ void SaveContentsPopup::compareChanges() {
                                 changesList.push_back(fmt::format("   {} Changed:", key2));
                                 for (auto [key3, value3] : value2) {
                                     auto newValue = m_dataNew["level-data"][key][key2][key3].as<int>().unwrapOrDefault();
+                                    if (value3.as<int>().unwrapOrDefault() == newValue) continue;
                                     changesList.push_back(fmt::format("     {} Changed: {} -> {}", key3, value3.as<int>().unwrapOrDefault(), newValue));
                                 }
                             }
                             else {
-                                auto newValue = m_dataNew["level-data"][key][key2].as<std::string>().unwrapOr("?");
-                                changesList.push_back(fmt::format("   {} Changed: {} -> {}", key2, value2.as<std::string>().unwrapOr("?"), newValue));
+                                auto newValue = m_dataNew["level-data"][key][key2].dump();
+                                changesList.push_back(fmt::format("   {} Changed: {} -> {}", key2, value2.dump(), newValue));
                             }
                         }
                     }
@@ -410,10 +389,10 @@ void SaveContentsPopup::compareChanges() {
         }
     }
 
-    if (m_skillsetsOld != m_skillsetsNew) { //if these are the same, skip
+    if (m_dataOld["skillset-data"] != m_dataNew["skillset-data"]) { //if these are the same, skip
         changesList.push_back("--Skillset Changes--");
 
-        int sizeDiff = (m_skillsetsOld.size() - m_skillsetsNew.size());
+        int sizeDiff = (m_dataOld["skillset-data"].size() - m_dataNew["skillset-data"].size());
 
         if (sizeDiff > 0) { //Packs were removed
             changesList.push_back(fmt::format("- {} Skillsets were Removed.", sizeDiff));
@@ -422,21 +401,25 @@ void SaveContentsPopup::compareChanges() {
             changesList.push_back(fmt::format("- {} Skillsets were Added.", std::abs(sizeDiff)));
         }
 
-        for (auto [key, value] : m_skillsetsOld) {
-            if (!m_skillsetsNew.contains(key)) {
+        for (auto [key, value] : m_dataOld["skillset-data"]) {
+            if (!m_dataNew["skillset-data"].contains(key)) {
                 changesList.push_back(fmt::format("- {} Removed", key));
             }
-            else if (value != m_skillsetsNew[key]) {
+            else if (value != m_dataNew["skillset-data"][key]) {
                 changesList.push_back(fmt::format("- {} Changed", key));
                     
                 for (auto [key2, value2] : value) {
-                    if (value2 != m_skillsetsNew[key][key2]) {
-                        auto newValue = m_skillsetsNew[key][key2].as<std::string>().unwrapOr("?");
+                    if (value2 != m_dataNew["skillset-data"][key][key2]) {
+                        auto newValue = m_dataNew["skillset-data"][key][key2].as<std::string>().unwrapOr("?");
                         changesList.push_back(fmt::format("   {} Changed: {} -> {}", key2, value2.as<std::string>().unwrapOr("?"), newValue));
                     }
                 }
             }
         }
+    }
+
+    if (m_dataOld["medals"] != m_dataNew["medals"]) { //if these are the same, skip
+        changesList.push_back("--Medal Changes--");
     }
 
     this->setTitle("Review Changes");
@@ -509,7 +492,7 @@ void SaveContentsPopup::setContents() {
     
     //initialize listeners based on upload type
     if (m_uploadType == (int)UploadType::Dev || m_uploadType == (int)UploadType::Revert) {
-        m_loadText->setCString("Pushing Dev List... (1/2)");
+        m_loadText->setCString("Pushing Dev List... (1/1)");
 
         auto contents = base64_encode(m_dataNew.dump());
 
@@ -526,10 +509,10 @@ void SaveContentsPopup::setContents() {
         });
         req.bodyJSON(body);
 
-	    m_listener.spawn(req.put(DEV_LIST), [&](web::WebResponse value){setDevList(value);});
+	    m_listener.spawn(req.put(DEV_LIST), [&](web::WebResponse value){finalizePush(value);});
     }
     else if (m_uploadType == (int)UploadType::Main) {
-        m_loadText->setCString("Pushing Main List... (1/2)");
+        m_loadText->setCString("Pushing Main List... (1/1)");
 
         auto contents = base64_encode(m_dataNew.dump());
 
@@ -546,79 +529,10 @@ void SaveContentsPopup::setContents() {
         });
         req.bodyJSON(body);
 
-	    m_listener.spawn(req.put(MAIN_LIST), [&](web::WebResponse value){setMainList(value);});
+	    m_listener.spawn(req.put(MAIN_LIST), [&](web::WebResponse value){finalizePush(value);});
     }
 
 	return;
-}
-
-void SaveContentsPopup::setMainList(web::WebResponse& value) {
-    if (value.ok()) {
-        m_loadText->setCString("Setting Main Skillsets... (2/2)");
-        
-        auto contents = base64_encode(m_skillsetsNew.dump());
-
-        auto req = web::WebRequest();
-        req.userAgent("GDDP Mod Database");
-        req.header("Accept", "application/vnd.github+json");
-        req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-        req.header("X-GitHub-Api-Version", "2022-11-28");
-                        
-        auto body = matjson::makeObject({
-            {"message", fmt::format("Database Update: {} - {}", m_dataNew["database-version"].as<int>().unwrapOr(-1), GameManager::sharedState()->m_playerName)},
-            {"content", contents},
-            {"sha", m_skillsetsSha}
-        });
-        req.bodyJSON(body);
-
-        m_listener2.spawn(req.put(SKILLSET_LIST), [&](web::WebResponse value){finalizePush(value);});
-    }
-    else {
-		FLAlertLayer::create(
-			"ERROR",
-			fmt::format("Something went wrong...\nAt: Push Main List\nCode: {}", value.code()).c_str(),
-			"OK"
-		)->show();
-
-		this->removeMeAndCleanup();
-    }
-
-    return;
-}
-
-void SaveContentsPopup::setDevList(web::WebResponse& value) {
-    if (value.ok()) {
-
-        m_loadText->setCString("Setting Dev Skillsets... (2/2)");
-    
-        auto contents = base64_encode(m_skillsetsNew.dump());
-
-        auto req = web::WebRequest();
-        req.userAgent("GDDP Mod Database");
-        req.header("Accept", "application/vnd.github+json");
-        req.header("Authorization", fmt::format("Bearer {}", m_accessCode));
-        req.header("X-GitHub-Api-Version", "2022-11-28");
-                    
-        auto body = matjson::makeObject({
-            {"message", fmt::format("Database Update: {} - {}", m_dataNew["database-version"].as<int>().unwrapOr(-1), GameManager::sharedState()->m_playerName)},
-            {"content", contents},
-            {"sha", m_skillsetsSha}
-        });
-        req.bodyJSON(body);
-
-        m_listener2.spawn(req.put(DEV_SKILLSET_LIST), [&](web::WebResponse value){finalizePush(value);});
-    }
-    else {
-		FLAlertLayer::create(
-			"ERROR",
-			fmt::format("Something went wrong...\nAt: Push Dev List\nCode: {}", value.code()).c_str(),
-			"OK"
-		)->show();
-
-		this->removeMeAndCleanup();
-    }
-
-    return;
 }
 
 void SaveContentsPopup::finalizePush(web::WebResponse& value) {
@@ -631,6 +545,10 @@ void SaveContentsPopup::finalizePush(web::WebResponse& value) {
 			"Your changes have been pushed successfully!",
 			"OK"
 		)->show();
+
+        // wipe autosave
+		auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\dev_autosave.json");
+		file::writeStringSafe(path, "");
 
         popup->removeMeAndCleanup();
 		this->removeMeAndCleanup();
@@ -652,8 +570,6 @@ void SaveContentsPopup::onClose(CCObject *sender)
 {
 	m_listener.cancel();
 	m_listener2.cancel();
-	m_listener3.cancel();
-	m_listener4.cancel();
 
 	// normal closing stuff
 	// CloseEvent(this).post();

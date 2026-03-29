@@ -8,16 +8,14 @@
 
 #include "DPLayer.hpp"
 #include "DPListLayer.hpp"
-#include "../RecommendedUtils.hpp"
 #include "../CustomText.hpp"
+#include "../popups/RandomLevelPopup.hpp"
 
 //geode namespace
 using namespace geode::prelude;
 using namespace cocos2d;
 
 void DPListLayer::keyBackClicked() {
-	updateSave();
-
 	m_loadingCancelled = true;
 
 	CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
@@ -39,13 +37,19 @@ bool DPListLayer::init(const char* type, int id) {
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
+	int month = data[m_type][m_id]["month"].as<int>().unwrapOr(11);
+	int year = data[m_type][m_id]["year"].as<int>().unwrapOr(1987);
+	std::vector<int> levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+	int reqLevels = data[m_type][m_id]["reqLevels"].as<int>().unwrapOr(-1);
+	std::string saveID = (m_type == "monthly") ? fmt::format("{}-{}", month, year) : data[m_type][m_id]["saveID"].asString().unwrapOr("null");
+
+	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
+
 	auto director = CCDirector::sharedDirector();
 	auto size = director->getWinSize();
 
 	auto bg = createLayerBG();
-	if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) {
-		bg->setColor({ 18, 18, 86 });
-	}
+	if (!Mod::get()->getSettingValue<bool>("restore-bg-color")) bg->setColor({ 18, 18, 86 });
 	bg->setZOrder(-10);
 	bg->setID("bg");
 	this->addChild(bg);
@@ -102,13 +106,21 @@ bool DPListLayer::init(const char* type, int id) {
 
 	//reload menu
 	auto reloadMenu = CCMenu::create();
-	reloadMenu->setPosition({ size.width - 30, size.height - 30 });
+	reloadMenu->setPosition({ size.width - 30.f, size.height - 30.f });
+	reloadMenu->setID("reload-menu");
+	this->addChild(reloadMenu);
+
 	auto reloadBtnSprite = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
 	auto reloadBtn = CCMenuItemSpriteExtra::create(reloadBtnSprite, this, menu_selector(DPListLayer::reloadLevels));
 	reloadBtn->setPosition({ 0, 0 });
+	reloadBtn->setID("reload-btn");
 	reloadMenu->addChild(reloadBtn);
-	reloadMenu->setID("reload-menu");
-	this->addChild(reloadMenu);
+	
+	auto randomSpr = CircleButtonSprite::createWithSpriteFrameName("DP_Roulette.png"_spr);
+	auto randomBtn = CCMenuItemSpriteExtra::create(randomSpr, this, menu_selector(DPListLayer::onRandomLevel));
+	randomBtn->setPositionY(-50.f);
+	randomBtn->setID("random-btn");
+	if (Mod::get()->getSettingValue<bool>("enable-random-level-picker")) reloadMenu->addChild(randomBtn);
 
 	//pages menu
 	m_pagesMenu = CCMenu::create();
@@ -147,11 +159,17 @@ bool DPListLayer::init(const char* type, int id) {
 	packProgressFront->setZOrder(1);
 	packProgressFront->setID("progress-bar-front");
 
+	if (listSave.completed) packProgressFront->setColor({ 255, 255, 0 });
+	else if ((m_type == "main" && !listSave.hasRank) || (m_type == "monthly" && listSave.progress < 5)) packProgressFront->setColor({ 255, 84, 50 });
+	else packProgressFront->setColor({ 80, 190, 255 });
+
+	auto progressPercent = (float)listSave.progress / ((m_type == "monthly") ? ((listSave.progress >= 5) ? 6.f : 5.f) : ((listSave.hasRank || m_type != "main") ? (float)levelIDs.size() : (float)reqLevels));
+
 	auto clippingNode = CCClippingNode::create();
 	auto stencil = CCScale9Sprite::create("square02_001.png");
 	stencil->setAnchorPoint({ 0, 0.5f });
 	stencil->setContentWidth(packProgressFront->getScaledContentSize().width);
-	stencil->setScaleX(1.f);
+	stencil->setScaleX(progressPercent);
 	stencil->setContentHeight(100);
 	clippingNode->setStencil(stencil);
 	clippingNode->setAnchorPoint({ 0, 0.5f });
@@ -162,9 +180,9 @@ bool DPListLayer::init(const char* type, int id) {
 	clippingNode->setID("clipping-node");
 	m_progressBar->addChild(clippingNode);
 
-	auto progressText = CCLabelBMFont::create("0/0", "bigFont.fnt");
+	auto progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, (m_type == "monthly") ? ((listSave.progress >= 5) ? 6 : 5) : ((listSave.hasRank || m_type != "main") ? levelIDs.size() : reqLevels)).c_str(), (listSave.completed) ? "goldFont.fnt" : "bigFont.fnt");
 	progressText->setPosition({ m_progressBar->getContentWidth() / 2, m_progressBar->getContentHeight() / 2, });
-	progressText->setScale(0.65f);
+	progressText->setScale((listSave.completed) ? 0.85f : 0.65f);
 	progressText->setZOrder(5);
 	progressText->setID("progress-text");
 	m_progressBar->addChild(progressText);
@@ -185,11 +203,24 @@ bool DPListLayer::init(const char* type, int id) {
 	return true;
 }
 
+void DPListLayer::onRandomLevel(CCObject*) {
+	std::vector<int> ids;
+	for (auto i : m_IDs) ids.push_back(numFromString<int>(i).unwrapOr(0));
+	RandomLevelPopup::create(ids)->show();
+	return;
+}
+
 void DPListLayer::updateProgressBar() {
+	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
+	if (m_completedLvls == completedLvls || !m_levelsLoaded) return;
+	
+	// update
+	m_completedLvls = completedLvls;
+	auto offs = m_list->m_listView->m_tableView->m_contentLayer->getPositionY();
+	reloadLevels(new CCObject);
+	m_list->m_listView->m_tableView->m_contentLayer->setPositionY(offs);
 
 	m_progressBar->setVisible(true);
-
-	updateSave();
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
@@ -206,15 +237,9 @@ void DPListLayer::updateProgressBar() {
 	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 	//update color
-	if (listSave.completed) {
-		front->setColor({ 255, 255, 0 });
-	}
-	else if ((m_type == "main" && !listSave.hasRank) || (m_type == "monthly" && listSave.progress < 5)) {
-		front->setColor({ 255, 84, 50 });
-	}
-	else {
-		front->setColor({ 80, 190, 255 });
-	}
+	if (listSave.completed) front->setColor({ 255, 255, 0 });
+	else if ((m_type == "main" && !listSave.hasRank) || (m_type == "monthly" && listSave.progress < 5)) front->setColor({ 255, 84, 50 });
+	else front->setColor({ 80, 190, 255 });
 
 	//calculate percent
 	auto progressPercent = (float)listSave.progress / ((m_type == "monthly") ? ((listSave.progress >= 5) ? 6.f : 5.f) : ((listSave.hasRank || m_type != "main") ? (float)levelIDs.size() : (float)reqLevels));
@@ -228,7 +253,7 @@ void DPListLayer::updateProgressBar() {
 	clippingNode->setStencil(stencil);
 
 	//update label
-	if (progressText->getParent() == m_progressBar) { progressText->removeFromParentAndCleanup(true); }
+	if (progressText->getParent() == m_progressBar) progressText->removeFromParentAndCleanup(true);
 	progressText = CCLabelBMFont::create(fmt::format("{}/{}", listSave.progress, (m_type == "monthly") ? ((listSave.progress >= 5) ? 6 : 5) : ((listSave.hasRank || m_type != "main") ? levelIDs.size() : reqLevels)).c_str(), (listSave.completed) ? "goldFont.fnt" : "bigFont.fnt");
 	progressText->setScale((listSave.completed) ? 0.85f : 0.65f);
 	progressText->setPosition({ m_progressBar->getContentWidth() / 2, (m_progressBar->getContentHeight() / 2) + 1.5f });
@@ -239,61 +264,10 @@ void DPListLayer::updateProgressBar() {
 	return;
 }
 
-void DPListLayer::updateSave() {
-
-	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	
-	int month = data[m_type][m_id]["month"].as<int>().unwrapOr(11);
-	int year = data[m_type][m_id]["year"].as<int>().unwrapOr(1987);
-	std::vector<int> levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
-	int reqLevels = data[m_type][m_id]["reqLevels"].as<int>().unwrapOr(-1);
-	std::string saveID = (m_type == "monthly") ? fmt::format("{}-{}", month, year) : data[m_type][m_id]["saveID"].asString().unwrapOr("null");
-
-	auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
-
-	//get completed levels
-	auto progress = 0;
-	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-	for (auto const& level : levelIDs) {
-		if (std::find(completedLvls.begin(), completedLvls.end(), level) != completedLvls.end()) {
-			progress += 1;
-		}
-	}
-
-	if (m_type == "main" && !listSave.hasRank && progress < listSave.progress) { //If you don't have the rank, any progress you have will be maintained even if a level is moved to legacy
-		progress = listSave.progress;
-	}
-
-	//update status
- 	auto hasRank = listSave.hasRank || ((progress >= reqLevels) && (reqLevels > -1));
-	auto completed = (progress == levelIDs.size());
-
-	if (m_type == "monthly" && progress >= 5) {
-		auto completedMonthlies = Mod::get()->getSavedValue<std::vector<std::string>>("monthly-completions");
-
-		if (std::find(completedMonthlies.begin(), completedMonthlies.end(), saveID) == completedMonthlies.end()) {
-			completedMonthlies.insert(completedMonthlies.begin(), saveID);
-			Mod::get()->setSavedValue<std::vector<std::string>>("monthly-completions", completedMonthlies);
-		}
-	}
-
-	//update recommendations
-	if (listSave.progress != progress && progress >= reqLevels - 2 && listSave.progress < reqLevels) {
-		RecommendedUtils::generateRecommendations();
-	}
-
-	//save
-	Mod::get()->setSavedValue<ListSaveFormat>(saveID, ListSaveFormat{ .progress = progress, .completed = completed, .hasRank = hasRank });
-	
-	return;
-}
-
 void DPListLayer::reloadLevels(CCObject* sender) {
 	m_errorText->setVisible(false);
 
-	if (m_levelsLoaded) {
-		loadLevels(m_page);
-	}
+	if (m_levelsLoaded) loadLevels(m_page);
 
 	return;
 }
@@ -332,11 +306,7 @@ void DPListLayer::loadLevels(int page) {
 
 	m_IDs.clear();
 
-	for (auto const& level : levelIDs) {
-		if (level > 0) m_IDs.push_back(std::to_string(level));
-	}
-
-	log::info("{}", m_IDs);
+	for (auto const& level : levelIDs) if (level > 0) m_IDs.push_back(std::to_string(level));
 
 	m_right->setVisible(m_IDs.size() > 10);
 
@@ -347,25 +317,16 @@ void DPListLayer::loadLevels(int page) {
 		m_IDs.begin() + std::min(static_cast<int>(m_IDs.size()), (m_page + 1) * 10));
 	auto searchObject = GJSearchObject::create(SearchType::Type19, string::join(results, ","));
 	auto storedLevels = glm->getStoredOnlineLevels(searchObject->getKey());
-
-	//log::info("{}", searchObject);
-	//log::info("{}", searchObject->getKey());
-	//log::info("{}", storedLevels);
 	
-	if (storedLevels) {
-		loadLevelsFinished(storedLevels, "");
-	}
-	else
-	{
-		glm->getOnlineLevels(searchObject);
-	}
+	if (storedLevels) loadLevelsFinished(storedLevels, "");
+	else glm->getOnlineLevels(searchObject);
 
 	return;
 }
 
 void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 
-	if (m_loadingCancelled) { return; }
+	if (m_loadingCancelled) return;
 
 	auto listSize = m_IDs.size();
 	auto maxPage = (listSize % 10 == 0 ? listSize : listSize + (10 - (listSize % 10))) / 10 - 1;
@@ -393,13 +354,16 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 	m_list->setPosition(size / 2 - m_list->getContentSize() / 2);
 	this->addChild(m_list);
 
+	auto mainPack = data[m_type][m_id]["mainPack"].as<int>().unwrapOrDefault();
+
 	//custom pack label
-	if ((Mod::get()->getSettingValue<bool>("custom-pack-text") && DPTextEffects.contains(data[m_type][m_id]["saveID"].asString().unwrapOr("null")))
-	&& !(m_type == "bonus" && Mod::get()->getSettingValue<bool>("disable-fancy-bonus-text"))) {
+	if ((Mod::get()->getSettingValue<bool>("custom-pack-text") && (data[m_type][m_id].contains("textEffects") || data["main"][mainPack].contains("textEffects")))
+	&& !(m_type == "bonus" && Mod::get()->getSettingValue<bool>("disable-fancy-bonus-text"))
+	&& !(m_type == "monthly" && Mod::get()->getSettingValue<bool>("disable-fancy-monthly-text"))) {
 		auto label = typeinfo_cast<CCLabelBMFont*>(m_list->getChildByID("title"));
 
 		auto customText = CustomText::create(label->getString());
-		customText->addEffectsFromProperties(DPTextEffects[data[m_type][m_id]["saveID"].asString().unwrapOr("null")].as<matjson::Value>().unwrapOrDefault());
+		customText->addEffectsFromProperties((m_type == "legacy") ? data["main"][mainPack]["textEffects"] : data[m_type][m_id]["textEffects"]);
 		customText->setPosition(label->getPosition());
 		customText->setAnchorPoint(label->getAnchorPoint());
 		customText->setScale(label->getScale());
@@ -470,23 +434,23 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 		this->addChild(dpIcon);
 	}*/
 
-	updateProgressBar();
+	this->scheduleUpdate();
 
 	return;
 }
 
 void DPListLayer::loadLevelsFailed(const char*) {
-	if (m_loadingCancelled) { return; }
+	if (m_loadingCancelled) return;
 	
 	m_levelsLoaded = true;
-
 	m_loadCircle->fadeAndRemove();
-
-	/*auto alert = FLAlertLayer::create("ERROR", "Failed to load levels. Please try again later.", "OK");
-	alert->setParent(this);
-	alert->show();*/
-
 	m_errorText->setVisible(true);
+
+	return;
+}
+
+void DPListLayer::update(float dt) {
+	updateProgressBar();
 
 	return;
 }
@@ -502,5 +466,7 @@ DPListLayer* DPListLayer::create(const char* type, int id) {
 }
 
 DPListLayer::~DPListLayer() {
+	auto glm = GameLevelManager::sharedState();
+	if (glm->m_levelManagerDelegate == this) glm->m_levelManagerDelegate = nullptr;
     this->removeAllChildrenWithCleanup(true);
 }

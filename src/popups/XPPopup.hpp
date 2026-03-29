@@ -16,48 +16,16 @@ public:
 class DemonXPPopup : public Popup {
 protected:
 	bool init() override;
+	
 	CCLayer* m_mainLayer;
+
+	void onToggle(CCObject*);
+	void update();
+
+	bool m_toggled = false;
+
 	virtual ~DemonXPPopup();
 public:
 	int m_levelID = 0;
 	static DemonXPPopup* create(int);
-};
-
-const std::vector<std::string> skillNames = {
-	"Chokepoints",
-	"Duals",
-	"Fast Paced",
-	"High CPS",
-	"Memory/Learny",
-	"Nerve Control",
-	"Ship",
-	"Swing",
-	"Timings",
-	"Wave"
-};
-
-const std::vector<CCPoint> skillPositions = {
-	{-105.f, 15.f},
-	{-105.f, -15.f},
-	{-105.f, -45.f},
-	{-105.f, -75.f},
-	{-105.f, -105.f},
-	{105.f, 15.f},
-	{105.f, -15.f},
-	{105.f, -45.f},
-	{105.f, -75.f},
-	{105.f, -105.f}
-};
-
-const std::vector<ccColor3B> skillColors = {
-	{255, 0, 0}, 
-	{255, 128, 0}, 
-	{255, 255, 0}, 
-	{128, 255, 0}, 
-	{0, 255, 0}, 
-	{0, 255, 128}, 
-	{0, 255, 255}, 
-	{0, 128, 255}, 
-	{0, 0, 255},
-	{128, 0, 255}
 };

@@ -32,3 +32,39 @@ std::vector<std::string> DPUtils::substring(std::string s, std::string d) {
 	res.push_back(token);
 	return res;
 };
+
+CCSprite* DPUtils::safeSprite(std::string name, CCSprite* fallback) {
+	if (CCSprite::create(name.c_str()) == nullptr) return fallback;
+
+	return CCSprite::create(name.c_str());
+};
+
+CCSprite* DPUtils::safeSpriteWithFrameName(std::string name, CCSprite* fallback) {
+	if (CCSprite::createWithSpriteFrameName(name.c_str()) == nullptr) return fallback;
+
+	return CCSprite::createWithSpriteFrameName(name.c_str());
+};
+
+std::vector<int>::iterator DPUtils::findInt(std::vector<int> v, int t) {
+	return std::find(v.begin(), v.end(), t);
+};
+
+std::vector<std::string>::iterator DPUtils::findString(std::vector<std::string> v, std::string t) {
+	return std::find(v.begin(), v.end(), t);
+};
+
+std::vector<matjson::Value>::iterator DPUtils::findJson(std::vector<matjson::Value> v, matjson::Value t) {
+	return std::find(v.begin(), v.end(), t);
+};
+
+bool DPUtils::containsInt(std::vector<int> v, int t) {
+	return (std::find(v.begin(), v.end(), t) != v.end());
+};
+
+bool DPUtils::containsString(std::vector<std::string> v, std::string t) {
+	return (std::find(v.begin(), v.end(), t) != v.end());
+};
+
+bool DPUtils::containsJson(std::vector<matjson::Value> v, matjson::Value t) {
+	return (std::find(v.begin(), v.end(), t) != v.end());
+};
