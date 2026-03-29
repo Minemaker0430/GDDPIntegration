@@ -20,6 +20,7 @@
 * Removed "Reduce Demon Label Effects" as it didn't do much to help anyway
 	* Alternative option is to disable "Fancy Demon Labels"
 * Patched up some crashes thanks to Jasmine
+* Fixed some unaligned UI on mobile devices
 
 # v1.0.16
 

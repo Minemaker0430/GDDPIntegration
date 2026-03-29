@@ -127,6 +127,7 @@ bool DPSearchLayer::init(std::vector<int> IDs) {
 	//reload menu
 	auto reloadMenu = CCMenu::create();
 	reloadMenu->setPosition({ size.width - 30, size.height - 30 });
+	reloadMenu->setZOrder(2);
 	auto reloadBtnSprite = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
 	auto reloadBtn = CCMenuItemSpriteExtra::create(reloadBtnSprite, this, menu_selector(DPSearchLayer::reloadLevels));
 	reloadBtn->setPosition({ 0, 0 });

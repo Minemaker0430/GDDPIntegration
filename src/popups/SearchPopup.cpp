@@ -91,7 +91,7 @@ bool SearchPopup::init() {
 	m_tabs->addChild(xpBtn);
 	m_tabBtns.push_back(xpBtn);
 
-	m_tabs->setPosition({ 0.f, 125.f });
+	m_tabs->setPosition({ 2.5f, 125.f });
 	m_tabs->setContentSize({ 420.f, 50.f });
 
 	m_tabs->setID("search-tabs");
@@ -99,7 +99,7 @@ bool SearchPopup::init() {
 
 	//check and uncheck buttons
 	auto checkMenu = CCMenu::create();
-	checkMenu->setPosition({ 75.f, 200.f });
+	checkMenu->setPosition({ 77.5f, 200.f });
 	checkMenu->setScale(0.75f);
 	checkMenu->setContentSize({ 0.f, 0.f });
 	checkMenu->setID("check-menu");
@@ -130,7 +130,7 @@ bool SearchPopup::init() {
 
 	//completed and uncompleted checks
 	auto completeMenu = CCMenu::create();
-	completeMenu->setPosition({ 75.f, 35.f });
+	completeMenu->setPosition({ 77.5f, 35.f });
 	completeMenu->setScale(0.75f);
 	completeMenu->setContentSize({ 0.f, 0.f });
 	completeMenu->setID("complete-filter-menu");
@@ -271,13 +271,18 @@ void SearchPopup::loadTab(int id) {
 
 				//togglebox
 				auto toggleMenu = CCMenu::create();
-				toggleMenu->setScale(0.75f);
-				toggleMenu->setPosition({ 250.f, -25.f });
+				toggleMenu->setContentSize({ 0.f, 0.f });
+				toggleMenu->setPosition({ 0.f, 0.f });
 				toggleMenu->setID("toggle-menu");
 
 				auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
 				auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+
+				toggleOffSpr->setScale(0.75f);
+				toggleOnSpr->setScale(0.75f);
+
 				auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
+				toggle->setPosition({ 320.f, 15.f });
 				toggle->setID("toggle");
 				toggle->toggle(filterToggle);
 				toggle->setUserObject(new SetToggleValue(saveID));
@@ -340,13 +345,18 @@ void SearchPopup::loadTab(int id) {
 
 					//togglebox
 					auto toggleMenu = CCMenu::create();
-					toggleMenu->setScale(0.75f);
-					toggleMenu->setPosition({ 250.f, -25.f });
+					toggleMenu->setContentSize({ 0.f, 0.f });
+					toggleMenu->setPosition({ 0.f, 0.f });
 					toggleMenu->setID("toggle-menu");
 
 					auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
 					auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+
+					toggleOffSpr->setScale(0.75f);
+					toggleOnSpr->setScale(0.75f);
+
 					auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
+					toggle->setPosition({ 320.f, 15.f });
 					toggle->setID("toggle");
 					toggle->toggle(filterToggle);
 					toggle->setUserObject(new SetToggleValue(saveID));
@@ -400,14 +410,20 @@ void SearchPopup::loadTab(int id) {
 					label->setPosition({ 30.f, 17.5f });
 
 					//togglebox
+					//togglebox
 					auto toggleMenu = CCMenu::create();
-					toggleMenu->setScale(0.75f);
-					toggleMenu->setPosition({ 250.f, -25.f });
+					toggleMenu->setContentSize({ 0.f, 0.f });
+					toggleMenu->setPosition({ 0.f, 0.f });
 					toggleMenu->setID("toggle-menu");
 
 					auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
 					auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+
+					toggleOffSpr->setScale(0.75f);
+					toggleOnSpr->setScale(0.75f);
+
 					auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
+					toggle->setPosition({ 320.f, 15.f });
 					toggle->setID("toggle");
 					toggle->toggle(filterToggle);
 					toggle->setUserObject(new SetToggleValue(key));
@@ -428,11 +444,11 @@ void SearchPopup::loadTab(int id) {
 		{
 			auto modeHeader = CCLabelBMFont::create("Mode", "goldFont.fnt");
 			modeHeader->setScale(0.5f);
-			modeHeader->setPosition({ 130.f, 188.f });
+			modeHeader->setPosition({ 128.5f, 188.f });
 			
 			auto valueHeader = CCLabelBMFont::create("Value", "goldFont.fnt");
 			valueHeader->setScale(0.5f);
-			valueHeader->setPosition({ 190.f, 188.f });
+			valueHeader->setPosition({ 191.f, 188.f });
 			
 			filterMenu->addChild(modeHeader);
 			filterMenu->addChild(valueHeader);
@@ -459,13 +475,18 @@ void SearchPopup::loadTab(int id) {
 
 				//togglebox
 				auto toggleMenu = CCMenu::create();
-				toggleMenu->setScale(0.75f);
-				toggleMenu->setPosition({ 250.f, -25.f });
+				toggleMenu->setContentSize({ 0.f, 0.f });
+				toggleMenu->setPosition({ 0.f, 0.f });
 				toggleMenu->setID("toggle-menu");
 
 				auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
 				auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+
+				toggleOffSpr->setScale(0.75f);
+				toggleOnSpr->setScale(0.75f);
+
 				auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(SearchPopup::onToggle));
+				toggle->setPosition({ 320.f, 15.f });
 				toggle->setID("toggle");
 				toggle->toggle(filterToggle);
 				toggle->setUserObject(new SetToggleValue(key));
@@ -475,60 +496,66 @@ void SearchPopup::loadTab(int id) {
 				//value changer
 				auto valueMenu = CCMenu::create();
 				valueMenu->setID("value-menu");
-				valueMenu->setScale(0.6f);
-				valueMenu->setPosition({ 140.f, -48.f });
+				valueMenu->setPosition({ 255.f, 15.f });
+				valueMenu->setContentSize({ 0.f, 0.f });
 
 				auto valLeftSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+				valLeftSpr->setScale(0.6f);
 				auto valLeft = CCMenuItemSpriteExtra::create(valLeftSpr, this, menu_selector(SearchPopup::onXpValue));
 				valLeft->setID("value-left");
 				valLeft->setVisible(filterValue > 0);
 				valLeft->setUserObject(new SetXPValue(key,  -1));
-				valLeft->setPositionX(-60.f);
+				valLeft->setPositionX(-35.f);
 				valueMenu->addChild(valLeft);
 
 				auto valRightSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
 				valRightSpr->setFlipX(true);
+				valRightSpr->setScale(0.6f);
 				auto valRight = CCMenuItemSpriteExtra::create(valRightSpr, this, menu_selector(SearchPopup::onXpValue));
 				valRight->setID("value-right");
 				valRight->setVisible(filterValue < 3);
 				valRight->setUserObject(new SetXPValue(key, 1));
-				valRight->setPositionX(60.f);
+				valRight->setPositionX(35.f);
 				valueMenu->addChild(valRight);
 
 				std::vector<std::string> valueStrings = { "None", "Low", "Avg", "Max" };
 
 				auto valLabel = CCLabelBMFont::create(valueStrings[filterValue].c_str(), "bigFont.fnt");
 				valLabel->setID("value-label");
+				valLabel->setScale(0.6f);
 				valLabel->setPositionY(2.f);
 				valueMenu->addChild(valLabel);
 
 				//value mode
 				auto modeMenu = CCMenu::create();
 				modeMenu->setID("mode-menu");
-				modeMenu->setScale(0.6f);
-				modeMenu->setPosition({ 60.f, -48.f });
+				modeMenu->setPosition({ 172.5f, 15.f });
+				modeMenu->setContentSize({ 0.f, 0.f });
 
 				auto modeLeftSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+				modeLeftSpr->setScale(0.6f);
 				auto modeLeft = CCMenuItemSpriteExtra::create(modeLeftSpr, this, menu_selector(SearchPopup::onXpMode));
 				modeLeft->setID("mode-left");
 				modeLeft->setVisible(filterMode > 0);
 				modeLeft->setUserObject(new SetXPValue(key, -1));
-				modeLeft->setPositionX(-30.f);
+				modeLeft->setPositionX(-20.f);
 				modeMenu->addChild(modeLeft);
 
 				auto modeRightSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
 				modeRightSpr->setFlipX(true);
+				modeRightSpr->setScale(0.6f);
 				auto modeRight = CCMenuItemSpriteExtra::create(modeRightSpr, this, menu_selector(SearchPopup::onXpMode));
 				modeRight->setID("mode-right");
 				modeRight->setVisible(filterMode < 4);
 				modeRight->setUserObject(new SetXPValue(key, 1));
-				modeRight->setPositionX(30.f);
+				modeRight->setPositionX(20.f);
 				modeMenu->addChild(modeRight);
 
 				std::vector<std::string> modeStrings = {">=", ">", "=", "<", "<="};
 
 				auto modeLabel = CCLabelBMFont::create(modeStrings[filterMode].c_str(), "bigFont.fnt");
 				modeLabel->setID("mode-label");
+				modeLabel->setScale(0.6f);
 				modeLabel->setPositionY(2.f);
 				modeMenu->addChild(modeLabel);
 
@@ -585,15 +612,13 @@ void SearchPopup::onSearch(CCObject* sender) {
 	for (auto p : data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) packs.set(p["saveID"].asString().unwrapOr("null"), p);
 
 	// iterate through packs
-	for (auto [key, value] : m_filter["packs"]) {
+	for (auto [key, value] : packs) {
 
 		// if pack isn't checked, skip
-		if (!value.asBool().unwrapOr(true)) continue; 
-
-		auto pack = packs[key];
+		if (!m_filter["packs"][key].asBool().unwrapOr(true)) continue; 
 
 		// iterate through levels
-		auto levels = pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+		auto levels = value["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
 		for (auto lvlID : levels) {
 			auto lvlData = data["level-data"][std::to_string(lvlID)];
 
@@ -731,7 +756,7 @@ void SearchPopup::onXpValue(CCObject* sender) {
 	auto newValue = oldValue + parameters->m_value;
 	m_filter["xp"][id].set("value", newValue);
 
-	log::info("{}: {}", id, newValue);
+	//log::info("{}: {}", id, newValue);
 
 	//update nodes
 	auto menu = btn->getParent();
@@ -759,7 +784,7 @@ void SearchPopup::onXpMode(CCObject* sender) {
 	auto newValue = oldValue + parameters->m_value;
 	m_filter["xp"][id].set("mode", newValue);
 
-	log::info("{}: {}", id, newValue);
+	//log::info("{}: {}", id, newValue);
 
 	//update nodes
 	auto menu = btn->getParent();

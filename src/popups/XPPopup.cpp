@@ -19,15 +19,6 @@ bool XPPopup::init() {
 
 	this->setTitle("Experience");
 
-	auto layer = typeinfo_cast<CCLayer*>(this->getChildren()->objectAtIndex(0));
-
-	//create main layer
-	auto mainLayer = CCLayer::create();
-	mainLayer->setID("main-layer");
-
-	layer->addChild(mainLayer);
-	m_mainLayer = mainLayer;
-
 	//Create Info Button
 	auto infoMenu = CCMenu::create();
 	auto infoButton = InfoAlertButton::create("XP Info", "<cy>XP</c> is gained by completing <cy>Main Tier</c> levels. Higher <cy>Tiers</c> give Higher <cy>XP</c>. Try to find levels that improve your <cr>Least Improved</c> skill!", 1.0f);
@@ -200,15 +191,6 @@ bool DemonXPPopup::init() {
 
 	this->setTitle("Demon XP");
 
-	auto layer = typeinfo_cast<CCLayer*>(this->getChildren()->objectAtIndex(0));
-
-	//create main layer
-	auto mainLayer = CCLayer::create();
-	mainLayer->setID("main-layer");
-
-	layer->addChild(mainLayer);
-	m_mainLayer = mainLayer;
-
 	//Get data and completed levels
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
@@ -224,20 +206,28 @@ bool DemonXPPopup::init() {
 
 	//Create Projection Toggle
 	auto toggleMenu = CCMenu::create();
-	toggleMenu->setPosition({ -125.f, -65.f });
-	toggleMenu->setScale(0.5f);
+	toggleMenu->setPosition(m_mainLayer->getContentSize() / 2.f);
+	toggleMenu->setContentSize({ 0.f, 0.f });
 	toggleMenu->setID("toggle-menu");
+
+	auto offSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
+	auto onSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+
+	offSpr->setScale(0.5f);
+	onSpr->setScale(0.5f);
 	
 	auto toggleBtn = CCMenuItemToggler::create(
-		CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png"),
-		CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png"),
+		offSpr,
+		onSpr,
 		this,
 		menu_selector(DemonXPPopup::onToggle)
 	);
+	toggleBtn->setPosition({ -190.f, -105.f });
 	
 	auto toggleLabel = CCLabelBMFont::create("Show Projected XP", "bigFont.fnt");
+	toggleLabel->setScale(0.4f);
 	toggleLabel->setAnchorPoint({ 0.f, 0.5f });
-	toggleLabel->setPositionX(20.f);
+	toggleLabel->setPosition({ -180.f, -105.f });
 
 	toggleMenu->addChild(toggleBtn);
 	toggleMenu->addChild(toggleLabel);

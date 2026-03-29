@@ -7,7 +7,6 @@ using namespace geode::prelude;
 class XPPopup : public Popup {
 protected:
 	bool init() override;
-	CCLayer* m_mainLayer;
 	virtual ~XPPopup();
 public:
 	static XPPopup* create();
@@ -16,8 +15,6 @@ public:
 class DemonXPPopup : public Popup {
 protected:
 	bool init() override;
-	
-	CCLayer* m_mainLayer;
 
 	void onToggle(CCObject*);
 	void update();

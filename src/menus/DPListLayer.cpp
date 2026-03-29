@@ -107,6 +107,7 @@ bool DPListLayer::init(const char* type, int id) {
 	//reload menu
 	auto reloadMenu = CCMenu::create();
 	reloadMenu->setPosition({ size.width - 30.f, size.height - 30.f });
+	reloadMenu->setZOrder(2);
 	reloadMenu->setID("reload-menu");
 	this->addChild(reloadMenu);
 

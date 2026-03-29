@@ -75,6 +75,7 @@ void RoulettePopup::loadSaveMenu() {
 	auto newMenu = CCMenu::create();
 	newMenu->setPosition({322.5f, -13.f});
 	newMenu->setScale(0.75f);
+	newMenu->setZOrder(1);
 	newMenu->setID("new-menu");
 
 	auto newBtn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_plusBtn_001.png"), this, menu_selector(RoulettePopup::onNewSave));
@@ -275,30 +276,32 @@ void RoulettePopup::loadSettingsMenu() {
 
 	// check/uncheck all buttons
 	auto checkMenu = CCMenu::create();
-	checkMenu->setPosition({ -73.f, 65.f });
-	checkMenu->setScale(0.65f);
+	checkMenu->setPosition(m_mainLayer->getContentSize() / 2.f);
+	checkMenu->setContentSize({ 0.f, 0.f });
 	checkMenu->setZOrder(1);
 	checkMenu->setID("check-menu");
 	m_mainLayer->addChild(checkMenu);
 
 	auto checkAllSpr = ButtonSprite::create("[] All", "bigFont.fnt", "GJ_button_01.png", 0.65f);
+	checkAllSpr->setScale(0.65f);
 	auto checkAllBox = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
 	checkAllBox->setScale(0.75f);
 	checkAllBox->setZOrder(2);
 	checkAllBox->setPosition({ 15.f, 18.5f });
 	checkAllSpr->addChild(checkAllBox);
 	auto checkAllBtn = CCMenuItemSpriteExtra::create(checkAllSpr, this, menu_selector(RoulettePopup::onPackCheckAll));
-	checkAllBtn->setPositionY(25.f);
+	checkAllBtn->setPosition({ -185.f, 15.f });
 	checkAllBtn->setID("check-all-btn");
 
 	auto uncheckAllSpr = ButtonSprite::create("[] All", "bigFont.fnt", "GJ_button_01.png", 0.65f);
+	uncheckAllSpr->setScale(0.65f);
 	auto uncheckAllBox = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
 	uncheckAllBox->setScale(0.75f);
 	uncheckAllBox->setZOrder(2);
 	uncheckAllBox->setPosition({ 15.f, 18.5f });
 	uncheckAllSpr->addChild(uncheckAllBox);
 	auto uncheckAllBtn = CCMenuItemSpriteExtra::create(uncheckAllSpr, this, menu_selector(RoulettePopup::onPackUncheckAll));
-	uncheckAllBtn->setPositionY(-25.f);
+	uncheckAllBtn->setPosition({ -185.f, -15.f });
 	uncheckAllBtn->setID("uncheck-all-btn");
 
 	checkMenu->addChild(checkAllBtn);
@@ -381,13 +384,18 @@ void RoulettePopup::loadSettingsMenu() {
 
 			// togglebox
 			auto toggleMenu = CCMenu::create();
-			toggleMenu->setScale(0.75f);
-			toggleMenu->setPosition({330.f, -25.f});
+			toggleMenu->setPosition(0.f, 0.f);
+			toggleMenu->setContentSize({ 0.f, 0.f });
 			toggleMenu->setID("toggle-menu");
 
 			auto toggleOffSpr = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
 			auto toggleOnSpr = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+
+			toggleOffSpr->setScale(0.75f);
+			toggleOnSpr->setScale(0.75f);
+
 			auto toggle = CCMenuItemToggler::create(toggleOffSpr, toggleOnSpr, this, menu_selector(RoulettePopup::onPackToggle));
+			toggle->setPosition({ 400.f, 15.f });
 			toggle->setTag(i + offs);
 			toggle->setID("toggle");
 			toggle->toggle(m_storedSettings[i + offs]);
