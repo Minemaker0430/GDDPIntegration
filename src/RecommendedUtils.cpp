@@ -43,7 +43,6 @@ above for that skill. its very unlikely that anyone will encounter this scenario
 //geode header
 #include <Geode/Geode.hpp>
 #include <Geode/utils/JsonValidation.hpp>
-#include <winspool.h>
 
 #include "./menus/DPLayer.hpp"
 #include "./popups/StatsPopup.hpp"
