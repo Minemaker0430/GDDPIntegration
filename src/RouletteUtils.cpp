@@ -68,6 +68,8 @@ std::vector<bool> RouletteUtils::fromFlags(std::string flags) {
 }
 
 std::vector<int> RouletteUtils::setupLevels(std::vector<matjson::Value> packs, std::string settings, int randomSeed) {
+
+    DPUtils::verifyCompletedLevels();
     
     auto settingsBools = fromFlags(settings);
     auto completedFlag = settingsBools[2];

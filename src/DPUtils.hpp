@@ -19,4 +19,6 @@ public:
 	static bool containsInt(std::vector<int>, int);
 	static bool containsString(std::vector<std::string>, std::string);
 	static bool containsJson(std::vector<matjson::Value>, matjson::Value);
+
+	static void verifyCompletedLevels();
 };

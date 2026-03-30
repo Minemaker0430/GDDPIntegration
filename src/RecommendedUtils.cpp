@@ -54,6 +54,8 @@ above for that skill. its very unlikely that anyone will encounter this scenario
 using namespace geode::prelude;
 
 void RecommendedUtils::validateLevels() {
+	DPUtils::verifyCompletedLevels();
+	
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	auto recommendations = Mod::get()->getSavedValue<matjson::Value>("recommended-levels");
 	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");

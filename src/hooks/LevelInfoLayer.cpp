@@ -172,15 +172,6 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			if (data["level-data"].contains(levelID)) {
 				gddpDiff = data["level-data"][levelID]["difficulty"].as<int>().unwrapOr(0);
 				skillsets = data["level-data"][levelID]["skillsets"].as<std::vector<std::string>>().unwrapOrDefault();
-
-				if (this->m_level->m_normalPercent.value() == 100) {
-					auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-
-					if (!DPUtils::containsInt(completedLvls, this->m_level->m_levelID.value())) {
-						completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
-						Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
-					}
-				}
 			}
 
 			//skillset badges
@@ -387,7 +378,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 					}
 				}
 			}
-
+			
+			DPUtils::verifyCompletedLevels();
 		}
 
 		return true;
@@ -396,34 +388,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 	void onBack(CCObject* sender) {
 		LevelInfoLayer::onBack(sender);
 
-		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-
-		//check for errors
-		auto jsonCheck = checkJson(data, "");
-
-		if (!jsonCheck.ok()) {
-			log::info("Something went wrong validating the GDDP list data.");
-
-			return;
-		}
-
-		bool inGDDP = Mod::get()->getSavedValue<bool>("in-gddp");
-
-		if (Mod::get()->getSettingValue<bool>("show-outside-menus")) inGDDP = true;
-
-		//if gauntlet level, return
-		if (this->m_level->m_gauntletLevel || this->m_level->m_gauntletLevel2) return;
-
-		if (inGDDP && data["level-data"].contains(std::to_string(this->m_level->m_levelID.value()))) {
-			if (this->m_level->m_normalPercent.value() == 100) {
-				auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-
-				if (!DPUtils::containsInt(completedLvls, this->m_level->m_levelID.value())) {
-					completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
-					Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
-				}
-			}
-		}
+		DPUtils::verifyCompletedLevels();
 
 		return;
 	}

@@ -209,6 +209,7 @@ void RandomLevelPopup::onConfirm(CCObject*) {
     std::vector<int> levelList;
 
     if (completed != uncompleted) {
+        DPUtils::verifyCompletedLevels();
         auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
         for (auto lvl : m_levels) {
             if ((DPUtils::containsInt(completedLvls, lvl) && completed) || (!DPUtils::containsInt(completedLvls, lvl) && uncompleted)) levelList.push_back(lvl);

@@ -5,11 +5,11 @@
 #include "menus/DPLayer.hpp"
 #include "popups/StatsPopup.hpp"
 #include "DPUtils.hpp"
-#include "popups/dev/VerificationPopup.hpp"
 
 using namespace geode::prelude;
 
 $on_game(Loaded) {
+    DPUtils::verifyCompletedLevels();
     DPAchievementManager::get();
 }
 

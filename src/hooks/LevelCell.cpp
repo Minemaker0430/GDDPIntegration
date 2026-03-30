@@ -137,15 +137,6 @@ class $modify(DemonProgression, LevelCell) {
 			if (data["level-data"].contains(levelID)) {
 				gddpDiff = data["level-data"][levelID]["difficulty"].as<int>().unwrapOr(0);
 				skillsets = data["level-data"][levelID]["skillsets"].as<std::vector<std::string>>().unwrapOrDefault();
-
-				if (this->m_level->m_normalPercent.value() >= 100) {
-					auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-
-					if (!DPUtils::containsInt(completedLvls, this->m_level->m_levelID.value())) {
-						completedLvls.insert(completedLvls.begin(), this->m_level->m_levelID.value());
-						Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
-					}
-				}
 			}
 
 			//skillset badges

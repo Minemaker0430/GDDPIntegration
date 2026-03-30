@@ -61,48 +61,6 @@ const matjson::Value XPUtils::skills = matjson::makeObject({
 	})}
 });
 
-/*const std::vector<std::string> XPUtils::skillIDs = { "chokepoints", "duals", "fastPaced", "cps", "memory", "nerve", "ship", "swing", "timings", "wave" };
-
-const std::map<std::string, std::string> skillNames = {
-	{"chokepoints", "Chokepoints"},
-	{"duals", "Duals"},
-	{"fastPaced", "Fast Paced"},
-	{"cps", "High CPS"},
-	{"memory", "Memory/Learny"},
-	{"nerve", "Nerve Control"},
-	{"ship", "Ship"},
-	{"swing", "Swing"},
-	{"timings", "Timings"},
-	{"wave", "Wave"}
-};
-
-const std::map<std::string, CCPoint> skillPositions = {
-	{"chokepoints", {-105.f, 15.f}},
-	{"duals", {-105.f, -15.f}},
-	{"fastPaced", {-105.f, -45.f}},
-	{"cps", {-105.f, -75.f}},
-	{"memory", {-105.f, -105.f}},
-	{"nerve", {105.f, 15.f}},
-	{"ship", {105.f, -15.f}},
-	{"swing", {105.f, -45.f}},
-	{"timings", {105.f, -75.f}},
-	{"wave", {105.f, -105.f}}
-};
-
-const std::map<std::string, ccColor3B> skillColors = {
-	{"chokepoints", ccColor3B{255, 0, 0}}, 
-	{"duals", ccColor3B{255, 128, 0}}, 
-	{"fastPaced", ccColor3B{255, 255, 0}}, 
-	{"cps", ccColor3B{128, 255, 0}}, 
-	{"memory", ccColor3B{0, 255, 0}}, 
-	{"nerve", ccColor3B{0, 255, 128}}, 
-	{"ship", ccColor3B{0, 255, 255}}, 
-	{"swing", ccColor3B{0, 128, 255}}, 
-	{"timings", ccColor3B{0, 0, 255}},
-	{"wave", ccColor3B{128, 0, 255}}
-};*/
-
-//const std::vector<int> FIBONACCI = {1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181};
 const float scaling = (1.f / 500.f);
 
 void XPUtils::getMaxLevels() {

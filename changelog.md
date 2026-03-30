@@ -1,3 +1,7 @@
+# v1.1.1
+
+* (Hopefully) Finally fixed a bug where levels would be mistakenly marked as completed
+
 # v1.1.0
 
 Major Additions/Changes:

@@ -694,6 +694,7 @@ void SearchPopup::onSearch(CCObject* sender) {
 			if (!xpOk) continue;
 
 			//check if completed/uncompleted and completed/uncompleted filter is on
+			DPUtils::verifyCompletedLevels();
 			auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 			if (!(completed == uncompleted)) {
 				if (uncompleted && DPUtils::containsInt(completedLvls, lvlID)) continue;

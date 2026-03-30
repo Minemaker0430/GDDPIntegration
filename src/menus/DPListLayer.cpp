@@ -10,6 +10,7 @@
 #include "DPListLayer.hpp"
 #include "../CustomText.hpp"
 #include "../popups/RandomLevelPopup.hpp"
+#include "../DPUtils.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -436,6 +437,7 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 	}*/
 
 	this->scheduleUpdate();
+	DPUtils::verifyCompletedLevels();
 
 	return;
 }

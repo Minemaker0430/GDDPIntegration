@@ -68,3 +68,45 @@ bool DPUtils::containsString(std::vector<std::string> v, std::string t) {
 bool DPUtils::containsJson(std::vector<matjson::Value> v, matjson::Value t) {
 	return (std::find(v.begin(), v.end(), t) != v.end());
 };
+
+void DPUtils::verifyCompletedLevels() {
+	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
+
+	// check completed levels in player's save file
+	auto glm = GameLevelManager::sharedState();
+	auto glmCompletedLvls = glm->getCompletedLevels(false)->asExt();
+
+	// make sure any level that should be there is there
+	if (glmCompletedLvls.size() > 0) {
+		for (auto i : glmCompletedLvls) {
+			auto lvl = static_cast<GJGameLevel*>(i);
+			auto lvlID = lvl->m_levelID.value();
+
+			if (
+				data["level-data"].contains(std::to_string(lvlID)) && 
+				lvl->getNormalPercent() >= 100 && 
+				!DPUtils::containsInt(completedLvls, lvlID)
+			) {
+				completedLvls.push_back(lvlID);
+			}
+
+			if (
+				data["level-data"].contains(std::to_string(lvlID)) && 
+				lvl->getNormalPercent() < 100 && 
+				DPUtils::containsInt(completedLvls, lvlID)
+			) {
+				completedLvls.erase(DPUtils::findInt(completedLvls, lvlID));
+			}
+		}
+	}
+
+	// remove any levels that shouldn't be there
+	for (auto lvlID : completedLvls) {
+		if (!data["level-data"].contains(std::to_string(lvlID))) {
+			completedLvls.erase(DPUtils::findInt(completedLvls, lvlID));
+		}
+	}
+
+	Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
+};

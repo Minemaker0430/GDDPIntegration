@@ -133,24 +133,7 @@ void DPLayer::reloadData(bool isInit) {
 					m_finishedLoading = true;
 					m_error = false;
 
-					// check completed levels in player's save file
-					auto glm = GameLevelManager::sharedState();
-					auto glmCompletedLvls = glm->getCompletedLevels(false);
-
-					if (glmCompletedLvls->count() > 0) {
-						for (int i = 0; i < glmCompletedLvls->indexOfObject(glmCompletedLvls->lastObject()); i++) {
-							auto lvl = static_cast<GJGameLevel*>(glmCompletedLvls->objectAtIndex(i));
-							auto lvlID = lvl->m_levelID.value();
-
-							if (m_data["level-data"].contains(std::to_string(lvlID)) && lvl->m_normalPercent.value() == 100) {
-								auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-								if (!DPUtils::containsInt(completedLvls, lvlID)) {
-									completedLvls.insert(completedLvls.begin(), lvlID);
-									Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
-								}
-							}
-						}
-					}
+					DPUtils::verifyCompletedLevels();
 
 					reloadList(m_currentTab);
 				}
