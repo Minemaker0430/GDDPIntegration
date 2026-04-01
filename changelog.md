@@ -1,3 +1,8 @@
+# v1.1.2
+
+* HOPEFULLY fixed the bug where levels are marked as completed when they aren't
+* Fixed a bug where the game would instantly crash on startup
+
 # v1.1.1
 
 * (Hopefully) Finally fixed a bug where levels would be mistakenly marked as completed
