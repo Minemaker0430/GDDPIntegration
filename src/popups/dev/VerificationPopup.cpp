@@ -2649,7 +2649,7 @@ void AddLevelPopup::onAddLevel(CCObject*) {
 
 		auto offs = popup->m_levelList->m_tableView->m_contentLayer->getPositionY(); // save list offset
 		popup->loadPack(popup->m_index, popup->m_packID, true);
-		popup->m_levelList->m_tableView->m_contentLayer->setPositionY(offs);
+		if (lvlList.size() > 7) popup->m_levelList->m_tableView->m_contentLayer->setPositionY(offs);
 	}
 
 	this->onClose(new CCObject());

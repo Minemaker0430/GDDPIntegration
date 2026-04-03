@@ -1,3 +1,9 @@
+# v1.1.3
+
+* Fixed some internal issues
+* Fixed an issue with the mod's save data
+* Bumped Geode version to v5.5.3
+
 # v1.1.2
 
 * HOPEFULLY fixed the bug where levels are marked as completed when they aren't

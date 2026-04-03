@@ -58,14 +58,17 @@ std::vector<matjson::Value>::iterator DPUtils::findJson(std::vector<matjson::Val
 };
 
 bool DPUtils::containsInt(std::vector<int> v, int t) {
+	if (v.empty()) return false;
 	return (std::find(v.begin(), v.end(), t) != v.end());
 };
 
 bool DPUtils::containsString(std::vector<std::string> v, std::string t) {
+	if (v.empty()) return false;
 	return (std::find(v.begin(), v.end(), t) != v.end());
 };
 
 bool DPUtils::containsJson(std::vector<matjson::Value> v, matjson::Value t) {
+	if (v.empty()) return false;
 	return (std::find(v.begin(), v.end(), t) != v.end());
 };
 

@@ -287,7 +287,7 @@ void SaveContentsPopup::compareChanges() {
                                         auto oldValue = value.as<std::vector<int>>().unwrapOrDefault();
                                         changesList.push_back(fmt::format("   {} Changed:", key));
                                         auto pos = 0;
-                                        auto sizeDiff = newValue.size() - oldValue.size();
+                                        int sizeDiff = newValue.size() - oldValue.size();
                                         for (auto id : newValue) {
                                             if (sizeDiff > 0 && !DPUtils::containsInt(oldValue, id)) {
                                                 changesList.push_back(fmt::format("     - {} Added.", id));
@@ -297,8 +297,11 @@ void SaveContentsPopup::compareChanges() {
                                                 changesList.push_back(fmt::format("     - {} Removed.", id));
                                                 pos -= 1;
                                             }
-                                            else if (oldValue.at(pos) != id) {
+                                            else if (pos < oldValue.size() && oldValue.at(pos) != id) {
                                                 changesList.push_back(fmt::format("     - {} -> {}", oldValue.at(pos), id));
+                                            }
+                                            else {
+                                                changesList.push_back(fmt::format("     - {}", id));
                                             }
 
                                             pos += 1;

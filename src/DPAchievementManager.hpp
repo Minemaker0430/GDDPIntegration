@@ -9,6 +9,7 @@ protected:
     DPAchievementManager();
 
     std::vector<int> m_completedLvls;
+    matjson::Value m_data;
 
     virtual void update(float dt) override;
 public:
