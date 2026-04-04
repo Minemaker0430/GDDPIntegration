@@ -133,7 +133,7 @@ void DPLayer::reloadData(bool isInit) {
 					m_finishedLoading = true;
 					m_error = false;
 
-					DPUtils::verifyCompletedLevels();
+					DPUtils::forceUpdateStatus();
 
 					reloadList(m_currentTab);
 				}

@@ -1,3 +1,7 @@
+# v1.1.4
+
+* Fixed Major FPS Drops, sorry about that
+
 # v1.1.3
 
 * Fixed some internal issues

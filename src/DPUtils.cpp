@@ -98,3 +98,8 @@ void DPUtils::verifyCompletedLevels() {
 
 	Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
 };
+
+void DPUtils::forceUpdateStatus() {
+	Mod::get()->setSavedValue<std::vector<int>>("completed-levels", std::vector<int>());
+	verifyCompletedLevels();
+};

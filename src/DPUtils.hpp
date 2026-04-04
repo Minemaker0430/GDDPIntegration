@@ -21,4 +21,5 @@ public:
 	static bool containsJson(std::vector<matjson::Value>, matjson::Value);
 
 	static void verifyCompletedLevels();
+	static void forceUpdateStatus();
 };

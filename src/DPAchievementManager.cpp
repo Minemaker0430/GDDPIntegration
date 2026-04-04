@@ -18,16 +18,16 @@ DPAchievementManager::DPAchievementManager() {
 }
 
 void DPAchievementManager::update(float dt) {
-    if (m_completedLvls == Mod::get()->getSavedValue<std::vector<int>>("completed-levels") && m_data == Mod::get()->getSavedValue<matjson::Value>("cached-data")) return;
-    m_data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+    if (m_completedLvls == Mod::get()->getSavedValue<std::vector<int>>("completed-levels")) return;
     m_completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 
+    auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
     auto achievements = Mod::get()->getSavedValue<matjson::Value>("achievements");
     auto achNotif = AchievementNotifier::sharedState();
 
     // update pack status
     for (std::string index : {"main", "legacy", "bonus", "monthly"}) {
-        for (auto pack : m_data[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+        for (auto pack : data[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
             // setup important data
             std::string name = pack["name"].asString().unwrapOr("null");
             std::string sprite = pack["sprite"].asString().unwrapOr("DP_Unknown");
@@ -74,8 +74,8 @@ void DPAchievementManager::update(float dt) {
     if (!Mod::get()->getSettingValue<bool>("achievement-popups")) return;
 
     // check main list achievements
-    if (m_data.contains("main")) {
-        for (auto pack : m_data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+    if (data.contains("main")) {
+        for (auto pack : data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
             auto saveID = pack["saveID"].asString().unwrapOr("null");
             auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
@@ -108,8 +108,8 @@ void DPAchievementManager::update(float dt) {
     // check legacy & bonus achievements
     if (!Mod::get()->getSettingValue<bool>("disable-pack-achievements")) {
         for (std::string index : {"legacy", "bonus"}) {
-            if (!m_data.contains(index)) continue;
-            for (auto pack : m_data[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+            if (!data.contains(index)) continue;
+            for (auto pack : data[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
                 auto saveID = pack["saveID"].asString().unwrapOr("null");
                 auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
@@ -138,8 +138,8 @@ void DPAchievementManager::update(float dt) {
     }
 
     // only look for this month's monthly pack
-    if (!Mod::get()->getSettingValue<bool>("disable-monthly-achievements") && m_data.contains("monthly")) {
-        auto monthlyPack = m_data["monthly"][0];
+    if (!Mod::get()->getSettingValue<bool>("disable-monthly-achievements") && data.contains("monthly")) {
+        auto monthlyPack = data["monthly"][0];
         auto month = monthlyPack["month"].as<int>().unwrapOr(1);
         auto year = monthlyPack["year"].as<int>().unwrapOr(1987);
         auto saveID = fmt::format("{}-{}", month, year);
@@ -187,18 +187,18 @@ void DPAchievementManager::update(float dt) {
     }
 
     // check medals
-    if (!Mod::get()->getSettingValue<bool>("disable-medal-achievements") && m_data.contains("medals")) {
+    if (!Mod::get()->getSettingValue<bool>("disable-medal-achievements") && data.contains("medals")) {
         for (std::string index : {"normal", "plus"}) {
-            for (int i = 0; i < m_data["medals"][index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
+            for (int i = 0; i < data["medals"][index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
                 auto id = fmt::format("{}medal-{}", ((index == "plus") ? "plus-" : ""), i);
-                auto name = m_data["medals"][index][i]["name"].asString().unwrapOr("");
-                auto req = m_data["medals"][index][i]["requirement"].as<int>().unwrapOr(0);
+                auto name = data["medals"][index][i]["name"].asString().unwrapOr("");
+                auto req = data["medals"][index][i]["requirement"].as<int>().unwrapOr(0);
                 if (!achievements[id].asBool().unwrapOr(false) && (StatsPopup::getPercentToRank(req, (index == "plus")) >= 1.f)) {
                     AchievementBar* ach = AchievementBar::create(
                         (index == "plus") ? fmt::format("{} Plus Medal Obtained!", name).c_str() : fmt::format("{} Medal Obtained!", name).c_str(), 
                         (index == "plus") ? 
-                        fmt::format("Achieve every rank from {} to {}+.", m_data["main"][0]["name"].asString().unwrapOr("???"), m_data["main"][req]["name"].asString().unwrapOr("???")).c_str() :
-                        fmt::format("Get the normal ranks from {} to {}.", m_data["main"][0]["name"].asString().unwrapOr("???"), m_data["main"][req]["name"].asString().unwrapOr("???")).c_str(), 
+                        fmt::format("Achieve every rank from {} to {}+.", data["main"][0]["name"].asString().unwrapOr("???"), data["main"][req]["name"].asString().unwrapOr("???")).c_str() :
+                        fmt::format("Get the normal ranks from {} to {}.", data["main"][0]["name"].asString().unwrapOr("???"), data["main"][req]["name"].asString().unwrapOr("???")).c_str(), 
                         "GJ_sStarsIcon_001.png", 
                         true
                     );
@@ -210,12 +210,12 @@ void DPAchievementManager::update(float dt) {
         }
 
         // check absolute perfection
-        auto progressPercent = StatsPopup::getPercentToRank(m_data["main"].asArray().unwrap().size() - 1, true);
+        auto progressPercent = StatsPopup::getPercentToRank(data["main"].asArray().unwrap().size() - 1, true);
 
         //Get All Bonus Progress
         auto bonusProgress = 0;
         auto bonusTotalLevels = 0;
-        for (auto pack : m_data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+        for (auto pack : data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
             auto saveID = pack["saveID"].asString().unwrapOr("null");
             auto totalLevels = pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size();
             auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
