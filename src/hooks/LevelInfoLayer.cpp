@@ -64,6 +64,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 	bool init(GJGameLevel* p0, bool p1) {
 		if (!LevelInfoLayer::init(p0, p1)) return false;
 
+		if (!this->m_level || this->m_level->m_levelID.value() < 0) return true;
+
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 		//check for errors

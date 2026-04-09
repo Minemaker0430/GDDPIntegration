@@ -6,7 +6,7 @@
 			"ios": "2.2081",
 			"mac": "2.2081"
 		},
-		"version": "v1.1.4",
+		"version": "v1.1.5",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "ItsMochaTheOtter",
@@ -49,7 +49,7 @@
 		],
 
 		"dependencies": {
-			"geode.node-ids": ">=1.22.0"
+			"geode.node-ids": ">=1.23.3"
 		},
 
 	"settings": {
@@ -58,10 +58,26 @@
 			"description": "Clears your completed levels in the mod's save data. Should only be used for accidental completions or bugs.\n\n<cr>This will NOT affect ranks.</c>",
 			"type": "custom:refresh-stats"
 		},
+		"reset-ranks": {
+			"name": "Reset Ranks",
+			"description": "Clears your completed ranks in the mod's save data. Should only be used for accidental completions or bugs.\n\n<cr>This will NOT affect progress.</c>",
+			"type": "custom:reset-ranks"
+		},
+		"reset-achievements": {
+			"name": "Reset Achievements",
+			"description": "Clears your completed achievements in the mod's save data. Should only be used for accidental completions or bugs.\n\n<cr>This will NOT affect ranks or progress.</c>",
+			"type": "custom:reset-achievements"
+		},
 		"bypass-section": {
 			"name": "Progression Bypass",
 			"description": "Options that let you bypass the lock system in the GDDP Menus.",
 			"type": "title"
+		},
+		"unlock-if-progressed": {
+			"name": "Unlock If Progressed",
+			"description": "Unlocks any pack you have progress in, regardless of rank status.\n<cy>(NOTE: Overrides \"Unlock All Tiers\" and \"Unlock All Legacy Packs\")</c>",
+			"type": "bool",
+			"default": false
 		},
 		"unlock-all-tiers": {
 			"name": "Unlock All Tiers",

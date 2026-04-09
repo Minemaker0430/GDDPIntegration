@@ -151,7 +151,8 @@ bool DPPackCell::init() {
 	// check if locked
 	if (
 		((m_id > 0) && (m_index == "main") && !Mod::get()->getSettingValue<bool>("unlock-all-tiers")) ||
-		((m_index == "legacy") && !Mod::get()->getSettingValue<bool>("unlock-all-legacy"))
+		((m_index == "legacy") && !Mod::get()->getSettingValue<bool>("unlock-all-legacy")) ||
+		((m_index == "main" || m_index == "legacy") && Mod::get()->getSettingValue<bool>("unlock-if-progressed") && listSave.progress <= 0)
 	) {
 		matjson::Value prevPackData = (m_index == "main") ? data["main"][fmax(0, m_id - 1)] : data["main"][mainPack];
 

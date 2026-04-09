@@ -101,5 +101,4 @@ void DPUtils::verifyCompletedLevels() {
 
 void DPUtils::forceUpdateStatus() {
 	Mod::get()->setSavedValue<std::vector<int>>("completed-levels", std::vector<int>());
-	verifyCompletedLevels();
 };

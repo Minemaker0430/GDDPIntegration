@@ -1,3 +1,12 @@
+# v1.1.5
+
+* Attempted to fix a weird crash from Level Cells
+* Added some more Options to Reset Stats (in case someone gets them as a bug)
+	* Reset Ranks
+	* Reset Achievements
+* Added the "Unlock If Progressed" Option to the Bypass Category
+	* Any pack that you have progress on will automatically be unlocked, regardless of rank status
+
 # v1.1.4
 
 * Fixed Major FPS Drops, sorry about that

@@ -42,6 +42,9 @@ class $modify(DemonProgression, LevelCell) {
 
 	void loadCustomLevelCell() {
 		LevelCell::loadCustomLevelCell();
+
+		if (!this->m_level || this->m_level->m_levelID.value() < 0) return;
+
 		auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 		bool inGDDP = (Mod::get()->getSavedValue<bool>("in-gddp") || Mod::get()->getSettingValue<bool>("show-outside-menus"));
@@ -49,7 +52,7 @@ class $modify(DemonProgression, LevelCell) {
 		//check for errors
 		auto jsonCheck = checkJson(data, "");
 
-		if (!jsonCheck.ok()) {
+		if (!jsonCheck.ok() || !data.isObject()) {
 			log::info("Something went wrong validating the GDDP list data.");
 
 			return;
@@ -141,7 +144,8 @@ class $modify(DemonProgression, LevelCell) {
 
 			//skillset badges
 			if (Mod::get()->getSettingValue<bool>("skillset-badges") && skillsets.size() > 0 && Mod::get()->getSettingValue<bool>("show-skills-in-list")) {
-				auto layer = typeinfo_cast<CCNode*>(this->getChildByID("main-layer"));
+				auto layer = (this->getChildByID("main-layer")) ? typeinfo_cast<CCNode*>(this->getChildByID("main-layer")) : nullptr;
+				if (layer == nullptr) return;
 
 				GJDifficultySprite* diffSpr;
 				if (this->getChildByID("main-layer")->getChildByID("difficulty-container")) {
