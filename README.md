@@ -1,3 +1,8 @@
+![Mod Version](https://api.geode-sdk.org/v1/mods/minemaker0430.gddp_integration/status_badge?stat=version)
+![Downloads](https://api.geode-sdk.org/v1/mods/minemaker0430.gddp_integration/status_badge?stat=downloads)
+![GD Version](https://api.geode-sdk.org/v1/mods/minemaker0430.gddp_integration/status_badge?stat=gd_version)
+![Geode Version](https://api.geode-sdk.org/v1/mods/minemaker0430.gddp_integration/status_badge?stat=geode_version)
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M8WCJ98)
 
 # GDDP - Demon Progression
