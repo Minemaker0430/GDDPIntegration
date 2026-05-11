@@ -1,3 +1,11 @@
+# v1.1.6
+
+* Attempted to fix a weird crash when opening the the Stats Popup
+* Attempted to fix various freezing bugs (Search Popup, Level Complete, etc.)
+* Added a missing Monthly Pack Completion milestone in the Stats Popup
+* Ranks and Medals now have an accurate percentage when looking at their info in the Stats Menu
+* Fixed a typo in the Random Level Selector popup
+
 # v1.1.5
 
 * Attempted to fix a weird crash from Level Cells

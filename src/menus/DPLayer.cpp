@@ -199,7 +199,7 @@ void DPLayer::rouletteCallback(CCObject* sender) {
 
 void DPLayer::recommendedCallback(CCObject* sender) {
 	if (m_finishedLoading && !m_error) {
-		RecommendedUtils::generateRecommendations();
+		//RecommendedUtils::generateRecommendations();
 
 		auto scene = CCScene::create(); // creates the scene
 		auto dpLayer = RecommendedLayer::create(); //creates the layer
@@ -581,8 +581,6 @@ void DPLayer::reloadList(int type) {
 			m_currentYear = m_data["monthly"][0]["year"].as<int>().unwrapOr(1987) - 1900;
 		}
 	}
-
-	RecommendedUtils::validateLevels();
 
 	//setup cells
 	auto packListCells = CCArray::create();

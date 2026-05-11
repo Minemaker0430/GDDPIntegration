@@ -22,4 +22,6 @@ public:
 
 	static void verifyCompletedLevels();
 	static void forceUpdateStatus();
+	static void updateSaveData();
+	static void updateAchievements();
 };

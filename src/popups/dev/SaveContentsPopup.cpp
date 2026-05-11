@@ -200,7 +200,8 @@ void SaveContentsPopup::compareChanges() {
 
     // erase default values for text effects
     for (auto index : {"main", "legacy", "bonus", "monthly"}) {
-        for (auto pack : m_dataNew[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+        for (auto i = 0; i < m_dataNew[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
+            auto& pack = m_dataNew[index][i];
             if (!pack.contains("textEffects")) continue;
 
             if (pack["textEffects"]["textColor"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255}) == ccColor3B{255, 255, 255}) pack["textEffects"].erase("textColor");
@@ -222,6 +223,10 @@ void SaveContentsPopup::compareChanges() {
             if (!pack["textEffects"]["crystal"].asBool().unwrapOrDefault()) pack["textEffects"].erase("crystal");
             if (!pack["textEffects"]["stars"].asBool().unwrapOrDefault()) pack["textEffects"].erase("stars");
             if (!pack["textEffects"]["bevel"].asBool().unwrapOrDefault()) pack["textEffects"].erase("bevel");
+        
+            if (pack["textEffects"].dump() == "{}") log::info("this should be erased");
+            if (pack["textEffects"].dump() == "{}") if (pack.erase("textEffects")) log::info("erased");
+            m_dataNew[index][i] = pack;
         }
     }
 

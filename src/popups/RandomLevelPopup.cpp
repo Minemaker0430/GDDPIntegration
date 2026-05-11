@@ -218,7 +218,7 @@ void RandomLevelPopup::onConfirm(CCObject*) {
     else  levelList = m_levels;
 
     if (levelList.empty()) {
-        auto alert = FLAlertLayer::create("Whoops!", "You don't have eny levels that match your <cy>Completed</c>/<cy>Uncompleted</c> Filter!", "OK");
+        auto alert = FLAlertLayer::create("Whoops!", "You don't have any levels that match your <cy>Completed</c>/<cy>Uncompleted</c> Filter!", "OK");
         alert->setParent(this);
         alert->show();
         return;

@@ -601,6 +601,8 @@ void SearchPopup::onSearch(CCObject* sender) {
 	auto completed = m_filter["completed"].asBool().unwrapOr(true);
 	auto uncompleted = m_filter["uncompleted"].asBool().unwrapOr(true);
 
+	DPUtils::verifyCompletedLevels();
+
 	// get difficulties
 	std::vector<bool> difficulties = {};
 	for (auto [key, value] : m_filter["difficulties"]) difficulties.push_back(value.asBool().unwrapOr(true));
@@ -694,7 +696,6 @@ void SearchPopup::onSearch(CCObject* sender) {
 			if (!xpOk) continue;
 
 			//check if completed/uncompleted and completed/uncompleted filter is on
-			DPUtils::verifyCompletedLevels();
 			auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 			if (!(completed == uncompleted)) {
 				if (uncompleted && DPUtils::containsInt(completedLvls, lvlID)) continue;

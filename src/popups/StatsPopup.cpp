@@ -206,7 +206,7 @@ void StatsPopup::loadTab(int id) {
 			monthlyCompletionsValue->setScale(1.f);
 			monthlyCompletionsValue->setID("monthly-completions-value");
 
-			std::vector<int> milestoneList = { 1, 2, 3, 4, 5, 10, 15, 25 };
+			std::vector<int> milestoneList = { 1, 2, 3, 4, 5, 10, 15, 20, 25 };
 			milestone = milestoneList[0];
 
 			for (int i = 0; i < milestoneList.size(); i++) {
@@ -429,13 +429,13 @@ void StatsPopup::loadTab(int id) {
 			for (int i = 0; i < plusMedals.size(); i++) if (getPercentToRank(plusMedals[i]["requirement"].as<int>().unwrapOr(0), true) >= 1.f) highestPlusMedal = i;
 
 			//Absolute Perfection Progress
-			auto progressPercent = getPercentToRank(data["main"].asArray().unwrap().size() - 1, true);
+			auto progressPercent = getPercentToRank(data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - 1, true);
 
 			auto bonusProgress = 0;
 			auto bonusTotalLevels = 0;
 			for (auto p : data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
 				auto saveID = p["saveID"].asString().unwrapOr("null");
-				auto totalLevels = p["levelIDs"].asArray().unwrap().size();
+				auto totalLevels = p["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size();
 				auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 				bonusProgress += listSave.progress;
@@ -774,7 +774,7 @@ void StatsPopup::loadTab(int id) {
 					packProgressFront->setZOrder(1);
 					packProgressFront->setColor({ 255, 190, 255 });
 
-					auto progressPercent = getPercentToRank(data["main"].asArray().unwrap().size() - 1, true);
+					auto progressPercent = getPercentToRank(data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - 1, true);
 
 					//Get All Bonus Progress
 					auto bonusProgress = 0;
@@ -896,10 +896,10 @@ void StatsPopup::medalInfoCallback(CCObject* sender) {
 
 		std::string progressStr = (
 			((progress == totalLevels) ? "<cy>" : "") +
-			fmt::format("{}/{} Main Levels", progress, totalLevels) +
+			fmt::format("{}/{} Main Levels ({}%)", progress, totalLevels, (floor((clampf(progress, 0, totalLevels) / (float)totalLevels) * 10000) / 100)) +
 			((progress == totalLevels) ? "</c>\n" : "\n") +
 			((bonusProgress == bonusTotalLevels) ? "<cy>" : "") +
-			fmt::format("{}/{} Bonus Levels", bonusProgress, bonusTotalLevels) +
+			fmt::format("{}/{} Bonus Levels ({}%)", bonusProgress, bonusTotalLevels, (floor((clampf(bonusProgress, 0, bonusTotalLevels) / (float)bonusTotalLevels) * 10000) / 100)) +
 			((bonusProgress == bonusTotalLevels) ? "</c>" : "")
 		);
 
@@ -923,12 +923,13 @@ void StatsPopup::medalInfoCallback(CCObject* sender) {
 			FLAlertLayer::create(
 				"Medal Info", 
 				fmt::format(
-					"Achieve every rank from {} to {}+\n\n{}{}/{} to Medal{}", 
+					"Achieve every rank from {} to {}+\n\n{}{}/{} to Medal ({}%){}", 
 					data["main"][0]["name"].asString().unwrapOr("???"),
 					data["main"][plusMedals[medalID]["requirement"].as<int>().unwrapOr(0)]["name"].asString().unwrapOr("???"),
 					(progress == totalLevels) ? "<cy>" : "",
 					clampf(progress, 0, totalLevels), 
 					totalLevels,
+					(floor((clampf(progress, 0, totalLevels) / (float)totalLevels) * 10000) / 100),
 					(progress == totalLevels) ? "</c>" : ""
 				), 
 				"OK"
@@ -953,12 +954,13 @@ void StatsPopup::medalInfoCallback(CCObject* sender) {
 			FLAlertLayer::create(
 				"Medal Info", 
 				fmt::format(
-					"Get the normal ranks from {} to {}\n\n{}{}/{} to Medal{}", 
+					"Get the normal ranks from {} to {}\n\n{}{}/{} to Medal ({}%){}", 
 					data["main"][0]["name"].asString().unwrapOr("???"),
 					data["main"][normalMedals[medalID]["requirement"].as<int>().unwrapOr(0)]["name"].asString().unwrapOr("???"),
 					(progress == totalLevels) ? "<cy>" : "",
 					clampf(progress, 0, totalLevels), 
 					totalLevels,
+					(floor(clampf(progress, 0, totalLevels) / (float)totalLevels * 10000) / 100),
 					(progress == totalLevels) ? "</c>" : ""
 				), 
 				"OK"
@@ -986,23 +988,26 @@ void StatsPopup::rankInfoCallback(CCObject* sender) {
 	FLAlertLayer::create(
 		"Rank Info",
 		(type == "main") ? fmt::format(
-			"{} Demons\n\n{}{}/{} to Rank{}\n{}{}/{} to Plus Rank{}", 
+			"{} Demons\n\n{}{}/{} to Rank ({}%){}\n{}{}/{} to Plus Rank ({}%){}", 
 			data[type][id]["name"].asString().unwrapOr("null"), 
 			((listSave.hasRank) ? "<cy>" : ""),
 			clampf(listSave.progress, 0, data[type][id]["reqLevels"].asInt().unwrapOr(999)), 
 			data[type][id]["reqLevels"].asInt().unwrapOr(999),
+			(floor((clampf(listSave.progress, 0, data[type][id]["reqLevels"].asInt().unwrapOr(999)) / (float)data[type][id]["reqLevels"].asInt().unwrapOr(999)) * 10000) / 100),
 			((listSave.hasRank) ? "</c>" : ""),
 			((listSave.completed) ? "<cy>" : ""),
 			listSave.progress, 
 			data[type][id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size(),
+			(floor(((float)listSave.progress / (float)data[type][id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size() * 10000)) / 100),
 			((listSave.completed) ? "</c>" : "")
 		) : fmt::format(
-			"{}{}\n\n{}{}/{} to Completion{}", 
+			"{}{}\n\n{}{}/{} to Completion ({}%){}", 
 			data[type][id]["name"].asString().unwrapOr("null"), 
 			((type == "legacy") ? " Demons" : ""),
 			((listSave.completed) ? "<cy>" : ""),
 			listSave.progress, 
 			data[type][id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size(),
+			(floor(((float)listSave.progress / (float)data[type][id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size()) * 10000) / 100),
 			((listSave.completed) ? "</c>" : "")
 		),
 		"OK"
@@ -1074,8 +1079,8 @@ float StatsPopup::getPercentToRank(int rankID, bool isPlus) {
 
 	for (int i = 0; i <= rankID; i++) {
 		auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
-		auto reqLevels = data["main"][i]["reqLevels"].asInt().unwrapOr(999);
-		auto totalLevels = data["main"][i]["levelIDs"].asArray().unwrap().size();
+		auto reqLevels = data["main"][i]["reqLevels"].as<int>().unwrapOr(999);
+		auto totalLevels = data["main"][i]["levelIDs"].as<std::vector<int>>().unwrapOrDefault().size();
 		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
 
 		if (isPlus) {

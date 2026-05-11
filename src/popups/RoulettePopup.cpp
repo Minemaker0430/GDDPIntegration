@@ -446,8 +446,12 @@ void RoulettePopup::onPackToggle(CCObject* sender) {
 
 void RoulettePopup::onPackCheckAll(CCObject*) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	auto totalPacks = data["main"].asArray().unwrap().size() + data["legacy"].asArray().unwrap().size() + data["bonus"].asArray().unwrap().size();
-	
+	auto totalPacks = (
+		data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() +
+		data["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() +
+		data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size()
+	);
+
 	for (int i = 0; i < totalPacks; i++) m_storedSettings[i + 6] = true;
 
 	m_name = m_value->getString();
@@ -462,8 +466,12 @@ void RoulettePopup::onPackCheckAll(CCObject*) {
 
 void RoulettePopup::onPackUncheckAll(CCObject*) {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
-	auto totalPacks = data["main"].asArray().unwrap().size() + data["legacy"].asArray().unwrap().size() + data["bonus"].asArray().unwrap().size();
-	
+	auto totalPacks = (
+		data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() +
+		data["legacy"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() +
+		data["bonus"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size()
+	);
+
 	for (int i = 0; i < totalPacks; i++) m_storedSettings[i + 6] = false;
 
 	m_name = m_value->getString();
