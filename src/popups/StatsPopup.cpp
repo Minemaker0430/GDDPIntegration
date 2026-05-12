@@ -450,8 +450,8 @@ void StatsPopup::loadTab(int id) {
 			std::string plusMedalStr = "None";
 			ccColor3B plusMedalColor = { 130, 130, 130 };
 			if (highestPlusMedal > -1) {
-				plusMedalStr = plusMedals[highestMedal]["name"].asString().unwrapOr("???");
-				plusMedalColor = plusMedals[highestMedal]["color"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255});
+				plusMedalStr = plusMedals[highestPlusMedal]["name"].asString().unwrapOr("???");
+				plusMedalColor = plusMedals[highestPlusMedal]["color"].as<ccColor3B>().unwrapOr(ccColor3B{255, 255, 255});
 			}
 			else if (highestPlusMedal == -2) {
 				plusMedalStr = "ABSOLUTE PERFECTION";
