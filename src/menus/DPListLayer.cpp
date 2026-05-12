@@ -213,6 +213,8 @@ void DPListLayer::onRandomLevel(CCObject*) {
 }
 
 void DPListLayer::updateProgressBar() {
+	m_progressBar->setVisible(m_levelsLoaded);
+
 	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
 	if (m_completedLvls == completedLvls || !m_levelsLoaded) return;
 	
@@ -221,8 +223,6 @@ void DPListLayer::updateProgressBar() {
 	auto offs = m_list->m_listView->m_tableView->m_contentLayer->getPositionY();
 	reloadLevels(new CCObject);
 	m_list->m_listView->m_tableView->m_contentLayer->setPositionY(offs);
-
-	m_progressBar->setVisible(true);
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 

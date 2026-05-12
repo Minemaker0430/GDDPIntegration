@@ -390,7 +390,7 @@ class $modify(DemonProgression, LevelInfoLayer) {
 	void onBack(CCObject* sender) {
 		LevelInfoLayer::onBack(sender);
 
-		//DPUtils::verifyCompletedLevels();
+		DPUtils::verifyCompletedLevels();
 
 		return;
 	}

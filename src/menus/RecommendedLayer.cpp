@@ -254,7 +254,7 @@ void RecommendedLayer::loadLevelsFailed(const char*) {
 	m_loadCircle->fadeAndRemove();
 
 	if (m_IDs.size() > 0) m_errorText->setCString("Something went wrong...");
-	else m_errorText->setCString("Beat a level to generate Recommendations!");
+	else m_errorText->setCString("Beat a level to generate\nRecommendations!");
 
 	/*auto alert = FLAlertLayer::create("ERROR", "Failed to load levels. Please try again later.", "OK");
 	alert->setParent(this);

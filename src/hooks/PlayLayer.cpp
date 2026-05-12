@@ -43,7 +43,7 @@ class $modify(PlayLayer) {
 
         if (this->m_isPracticeMode) return; // ALWAYS return if in practice mode
 
-        DPUtils::verifyCompletedLevels();
+        DPUtils::addCompletedLevel(this->m_level->m_levelID.value());
 
         //roulette stuff
         bool inRoulette = Mod::get()->getSavedValue<bool>("in-roulette", false);

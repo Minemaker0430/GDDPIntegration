@@ -318,7 +318,7 @@ void RecommendedUtils::getSkillsForRecommendation(int levelID) {
 			"{}<cy>{}</c>{}",
 			(s == skills.size() - 1 && skills.size() > 1) ? "& " : "",
 			XPUtils::skills[skills[s]]["name"].asString().unwrapOr("???"),
-			(s < skills.size() && skills.size() > 2) ? ", " : " "
+			(s < skills.size() - 1 && skills.size() > 2) ? ", " : " "
 		);
 	}
 

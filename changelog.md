@@ -1,3 +1,10 @@
+# v1.1.8
+
+* (Hopefully) Fixed freezing upon level completion (for GDDP Levels)
+* Fixed text overflow when the Recommended menu has no levels
+* Fixed progress bar not appearing sometimes on the level lists
+* Fixed trailing comma on levels recommended for 3+ Skills
+
 # v1.1.7
 
 * Fixed a crash in the Stats Menu when having a Plus Medal without a Normal Medal

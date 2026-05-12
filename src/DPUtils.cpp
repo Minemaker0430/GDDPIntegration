@@ -109,8 +109,21 @@ void DPUtils::verifyCompletedLevels() {
 
 	if (oldCompletedLvls != completedLvls) {
 		DPUtils::updateSaveData();
-		RecommendedUtils::validateLevels();
 	}
+
+    RecommendedUtils::validateLevels();
+};
+
+void DPUtils::addCompletedLevel(int levelID) {
+    auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+    auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels", std::vector<int>());
+
+    if (!DPUtils::containsInt(completedLvls, levelID) && data["level-data"].contains(std::to_string(levelID))) {
+        completedLvls.push_back(levelID);
+        Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
+
+        DPUtils::updateSaveData();
+    }
 };
 
 void DPUtils::forceUpdateStatus() {
