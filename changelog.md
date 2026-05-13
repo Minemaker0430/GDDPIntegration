@@ -1,3 +1,8 @@
+# v1.1.9
+
+* Fixed lag spikes upon level completion (for real this time)
+* GDDP level complete now checks for Testmode and Ignore Damage too
+
 # v1.1.8
 
 * (Hopefully) Fixed freezing upon level completion (for GDDP Levels)

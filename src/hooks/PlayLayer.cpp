@@ -41,7 +41,7 @@ class $modify(PlayLayer) {
     void levelComplete() {
         PlayLayer::levelComplete();
 
-        if (this->m_isPracticeMode) return; // ALWAYS return if in practice mode
+        if (this->m_isPracticeMode || this->m_isTestMode || this->m_isIgnoreDamageEnabled) return; // ALWAYS return if in practice mode/testmode/ignore damage enabled
 
         DPUtils::addCompletedLevel(this->m_level->m_levelID.value());
 

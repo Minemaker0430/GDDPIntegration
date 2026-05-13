@@ -122,7 +122,26 @@ void DPUtils::addCompletedLevel(int levelID) {
         completedLvls.push_back(levelID);
         Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
 
-        DPUtils::updateSaveData();
+        //find pack for level
+        for (std::string index : {"main", "legacy", "bonus", "monthly"}) {
+            for (auto pack : data[index].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
+                auto levelIDs = pack["levelIDs"].as<std::vector<int>>().unwrapOrDefault();
+                if (DPUtils::containsInt(levelIDs, levelID)) {
+                    auto saveID = (index == "monthly") ? fmt::format("{}-{}", pack["month"].as<int>().unwrapOr(-1), pack["year"].as<int>().unwrapOr(-1)) : pack["saveID"].asString().unwrapOr("null");
+                    auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
+
+                    auto progress = listSave.progress + 1;
+                    auto hasRank = listSave.hasRank || ((progress >= pack["reqLevels"].as<int>().unwrapOr(-1)) && (pack["reqLevels"].as<int>().unwrapOr(-1) > -1));
+                    auto completed = (progress == levelIDs.size());
+
+                    if (!Mod::get()->getSavedValue<bool>("dev-preview", false) && progress != listSave.progress) Mod::get()->setSavedValue<ListSaveFormat>(saveID, ListSaveFormat{ .progress = progress, .completed = completed, .hasRank = hasRank });
+
+                    if ((listSave.hasRank != hasRank || listSave.completed != completed) && Mod::get()->getSettingValue<bool>("achievement-popups")) DPUtils::updateAchievements();
+
+                    return;
+                }
+            }
+        }
     }
 };
 
