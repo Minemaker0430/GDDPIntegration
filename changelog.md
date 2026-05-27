@@ -1,3 +1,18 @@
+# v1.1.10
+
+* Fixed a bug where Recommendations didn't update
+* Added a "Page" System for Monthly Packs, to separate them by Year
+	* The old tab can be Toggled in settings
+* Added a setting to highlight the Tier you're working on
+	* Also added a setting for "Highlight Latest Monthly Pack"
+* Added a "Pin" button to Packs that pins them at the top of the list
+* Added a notification icon to the Monthly Tab for when new packs get released
+
+Other Notes:
+* Added Grandpa Demon as an incompatibility, due to it messing with vanilla nodes that GDDP depends on, causing crashes
+	* It is also no longer officially supported and not on the Geode index
+	* I will not be attempting to re-add compatibility
+
 # v1.1.9
 
 * Fixed lag spikes upon level completion (for real this time)

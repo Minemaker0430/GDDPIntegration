@@ -6,7 +6,7 @@ using namespace geode::prelude;
 
 class RecommendedUtils {
 public:
-	static void validateLevels();
+	static void validateLevels(bool force = false);
 	static void generateRecommendations();
     static void getSkillsForRecommendation(int);
 

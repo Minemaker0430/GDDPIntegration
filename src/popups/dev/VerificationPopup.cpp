@@ -991,6 +991,14 @@ void VerificationPopup::loadMain(int tab)
 
 	onUpdateSearch("");
 
+	if (GameManager::sharedState()->m_playerName == "MochaTheOtter") {
+		auto syncMenu = CCMenu::create();
+		syncMenu->setPosition({435.5f, 70.f});
+		auto syncBtn = CCMenuItemSpriteExtra::create(ButtonSprite::create("Sync DB", "bigFont.fnt", "GJ_button_02.png", 0.65f), this, menu_selector(VerificationPopup::onDBSync));
+		syncMenu->addChild(syncBtn);
+		m_mainLayer->addChild(syncMenu);
+	}
+
 	return;
 }
 

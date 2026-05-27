@@ -53,7 +53,9 @@ above for that skill. its very unlikely that anyone will encounter this scenario
 //geode namespace
 using namespace geode::prelude;
 
-void RecommendedUtils::validateLevels() {
+void RecommendedUtils::validateLevels(bool force) {
+	if (!Mod::get()->getSettingValue<bool>("enable-recommendations")) return;
+
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	auto recommendations = Mod::get()->getSavedValue<matjson::Value>("recommended-levels");
 	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
@@ -76,6 +78,7 @@ void RecommendedUtils::validateLevels() {
 	}
 
 	if (levels.empty() && completedLvls.size() > 0) generateRecommendations();
+	else if (force) generateRecommendations();
 	else {
 
 		//check if you completed a recommended level
@@ -95,7 +98,7 @@ void RecommendedUtils::validateLevels() {
 			for (auto lvl : levelIDs) {
 				//auto levelID = std::to_string(lvl);
 
-				if (DPUtils::containsInt(mainList, lvl) && DPUtils::containsInt(levels, lvl)) {
+				if (DPUtils::containsInt(levels, lvl)) {
 					generateRecommendations();
 					stop = true;
 					break;
@@ -130,6 +133,7 @@ void RecommendedUtils::generateRecommendations() {
 
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
+	auto oldRecommendations = Mod::get()->getSavedValue<matjson::Value>("recommended-levels");
 
 	XPUtils::getXP();
 
@@ -149,38 +153,37 @@ void RecommendedUtils::generateRecommendations() {
 
 	//Get Highest Rank
 	auto highest = 0; //Defaults to Beginner
-	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
-		//Check For Non-Plus Rank
-		if (StatsPopup::getPercentToRank(i, false) >= 1.f) highest = i;
-
-		//Check For Plus Rank
-		if (StatsPopup::getPercentToRank(i, true) >= 1.f) highest = std::min(i + 1, static_cast<int>(data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - 1));
-	}
-	//log::info("highest rank: {}", highest);
-
-	//Get Highest Partial Rank
 	auto highestPartial = -1;
 	auto partialDelta = 0;
 	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 		auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
 		auto reqLevels = data["main"][i]["reqLevels"].as<int>().unwrapOr(-1);
-
 		if (saveID == "null") continue;
 
 		auto listSave = Mod::get()->getSavedValue<ListSaveFormat>(saveID);
-		auto delta = listSave.progress - (reqLevels + 3);
 
-		if (listSave.progress > 0 && i > highestPartial && delta > 0 && delta <= 2) {
+		auto delta = listSave.progress - (reqLevels + 3);
+		
+		//Check For Non-Plus Rank
+		if (listSave.hasRank) {
+			highest = i;
+			//Check For Plus Rank
+			if (listSave.completed) highest = std::min(i + 1, static_cast<int>(data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size() - 1));
+		}
+		else if (listSave.progress > 0 && i > highestPartial && delta > 0 && delta <= 2 && !listSave.hasRank) {
 			highestPartial = i;
 			partialDelta = delta;
 		}
 	}
+	//log::info("highest rank: {}", highest);
+
 	//log::info("highest partial rank: {}", highestPartial);
 
-	// get hardest demons by skill by tier
+	// get hardest skills by tier
 	matjson::Value hardestSkills = {};
 	for (int i = 0; i < data["main"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>()).size(); i++) {
 		auto saveID = data["main"][i]["saveID"].asString().unwrapOr("null");
+		if (Mod::get()->getSavedValue<ListSaveFormat>(saveID).progress < 0) continue; // if you haven't made any progress in the tier, skip
 		
 		matjson::Value res = {};
 		for (auto s : skills) res.set(s, -1);

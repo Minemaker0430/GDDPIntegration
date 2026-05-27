@@ -442,6 +442,14 @@ bool DPLayer::init() {
 	m_tabs->setVisible(false);
 	this->addChild(m_tabs);
 
+	auto notifSprite = CCSprite::createWithSpriteFrameName("exMark_001.png");
+	notifSprite->setPosition({ 87.f, 25.f });
+	notifSprite->setScale(0.55f);
+	notifSprite->setZOrder(1);
+	notifSprite->setVisible(false);
+	notifSprite->setID("monthly-notif");
+	monthlyPacksBtn->addChild(notifSprite);
+
 	m_databaseVer = CCLabelBMFont::create("Loading...", "chatFont.fnt");
 	m_databaseVer->setAnchorPoint({ 1, 1 });
 	m_databaseVer->setPosition({ size.width - 1, size.height - 1 });
@@ -572,30 +580,64 @@ void DPLayer::reloadList(int type) {
 
 	if (packs.empty()) return;
 
-	m_monthlyTimer->setVisible(false);
-	if (type == (int)DPListType::Monthly && Mod::get()->getSettingValue<bool>("show-monthly-timer")) {
-		m_monthlyTimer->setVisible(true);
-
-		if (m_data["monthly"][0]["name"].asString().unwrapOr("???") != "???") {
-			m_currentMonth = m_data["monthly"][0]["month"].as<int>().unwrapOr(8);
-			m_currentYear = m_data["monthly"][0]["year"].as<int>().unwrapOr(1987) - 1900;
-		}
+	if (m_data["monthly"][0]["name"].asString().unwrapOr("???") != "???") {
+		m_currentMonth = m_data["monthly"][0]["month"].as<int>().unwrapOr(8);
+		m_currentYear = m_data["monthly"][0]["year"].as<int>().unwrapOr(1987) - 1900;
 	}
+
+	m_monthlyTimer->setVisible(type == (int)DPListType::Monthly && Mod::get()->getSettingValue<bool>("show-monthly-timer"));
+
+	//detect the latest monthly pack for the notification icon
+	if (Mod::get()->getSavedValue<std::string>("latest-monthly", "0-0") != fmt::format("{}-{}", m_currentMonth, m_currentYear + 1900)) {
+		if (type == (int)DPListType::Monthly) Mod::get()->setSavedValue<std::string>("latest-monthly", fmt::format("{}-{}", m_currentMonth, m_currentYear + 1900));
+	}
+	
+	if (auto notifSprite = static_cast<CCSprite*>(m_tabs->getChildByID("monthly")->getChildByID("monthly-notif"))) notifSprite->setVisible(Mod::get()->getSettingValue<bool>("show-monthly-notification") && Mod::get()->getSavedValue<std::string>("latest-monthly", "0-0") != fmt::format("{}-{}", m_currentMonth, m_currentYear + 1900));
+
+	auto pinned = Mod::get()->getSavedValue<std::vector<std::string>>("pinned-packs", std::vector<std::string>());
 
 	//setup cells
 	auto packListCells = CCArray::create();
 	auto packID = 0;
+
+	// pinned packs first
+	if (Mod::get()->getSettingValue<bool>("enable-pinning")) {
+		for (auto p : packs) {
+			if (DPUtils::containsString(pinned, (type == (int)DPListType::Monthly) ? fmt::format("{}-{}", p["month"].as<int>().unwrapOr(8), p["year"].as<int>().unwrapOr(1987)) : p["saveID"].asString().unwrapOr("null"))) {
+				
+				if (!Mod::get()->getSettingValue<bool>("legacy-monthly-tab") && type == (int)DPListType::Monthly) {
+					if ((p["year"].as<int>().unwrapOr(0) - 1900) != (m_currentYear - m_monthlyPage)) { packID++; continue; }
+				}
+				
+				auto cell = ListCell::create();
+				cell->addChild(DPPackCell::create(p, dataIdx, packID));
+				packListCells->addObject(cell);
+			}
+			packID++;
+		}
+		
+		packID = 0;
+	}
+
 	for (auto p : packs) {
+
+		if (!Mod::get()->getSettingValue<bool>("legacy-monthly-tab") && type == (int)DPListType::Monthly) {
+			if ((p["year"].as<int>().unwrapOr(0) - 1900) != (m_currentYear - m_monthlyPage)) { packID++; continue; }
+		}
+
+		if (Mod::get()->getSettingValue<bool>("enable-pinning") && DPUtils::containsString(pinned, (type == (int)DPListType::Monthly) ? fmt::format("{}-{}", p["month"].as<int>().unwrapOr(8), p["year"].as<int>().unwrapOr(1987)) : p["saveID"].asString().unwrapOr("null"))) { packID++; continue; } //if pinned, skip
 
 		auto cell = ListCell::create();
 		cell->addChild(DPPackCell::create(p, dataIdx, packID));
+		packListCells->addObject(cell);
 
 		packID++;
-		packListCells->addObject(cell);
 	}
 
 	//list
-	m_list = ListView::create(packListCells, 50.0f, 358.0f, 220.0f);
+	auto isMonthlyPaged = (type == (int)DPListType::Monthly && !Mod::get()->getSettingValue<bool>("legacy-monthly-tab"));
+	m_list = (isMonthlyPaged) ? ListView::create(packListCells, 50.0f, 358.0f, 190.0f) : ListView::create(packListCells, 50.0f, 358.0f, 220.0f);
+	if (isMonthlyPaged) m_list->setContentHeight(220.f);
 	m_list->setAnchorPoint({ 0.5f, 0.5f });
 	m_list->setPosition({ (size.width / 2) - 180, (size.height / 2) - 115 });
 	m_list->setID("list-menu");
@@ -603,6 +645,62 @@ void DPLayer::reloadList(int type) {
 	this->addChild(m_list);
 	m_currentTab = type;
 
+	if (isMonthlyPaged) {
+		auto monthlyPacks = m_data["monthly"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>());
+		m_monthlyMaxPage = std::abs((m_data["monthly"][monthlyPacks.size() - 1]["year"].as<int>().unwrapOr(1987) - 1900) - m_currentYear);
+
+		auto monthlyInfo = CCLabelBMFont::create(fmt::format("{}", (m_currentYear - m_monthlyPage) + 1900).c_str(), "bigFont.fnt");
+		monthlyInfo->setPosition({ m_list->getContentWidth() / 2, 15.f });
+		monthlyInfo->setScale(0.5f);
+
+		auto prevBtnSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+		auto nextBtnSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+		prevBtnSprite->setScale(0.5f);
+		nextBtnSprite->setScale(0.5f);
+		nextBtnSprite->setFlipX(true);
+
+		auto prevBtn = CCMenuItemSpriteExtra::create(prevBtnSprite, this, menu_selector(DPLayer::prevMonthlyPage));
+		auto nextBtn = CCMenuItemSpriteExtra::create(nextBtnSprite, this, menu_selector(DPLayer::nextMonthlyPage));
+
+		prevBtn->setPosition({ 15.f, 15.f });
+		nextBtn->setPosition({ 345.f, 15.f });
+
+		prevBtn->setVisible(m_monthlyPage > 0);
+		nextBtn->setVisible(m_monthlyPage < m_monthlyMaxPage);
+
+		auto monthlyMenu = CCMenu::create();
+		monthlyMenu->setID("monthly-pages");
+
+		monthlyMenu->addChild(prevBtn);
+		monthlyMenu->addChild(nextBtn);
+		monthlyMenu->addChild(monthlyInfo);
+
+		monthlyMenu->setAnchorPoint({ 0.5f, 1.f });
+		monthlyMenu->setContentSize({ m_list->getContentWidth(), 30.f });
+		monthlyMenu->setPosition({ 0.f, 190.f });
+		monthlyMenu->setZOrder(1);
+
+		auto bg = CCLayerColor::create({ 194, 114, 62, 255 }, 358.0f, 30.0f);
+		bg->setAnchorPoint(monthlyMenu->getAnchorPoint());
+		bg->setPosition(monthlyMenu->getPosition());
+		bg->setZOrder(-1);
+		monthlyMenu->addChild(bg);
+
+		m_list->addChild(monthlyMenu);
+	}
+
+	return;
+}
+
+void DPLayer::prevMonthlyPage(CCObject*) {
+	if (m_monthlyPage > 0) m_monthlyPage--;
+	reloadList(m_currentTab);
+	return;
+}
+
+void DPLayer::nextMonthlyPage(CCObject*) {
+	if (m_monthlyPage < m_monthlyMaxPage) m_monthlyPage++;
+	reloadList(m_currentTab);
 	return;
 }
 
@@ -627,12 +725,30 @@ void DPLayer::onDevToggle(CCObject* sender) {
 	return;
 }
 
+void DPLayer::onPinToggle(CCObject* sender) {
+	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+	auto btn = static_cast<CCMenuItemToggler*>(sender);
+	auto params = static_cast<ListParameters*>(static_cast<CCNode*>(sender)->getUserObject());
+	auto saveID = (params->m_type == "monthly") ? fmt::format("{}-{}", data[params->m_type][params->m_index]["month"].as<int>().unwrapOr(8), data[params->m_type][params->m_index]["year"].as<int>().unwrapOr(1987)) : data[params->m_type][params->m_index]["saveID"].asString().unwrapOr("null");
+
+	auto pinned = Mod::get()->getSavedValue<std::vector<std::string>>("pinned-packs", std::vector<std::string>());
+
+	if (!btn->isToggled()) pinned.push_back(saveID);
+	else if (DPUtils::containsString(pinned, saveID)) pinned.erase(std::remove(pinned.begin(), pinned.end(), saveID), pinned.end());
+
+	Mod::get()->setSavedValue<std::vector<std::string>>("pinned-packs", pinned);
+
+	return;
+}
+
 void DPLayer::update(float dt) {
 	auto completedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels");
-	if (m_completedLvls == completedLvls || !m_finishedLoading) return;
+	auto pinned = Mod::get()->getSavedValue<std::vector<std::string>>("pinned-packs", std::vector<std::string>());
+	if ((m_completedLvls == completedLvls && m_pinned == pinned) || !m_finishedLoading) return;
 	
 	// update
 	m_completedLvls = completedLvls;
+	m_pinned = pinned;
 	auto offs = m_list->m_tableView->m_contentLayer->getPositionY();
 	reloadList(m_currentTab);
 	m_list->m_tableView->m_contentLayer->setPositionY(offs);

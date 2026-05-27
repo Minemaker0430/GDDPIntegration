@@ -6,7 +6,7 @@
 			"ios": "2.2081",
 			"mac": "2.2081"
 		},
-		"version": "v1.1.9",
+		"version": "v1.1.10",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "ItsMochaTheOtter",
@@ -50,6 +50,10 @@
 
 		"dependencies": {
 			"geode.node-ids": ">=1.23.3"
+		},
+
+		"incompatibilities": {
+			"itzkiba.grandpa_demon": "<=1.2.3"
 		},
 
 	"settings": {
@@ -109,13 +113,6 @@
 			"default": true,
 			"enable-if": "skillset-badges"
 		},
-		"show-recommended-in-list": {
-			"name": "Show Recommendations Button in List",
-			"description": "If disabled, the star button on recommendations will only be shown on the Level Page.",
-			"type": "bool",
-			"default": true,
-			"enable-if": "skillset-badges"
-		},
 		"enable-search": {
 			"name": "Enable Search Menu",
 			"description": "Enables the Advanced GDDP Search Menu.",
@@ -138,7 +135,22 @@
 			"name": "Enable Recommendation Button",
 			"description": "Enables the Star button next to recommended levels.",
 			"type": "bool",
-			"default": true
+			"default": true,
+			"enable-if": "enable-recommendations"
+		},
+		"show-recommended-in-list": {
+			"name": "Show Recommendations Button in List",
+			"description": "If disabled, the star button on recommendations will only be shown on the Level Page.",
+			"type": "bool",
+			"default": true,
+			"enable-if": "enable-recommended-btn"
+		},
+		"disable-recommended-effect": {
+			"name": "Disable Recommended Glow",
+			"description": "Disables the Glow on Recommended Levels.",
+			"type": "bool",
+			"default": false,
+			"enable-if": "enable-recommendations"
 		},
 		"enable-random-level-picker": {
 			"name": "Enable Random Level Picker",
@@ -155,6 +167,12 @@
 		"enable-practice": {
 			"name": "Enable Practice",
 			"description": "Enables StartPos Copies to be accessed.",
+			"type": "bool",
+			"default": true
+		},
+		"enable-pinning": {
+			"name": "Enable Pinning",
+			"description": "Enables the ability to Pin Packs in the GDDP Menu.",
 			"type": "bool",
 			"default": true
 		},
@@ -189,13 +207,6 @@
 			"type": "bool",
 			"default": false,
 			"enable-if": "custom-difficulty-faces"
-		},
-		"disable-recommended-effect": {
-			"name": "Disable Recommended Glow",
-			"description": "Disables the Glow on Recommended Levels.",
-			"type": "bool",
-			"default": false,
-			"enable-if": "enable-recommendations"
 		},
 		"hide-monthly-outside": {
 			"name": "Hide Monthly Outside Menus",
@@ -356,6 +367,30 @@
 		"show-monthly-timer": {
 			"name": "Show Monthly Timer",
 			"description": "Shows the time until the next Monthly Pack.",
+			"type": "bool",
+			"default": true
+		},
+		"highlight-current-tier": {
+			"name": "Highlight Current Tier",
+			"description": "Highlights the tier you're currently working towards.",
+			"type": "bool",
+			"default": false
+		},
+		"highlight-latest-monthly": {
+			"name": "Highlight Latest Monthly",
+			"description": "Highlights the latest Monthly Pack.",
+			"type": "bool",
+			"default": true
+		},
+		"legacy-monthly-tab": {
+			"name": "Legacy Monthly Tab",
+			"description": "Makes the Monthly Tab all one page, like it was before.",
+			"type": "bool",
+			"default": false
+		},
+		"show-monthly-notification": {
+			"name": "Show Monthly Notification",
+			"description": "Shows a notification on the Monthly Tab when a new Monthly Pack is out.",
 			"type": "bool",
 			"default": true
 		},

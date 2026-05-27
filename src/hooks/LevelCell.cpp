@@ -148,9 +148,10 @@ class $modify(DemonProgression, LevelCell) {
 				if (layer == nullptr) return;
 
 				GJDifficultySprite* diffSpr;
-				if (this->getChildByID("main-layer")->getChildByID("difficulty-container")) {
-					diffSpr = typeinfo_cast<GJDifficultySprite*>(layer->getChildByID("difficulty-container")->getChildByID("difficulty-sprite"));
+				if (auto spr = layer->getChildByID("difficulty-container")->getChildByID("difficulty-sprite")) {
+					diffSpr = typeinfo_cast<GJDifficultySprite*>(spr);
 				}
+				else return;
 
 				//create the skillset menu
 				auto skillMenu = CCMenu::create();
@@ -223,9 +224,9 @@ class $modify(DemonProgression, LevelCell) {
 			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
 
 				if (this->getChildByID("main-layer")->getChildByID("difficulty-container")) {
-					auto diffIcon = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("main-layer")->getChildByID("difficulty-container")->getChildByID("difficulty-sprite"));
 					auto layer = typeinfo_cast<CCNode*>(this->getChildByID("main-layer")->getChildByID("difficulty-container"));
-					typeinfo_cast<GJDifficultySprite*>(layer->getChildByID("difficulty-sprite"))->setOpacity(0);
+					auto diffIcon = typeinfo_cast<GJDifficultySprite*>(layer->getChildByID("difficulty-sprite"));
+					diffIcon->setOpacity(0);
 
 					std::string sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Unknown");
 					std::string plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_Unknown");

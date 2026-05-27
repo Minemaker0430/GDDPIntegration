@@ -133,6 +133,7 @@ bool RecommendedLayer::init() {
 		return true;
 	}
 
+	RecommendedUtils::validateLevels();
 	loadLevels(0);
 
 	this->setKeyboardEnabled(true);

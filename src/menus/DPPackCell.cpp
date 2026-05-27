@@ -154,7 +154,7 @@ bool DPPackCell::init() {
 		((m_index == "legacy") && !Mod::get()->getSettingValue<bool>("unlock-all-legacy")) ||
 		((m_index == "main" || m_index == "legacy") && Mod::get()->getSettingValue<bool>("unlock-if-progressed") && listSave.progress <= 0)
 	) {
-		matjson::Value prevPackData = (m_index == "main") ? data["main"][fmax(0, m_id - 1)] : data["main"][mainPack];
+		matjson::Value prevPackData = (m_index == "main") ? data["main"][std::max(0, m_id - 1)] : data["main"][mainPack];
 
 		//get rank of required pack and finish the cell
 		if (!Mod::get()->getSavedValue<ListSaveFormat>(prevPackData["saveID"].asString().unwrapOr("null")).hasRank) {
@@ -270,7 +270,33 @@ bool DPPackCell::init() {
 	viewBtn->setUserObject(new ListParameters(m_index, m_id));
 	cellMenu->addChild(viewBtn);
 
-	if (m_id == 0 && m_index == "monthly") {
+	auto pinned = Mod::get()->getSavedValue<std::vector<std::string>>("pinned-packs", std::vector<std::string>());
+
+	auto pinMenu = CCMenu::create();
+	pinMenu->setPosition({ 0.f, 0.f });
+	pinMenu->setZOrder(1);
+	pinMenu->setID("pin-menu");
+
+	auto starOffSpr = CCSprite::createWithSpriteFrameName("GJ_starsIcon_gray_001.png");
+	starOffSpr->setScale(0.5f);
+	auto starOnSpr = CCSprite::createWithSpriteFrameName("GJ_starsIcon_001.png");
+	starOnSpr->setScale(0.5f);
+	auto togglePinBtn = CCMenuItemToggler::create(starOffSpr, starOnSpr, this, menu_selector(DPLayer::onPinToggle));
+	togglePinBtn->setPosition({ 349.5f, 42.5f });
+	togglePinBtn->setID("pin-btn");
+	togglePinBtn->setUserObject(new ListParameters(m_index, m_id));
+	togglePinBtn->toggle(DPUtils::containsString(pinned, saveID));
+	pinMenu->addChild(togglePinBtn);
+
+	if (
+		(m_id == 0 && m_index == "monthly" && Mod::get()->getSettingValue<bool>("highlight-latest-monthly")) ||
+		(
+			(m_id > 0 && Mod::get()->getSavedValue<ListSaveFormat>(data["main"][m_id - 1]["saveID"].asString().unwrapOr("null")).hasRank) && 
+			(m_id < packs.size() - 1 && !Mod::get()->getSavedValue<ListSaveFormat>(data["main"][m_id + 1]["saveID"].asString().unwrapOr("null")).hasRank) && 
+			m_index == "main" && 
+			!listSave.hasRank && 
+			Mod::get()->getSettingValue<bool>("highlight-current-tier"))
+	) {
 		auto goldBG = CCLayerColor::create({ 255, 200, 0, 255 });
 		goldBG->setID("gold-bg");
 		goldBG->setContentHeight(50.f);
@@ -278,6 +304,7 @@ bool DPPackCell::init() {
 		this->addChild(goldBG);
 	}
 
+	if (Mod::get()->getSettingValue<bool>("enable-pinning")) this->addChild(pinMenu);
 	this->addChild(cellMenu);
 	this->addChild(packText);
 	this->addChild(customPackText);

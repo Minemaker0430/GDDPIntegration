@@ -105,13 +105,10 @@ void DPUtils::verifyCompletedLevels() {
 
 	auto oldCompletedLvls = Mod::get()->getSavedValue<std::vector<int>>("completed-levels", std::vector<int>());
 
-	Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
+	if (!Mod::get()->getSavedValue<bool>("dev-preview", false)) Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
 
-	if (oldCompletedLvls != completedLvls) {
-		DPUtils::updateSaveData();
-	}
-
-    RecommendedUtils::validateLevels();
+	if (oldCompletedLvls != completedLvls) DPUtils::updateSaveData();
+    RecommendedUtils::validateLevels(oldCompletedLvls != completedLvls);
 };
 
 void DPUtils::addCompletedLevel(int levelID) {
@@ -120,7 +117,6 @@ void DPUtils::addCompletedLevel(int levelID) {
 
     if (!DPUtils::containsInt(completedLvls, levelID) && data["level-data"].contains(std::to_string(levelID))) {
         completedLvls.push_back(levelID);
-        Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
 
         //find pack for level
         for (std::string index : {"main", "legacy", "bonus", "monthly"}) {
@@ -137,15 +133,19 @@ void DPUtils::addCompletedLevel(int levelID) {
                     if (!Mod::get()->getSavedValue<bool>("dev-preview", false) && progress != listSave.progress) Mod::get()->setSavedValue<ListSaveFormat>(saveID, ListSaveFormat{ .progress = progress, .completed = completed, .hasRank = hasRank });
 
                     if ((listSave.hasRank != hasRank || listSave.completed != completed) && Mod::get()->getSettingValue<bool>("achievement-popups")) DPUtils::updateAchievements();
+                    Mod::get()->setSavedValue<std::vector<int>>("completed-levels", completedLvls);
 
                     return;
                 }
             }
         }
     }
+
+    return;
 };
 
 void DPUtils::forceUpdateStatus() {
+    if (Mod::get()->getSavedValue<bool>("dev-preview", false)) return;
 	Mod::get()->setSavedValue<std::vector<int>>("completed-levels", std::vector<int>());
 };
 

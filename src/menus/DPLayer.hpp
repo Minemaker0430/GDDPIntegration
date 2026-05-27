@@ -20,6 +20,7 @@ protected:
 	CCMenu* m_backMenu;
 	matjson::Value m_data;
 	std::vector<int> m_completedLvls;
+	std::vector<std::string> m_pinned;
 	LoadingCircle* m_loadcircle;
 	int m_currentTab = 0;
 	CCMenu* m_reload;
@@ -35,6 +36,8 @@ protected:
 
 	int m_currentMonth = 0;
 	int m_currentYear = 87;
+	int m_monthlyPage = 0;
+	int m_monthlyMaxPage = 0;
 
 	async::TaskHolder<WebResponse> m_listener;
 
@@ -45,6 +48,7 @@ public:
 	void onTab(CCObject*); //tabs switched?
 	void openList(CCObject*); //open list with the id tagged on the btn
 	void onDevToggle(CCObject*); //toggles dev preview mode for staff
+	void onPinToggle(CCObject*); //toggles pinning packs to the top of the list
 	
 	void reloadCallback(CCObject*); //when reload is pressed
 	void reloadData(bool isInit = false); //reload all data
@@ -59,6 +63,9 @@ public:
 	void recommendedCallback(CCObject*);
 	void xpCallback(CCObject*);
 	void devCallback(CCObject*);
+
+	void prevMonthlyPage(CCObject*);
+	void nextMonthlyPage(CCObject*);
 	
 	void updateMonthlyTimer(float dt);
 	

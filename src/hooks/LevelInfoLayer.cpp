@@ -163,7 +163,8 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			auto hasRank = (saveID != "null") ? Mod::get()->getSavedValue<ListSaveFormat>(saveID).hasRank : false;
 
 			GJDifficultySprite* diffSpr = GJDifficultySprite::create(10, GJDifficultyName::Long);
-			if (this->getChildByID("difficulty-sprite")) diffSpr = typeinfo_cast<GJDifficultySprite*>(this->getChildByID("difficulty-sprite"));
+			if (auto spr = this->getChildByID("difficulty-sprite")) diffSpr = typeinfo_cast<GJDifficultySprite*>(spr);
+			else return true;
 			
 			auto skillsetData = data["skillset-data"];
 
