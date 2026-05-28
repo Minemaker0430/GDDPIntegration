@@ -6,7 +6,7 @@
 			"ios": "2.2081",
 			"mac": "2.2081"
 		},
-		"version": "v1.1.10",
+		"version": "v1.1.11",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "ItsMochaTheOtter",
@@ -171,8 +171,14 @@
 			"default": true
 		},
 		"enable-pinning": {
-			"name": "Enable Pinning",
+			"name": "Enable Pack Pinning",
 			"description": "Enables the ability to Pin Packs in the GDDP Menu.",
+			"type": "bool",
+			"default": true
+		},
+		"enable-level-pinning": {
+			"name": "Enable Level Pinning",
+			"description": "Enables the ability to Pin Levels in the GDDP Menu.",
 			"type": "bool",
 			"default": true
 		},

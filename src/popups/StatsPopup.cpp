@@ -541,10 +541,12 @@ void StatsPopup::loadTab(int id) {
 
 					auto sprite = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 
+					// @geode-ignore(unknown-resource)
 					if (sprName != "DP_Invisible.png") sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(sprName).data());
 
 					if (!listSave.hasRank && !listSave.completed) sprite->setColor({ 0, 0, 0 });
 					else if (listSave.completed && indexes[id] == "main") sprite = CCSprite::createWithSpriteFrameName(Mod::get()->expandSpriteName(plusSprName).data());
+					// @geode-ignore(unknown-resource)
 					if (sprName == "DP_Invisible.png") sprite->setOpacity(0);
 
 					auto infoMenu = CCMenu::create();

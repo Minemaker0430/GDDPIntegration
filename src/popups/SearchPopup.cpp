@@ -255,6 +255,7 @@ void SearchPopup::loadTab(int id) {
 				//sprite
 				auto unkSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 				CCSprite* spr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(sprite).data(), unkSpr);
+				// @geode-ignore(unknown-resource)
 				if (sprite == "DP_Invisible.png") spr->setVisible(false);
 				spr->setID("sprite");
 				spr->setScale(0.75f);
@@ -329,6 +330,7 @@ void SearchPopup::loadTab(int id) {
 					//sprite
 					auto unkSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 					CCSprite* spr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(sprite).data(), unkSpr);
+					// @geode-ignore(unknown-resource)
 					if (sprite == "DP_Invisible.png") spr->setVisible(false);
 					spr->setID("sprite");
 					spr->setScale(0.75f);

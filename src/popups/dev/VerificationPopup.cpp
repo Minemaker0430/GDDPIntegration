@@ -439,6 +439,7 @@ void VerificationPopup::onUpdateSearch(std::string text) {
 					// sprite
 					auto spriteName = fmt::format("{}.png", packData["sprite"].asString().unwrapOr("DP_Unknown"));
 					CCSprite* sprite = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(spriteName).data(), unkSpr);
+					// @geode-ignore(unknown-resource)
 					if (spriteName == "DP_Invisible.png") sprite->setVisible(false);
 					sprite->setID("sprite");
 					sprite->setScale(0.75f);

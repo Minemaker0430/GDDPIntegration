@@ -206,9 +206,9 @@ bool DPListLayer::init(const char* type, int id) {
 }
 
 void DPListLayer::onRandomLevel(CCObject*) {
-	std::vector<int> ids;
-	for (auto i : m_IDs) ids.push_back(numFromString<int>(i).unwrapOr(0));
-	RandomLevelPopup::create(ids)->show();
+	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
+	std::vector<int> levelIDs = data[m_type][m_id]["levelIDs"].as<std::vector<int>>().unwrapOrDefault(); // get levels UNPINNED
+	RandomLevelPopup::create(levelIDs)->show();
 	return;
 }
 
@@ -308,7 +308,10 @@ void DPListLayer::loadLevels(int page) {
 
 	m_IDs.clear();
 
-	for (auto const& level : levelIDs) if (level > 0) m_IDs.push_back(std::to_string(level));
+	auto pinnedLevels = (Mod::get()->getSettingValue<bool>("enable-level-pinning")) ? Mod::get()->getSavedValue<std::vector<int>>("pinned-levels") : std::vector<int>();
+
+	for (auto const& level : levelIDs) if (level > 0 && DPUtils::containsInt(pinnedLevels, level)) m_IDs.push_back(std::to_string(level));
+	for (auto const& level : levelIDs) if (level > 0 && !DPUtils::containsInt(pinnedLevels, level)) m_IDs.push_back(std::to_string(level));
 
 	m_right->setVisible(m_IDs.size() > 10);
 
@@ -376,6 +379,32 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 		label->setVisible(false);
 				
 		m_list->addChild(customText);
+	}
+
+	// level pin button
+	if (Mod::get()->getSettingValue<bool>("enable-level-pinning")) {
+		for (auto i : m_list->m_listView->m_tableView->m_cellArray->asExt()) {
+			auto cell = typeinfo_cast<LevelCell*>(i);
+			if (!cell) continue;
+
+			auto pinMenu = CCMenu::create();
+			pinMenu->setPosition({ cell->getContentWidth() - 10.f, cell->getContentHeight() - 10.f });
+			pinMenu->setZOrder(10);
+			pinMenu->setID("pin-menu");
+			cell->addChild(pinMenu);
+
+			auto pinnedLevels = Mod::get()->getSavedValue<std::vector<int>>("pinned-levels");
+
+			auto starOffSpr = CCSprite::createWithSpriteFrameName("GJ_starsIcon_gray_001.png");
+			starOffSpr->setScale(0.5f);
+			auto starOnSpr = CCSprite::createWithSpriteFrameName("GJ_starsIcon_001.png");
+			starOnSpr->setScale(0.5f);
+			auto pinBtn = CCMenuItemToggler::create(starOffSpr, starOnSpr, this, menu_selector(DPListLayer::onPinLevel));
+			pinBtn->setTag(cell->m_level->m_levelID.value());
+			pinBtn->setID("pin-btn");
+			pinBtn->toggle(DPUtils::containsInt(pinnedLevels, cell->m_level->m_levelID.value()));
+			pinMenu->addChild(pinBtn);
+		}
 	}
 
 	//add sprite
@@ -448,6 +477,23 @@ void DPListLayer::loadLevelsFailed(const char*) {
 	m_levelsLoaded = true;
 	m_loadCircle->fadeAndRemove();
 	m_errorText->setVisible(true);
+
+	return;
+}
+
+void DPListLayer::onPinLevel(CCObject* sender) {
+	auto btn = typeinfo_cast<CCMenuItemToggler*>(sender);
+	if (!btn) return;
+
+	int levelID = btn->getTag();
+
+	auto pinnedLevels = Mod::get()->getSavedValue<std::vector<int>>("pinned-levels");
+
+	if (!btn->isToggled()) pinnedLevels.push_back(levelID);
+	else pinnedLevels.erase(std::remove(pinnedLevels.begin(), pinnedLevels.end(), levelID), pinnedLevels.end());
+
+	Mod::get()->setSavedValue("pinned-levels", pinnedLevels);
+	reloadLevels(new CCObject);
 
 	return;
 }

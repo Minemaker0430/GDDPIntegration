@@ -96,7 +96,7 @@ bool XPPopup::init() {
 		levelLabel->setID("level-label");
 		progressBack->addChild(levelLabel);
 
-		auto totalXPLabel = CCLabelBMFont::create(fmt::format("({}%)", clampf(floor(((float)level / (float)maxLevel) * 10000) / 100.f, 0, 100)).c_str(), "bigFont.fnt");
+		auto totalXPLabel = CCLabelBMFont::create(fmt::format("({}%)", clampf(floor(((float)(level - 1) / (float)(maxLevel - 1)) * 10000) / 100.f, 0, 100)).c_str(), "bigFont.fnt");
 		totalXPLabel->setPosition({ 10.f + levelLabel->getScaledContentWidth(), 11.5f });
 		totalXPLabel->setAnchorPoint({ 0.f, 0.5f });
 		totalXPLabel->setScale(0.5f);

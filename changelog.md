@@ -1,3 +1,9 @@
+# v1.1.11
+
+* Added Level Pinning to Packs
+* Fixed XP Menu having incorrect total progress percentages
+	* Previously acted as if you were a level *above* your current level, since the mod starts every skill at Level 1
+
 # v1.1.10
 
 * Fixed a bug where Recommendations didn't update

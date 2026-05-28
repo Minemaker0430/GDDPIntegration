@@ -39,6 +39,7 @@ public:
 	void reloadLevels(CCObject*);
 	void pageRight(CCObject*);
 	void pageLeft(CCObject*);
+	void onPinLevel(CCObject*);
 
 	void updateProgressBar();
 	void loadLevels(int);

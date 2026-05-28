@@ -366,6 +366,7 @@ void RoulettePopup::loadSettingsMenu() {
 			// sprite
 			auto spriteName = fmt::format("{}.png", ((id == "main") ? packData["plusSprite"].asString().unwrapOr("DP_Unknown") : packData["sprite"].asString().unwrapOr("DP_Unknown"))); // use plus sprite for main packs, normal for legacy
 			CCSprite *sprite;
+			// @geode-ignore(unknown-resource)
 			if (spriteName == "DP_Invisible.png") {
 				sprite = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 				sprite->setVisible(false);
