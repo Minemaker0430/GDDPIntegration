@@ -128,7 +128,7 @@ void XPUtils::getLevels() {
 		
 		if (level != maxLvl && level + 1 < xpRequirements.size()) next = 1.f - ((xpRequirements[level + 1] - xp) / (xpRequirements[level + 1] - xpRequirements[level]));
 
-        skillVal.set(key, std::max(level, 1));
+        skillVal.set(key, level);
         percent.set(key, next);
 	}
 
@@ -180,7 +180,7 @@ matjson::Value XPUtils::getProjectedXP(int lvlID) {
 			else end = mid - 1;
         }
 		
-        pLevel.set(key, std::max(level, 1));
+        pLevel.set(key, level);
         
 		//Next
 		if (level != maxLvl && level + 1 < xpRequirements.size()) next = 1.f - ((xpRequirements[level + 1] - xp) / (xpRequirements[level + 1] - xpRequirements[level]));

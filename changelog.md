@@ -1,3 +1,10 @@
+# v1.1.12
+
+* Skills are no longer forced to be at least Level 1
+* Reverted XP Menu fix
+* Removed Grandpa Demon as an incompatibility
+	* It shouldn't crash with Grandpa Demon installed, but I cannot guarantee that for sure
+
 # v1.1.11
 
 * Added Level Pinning to Packs

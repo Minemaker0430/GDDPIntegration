@@ -1674,6 +1674,8 @@ void VerificationPopup::loadPack(std::string index, int id, bool fromLvl) {
 	//set up edit menu
 	//level IDs will be on the right side, base pack options on the left
 
+	if (index != "legacy" && !data.contains("textEffects")) data.set("textEffects", {});
+
 	//property cells
 	auto cells = CCArray::create();
 
