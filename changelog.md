@@ -1,3 +1,7 @@
+# v1.1.13
+
+* FINALLY fixed a long-running bug where completed levels would sometimes not be marked as completed
+
 # v1.1.12
 
 * Skills are no longer forced to be at least Level 1

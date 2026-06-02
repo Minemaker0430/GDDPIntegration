@@ -84,18 +84,16 @@ void DPUtils::verifyCompletedLevels() {
 	std::vector<int> completedLvls;
 
 	// check completed levels in player's save file
-	auto glm = GameLevelManager::sharedState();
-	auto glmCompletedLvls = glm->getCompletedLevels(false)->asExt();
+    auto gsm = GameStatsManager::sharedState();
 
 	// make sure any level that should be there is there
-	if (glmCompletedLvls.size() > 0) {
-		for (auto i : glmCompletedLvls) {
-			auto lvl = static_cast<GJGameLevel*>(i);
-			auto lvlID = lvl->m_levelID.value();
+	if (data.contains("level-data")) {
+		for (auto [key, value] : data["level-data"]) {
+			auto lvlID = numFromString<int>(key).unwrapOr(0);
 
 			if (
-				data["level-data"].contains(std::to_string(lvlID)) && 
-				lvl->getNormalPercent() >= 100 && 
+				data["level-data"].contains(key) && 
+                gsm->hasCompletedOnlineLevel(lvlID) &&
 				!DPUtils::containsInt(completedLvls, lvlID)
 			) {
 				completedLvls.push_back(lvlID);
