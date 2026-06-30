@@ -1,3 +1,7 @@
+# v1.1.14
+
+* Fixed "Progress to Max Level" calculations in the XP Menu
+
 # v1.1.13
 
 * FINALLY fixed a long-running bug where completed levels would sometimes not be marked as completed
