@@ -1,3 +1,7 @@
+# v1.1.16
+
+* Fixed a visual bug
+
 # v1.1.15
 
 * Bumped Geode Version

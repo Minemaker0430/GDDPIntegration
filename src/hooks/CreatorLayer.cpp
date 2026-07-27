@@ -81,30 +81,30 @@ class $modify(CreatorLayer) {
 					else mapPacksButton->setVisible(false);
 				}
 			}
+			
+
+			if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
+				if (auto questsButton = menu->getChildByID("quests-button")) questsButton->setPositionX(45.8);
+				if (auto dailyButton = menu->getChildByID("daily-button")) dailyButton->setPositionX(135.4);
+				if (auto weeklyButton = menu->getChildByID("weekly-button")) weeklyButton->setPositionX(225);
+				if (auto gauntletsButton = menu->getChildByID("gauntlets-button")) gauntletsButton->setPositionX(314.6);
+				if (auto demonProgressionButton = menu->getChildByID("demon-progression-button")) demonProgressionButton->setPositionX(406.2);
+			}
 			else {
-				if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
-					if (auto questsButton = menu->getChildByID("quests-button")) questsButton->setPositionX(45.8);
-					if (auto dailyButton = menu->getChildByID("daily-button")) dailyButton->setPositionX(135.4);
-					if (auto weeklyButton = menu->getChildByID("weekly-button")) weeklyButton->setPositionX(225);
-					if (auto gauntletsButton = menu->getChildByID("gauntlets-button")) gauntletsButton->setPositionX(314.6);
-					if (auto demonProgressionButton = menu->getChildByID("demon-progression-button")) demonProgressionButton->setPositionX(406.2);
-				}
-				else {
-					if (auto mapButton = menu->getChildByID("map-button")) mapButton->setPositionX(2.9);
-					if (auto dailyButton = menu->getChildByID("daily-button")) dailyButton->setPositionX(91.5);
-					if (auto weeklyButton = menu->getChildByID("weekly-button")) weeklyButton->setPositionX(181);
-					if (auto eventButton = menu->getChildByID("event-button")) eventButton->setPositionX(270.5);
-					if (auto gauntletsButton = menu->getChildByID("gauntlets-button")) gauntletsButton->setPositionX(360.1);
-				}
+				if (auto mapButton = menu->getChildByID("map-button")) mapButton->setPositionX(2.9);
+				if (auto dailyButton = menu->getChildByID("daily-button")) dailyButton->setPositionX(91.5);
+				if (auto weeklyButton = menu->getChildByID("weekly-button")) weeklyButton->setPositionX(181);
+				if (auto eventButton = menu->getChildByID("event-button")) eventButton->setPositionX(270.5);
+				if (auto gauntletsButton = menu->getChildByID("gauntlets-button")) gauntletsButton->setPositionX(360.1);
+			}
 
-				if (Loader::get()->isModLoaded("cvolton.betterinfo") && !Mod::get()->getSettingValue<bool>("dont-move-side-btns")) {
-					if (auto menu = this->getChildByID("cvolton.betterinfo/center-right-menu")) menu->setPositionY(260);
-				}
+			if (Loader::get()->isModLoaded("cvolton.betterinfo") && !Mod::get()->getSettingValue<bool>("dont-move-side-btns")) {
+				if (auto menu = this->getChildByID("cvolton.betterinfo/center-right-menu")) menu->setPositionY(260);
+			}
 
-				if (Loader::get()->isModLoaded("spaghettdev.gd-roulette") && !Mod::get()->getSettingValue<bool>("dont-move-side-btns")) {
-					if (auto menu = this->getChildByID("spaghettdev.gd-roulette/creator-layer-menu")) menu->setPositionY(92);
-					else if (auto menu = this->getChildByID("spaghettdev.gd-roulette/center-left-menu")) menu->setPositionY(255);
-				}
+			if (Loader::get()->isModLoaded("spaghettdev.gd-roulette") && !Mod::get()->getSettingValue<bool>("dont-move-side-btns")) {
+				if (auto menu = this->getChildByID("spaghettdev.gd-roulette/creator-layer-menu")) menu->setPositionY(92);
+				else if (auto menu = this->getChildByID("spaghettdev.gd-roulette/center-left-menu")) menu->setPositionY(255);
 			}
 		}
 
