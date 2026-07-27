@@ -1023,11 +1023,11 @@ void StatsPopup::onTab(CCObject* sender) {
 	auto menuType = btn->getTag();
 
 	CCArrayExt<CCMenuItemToggler*> tabs;
-	tabs.push_back(static_cast<CCMenuItemToggler*>(m_tabs->getChildByID("main")));
-	tabs.push_back(static_cast<CCMenuItemToggler*>(m_tabs->getChildByID("ranks")));
-	tabs.push_back(static_cast<CCMenuItemToggler*>(m_tabs->getChildByID("medals")));
+	if (auto mainTab = static_cast<CCMenuItemToggler*>(m_tabs->getChildByID("main"))) tabs.push_back(mainTab);
+	if (auto ranksTab = static_cast<CCMenuItemToggler*>(m_tabs->getChildByID("ranks"))) tabs.push_back(ranksTab);
+	if (auto medalsTab = static_cast<CCMenuItemToggler*>(m_tabs->getChildByID("medals"))) tabs.push_back(medalsTab);
 
-	for (auto b : tabs) if (b) static_cast<CCMenuItemToggler*>(b)->toggle(false);
+	for (auto b : tabs) if (b) b->toggle(false);
 	btn->m_toggled = false;
 
 	if (m_mainLayer) m_mainLayer->removeAllChildrenWithCleanup(true);

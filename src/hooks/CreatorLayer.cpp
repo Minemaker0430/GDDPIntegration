@@ -57,6 +57,8 @@ class $modify(CreatorLayer) {
 			}
 		}
 		else {
+			if (!menu) return true;
+
 			auto spr = CCSprite::createWithSpriteFrameName("DP_demonProgressionBtn.png"_spr);
 
 			if (Mod::get()->getSettingValue<bool>("alt-button-texture")) spr = CCSprite::createWithSpriteFrameName("DP_demonProgressionBtnAlt.png"_spr);
@@ -71,26 +73,28 @@ class $modify(CreatorLayer) {
 			typeinfo_cast<CCSprite*>(dpBtn->getChildren()->objectAtIndex(0))->setPositionX(44.f);
 			menu->addChild(dpBtn);
 
-			if (menu->getChildByID("map-packs-button") && Mod::get()->getSettingValue<bool>("replace-map-packs")) {
-				dpBtn->setPosition({ menu->getChildByID("map-packs-button")->getPositionX(), menu->getChildByID("map-packs-button")->getPositionY() });
+			if (auto mapPacksButton = menu->getChildByID("map-packs-button")) {
+				if (Mod::get()->getSettingValue<bool>("replace-map-packs")) {
+					dpBtn->setPosition({ mapPacksButton->getPositionX(), mapPacksButton->getPositionY() });
 
-				if (Loader::get()->isModLoaded("alphalaneous.pages_api")) menu->getChildByID("map-packs-button")->removeMeAndCleanup();
-				else menu->getChildByID("map-packs-button")->setVisible(false);
+					if (Loader::get()->isModLoaded("alphalaneous.pages_api")) mapPacksButton->removeMeAndCleanup();
+					else mapPacksButton->setVisible(false);
+				}
 			}
 			else {
 				if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
-					menu->getChildByID("quests-button")->setPositionX(45.8);
-					menu->getChildByID("daily-button")->setPositionX(135.4);
-					menu->getChildByID("weekly-button")->setPositionX(225);
-					menu->getChildByID("gauntlets-button")->setPositionX(314.6);
-					menu->getChildByID("demon-progression-button")->setPositionX(406.2);
+					if (auto questsButton = menu->getChildByID("quests-button")) questsButton->setPositionX(45.8);
+					if (auto dailyButton = menu->getChildByID("daily-button")) dailyButton->setPositionX(135.4);
+					if (auto weeklyButton = menu->getChildByID("weekly-button")) weeklyButton->setPositionX(225);
+					if (auto gauntletsButton = menu->getChildByID("gauntlets-button")) gauntletsButton->setPositionX(314.6);
+					if (auto demonProgressionButton = menu->getChildByID("demon-progression-button")) demonProgressionButton->setPositionX(406.2);
 				}
 				else {
-					menu->getChildByID("map-button")->setPositionX(2.9);
-					menu->getChildByID("daily-button")->setPositionX(91.5);
-					menu->getChildByID("weekly-button")->setPositionX(181);
-					menu->getChildByID("event-button")->setPositionX(270.5);
-					menu->getChildByID("gauntlets-button")->setPositionX(360.1);
+					if (auto mapButton = menu->getChildByID("map-button")) mapButton->setPositionX(2.9);
+					if (auto dailyButton = menu->getChildByID("daily-button")) dailyButton->setPositionX(91.5);
+					if (auto weeklyButton = menu->getChildByID("weekly-button")) weeklyButton->setPositionX(181);
+					if (auto eventButton = menu->getChildByID("event-button")) eventButton->setPositionX(270.5);
+					if (auto gauntletsButton = menu->getChildByID("gauntlets-button")) gauntletsButton->setPositionX(360.1);
 				}
 
 				if (Loader::get()->isModLoaded("cvolton.betterinfo") && !Mod::get()->getSettingValue<bool>("dont-move-side-btns")) {

@@ -8,7 +8,6 @@
 #include "../XPUtils.hpp"
 #include "../DPUtils.hpp"
 #include "XPPopup.hpp"
-#include "../CustomText.hpp"
 
 //geode namespace
 using namespace geode::prelude;
@@ -339,6 +338,8 @@ void DemonXPPopup::update() {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 	auto projected = (m_toggled) ? XPUtils::getProjectedXP(m_levelID) : matjson::Value();
 	
+	if (!m_mainLayer) return;
+
 	for (auto [key, value] : XPUtils::skills) {
 
 		if (m_toggled) { // show projected xp values
@@ -347,10 +348,13 @@ void DemonXPPopup::update() {
 
 			//get nodes
 			auto parent = m_mainLayer->getChildByIDRecursive(fmt::format("skill-{}", key));
+			if (!parent) continue;
+
 			auto clippingNode = static_cast<CCClippingNode*>(parent->getChildByIDRecursive("progress-bar-node"));
 			auto projectedClippingNode = static_cast<CCClippingNode*>(parent->getChildByIDRecursive("projected-progress-bar-node"));
 			auto projectedChangeLabel = static_cast<CCLabelBMFont*>(parent->getChildByIDRecursive("projected-change-label"));
-			auto progressFront = static_cast<CCSprite*>(clippingNode->getChildByID("progress-bar-front"));
+			auto progressFront = clippingNode ? static_cast<CCSprite*>(clippingNode->getChildByID("progress-bar-front")) : nullptr;
+			if (!clippingNode || !projectedClippingNode || !projectedChangeLabel || !progressFront) continue;
 
 			auto stencil = CCScale9Sprite::create("square02_001.png");
 			stencil->setAnchorPoint({ 0, 0.5f });
@@ -384,8 +388,11 @@ void DemonXPPopup::update() {
 
 			//get nodes
 			auto parent = m_mainLayer->getChildByIDRecursive(fmt::format("skill-{}", key));
+			if (!parent) continue;
+
 			auto clippingNode = static_cast<CCClippingNode*>(parent->getChildByIDRecursive("progress-bar-node"));
-			auto progressFront = static_cast<CCSprite*>(clippingNode->getChildByID("progress-bar-front"));
+			auto progressFront = clippingNode ? static_cast<CCSprite*>(clippingNode->getChildByID("progress-bar-front")) : nullptr;
+			if (!clippingNode || !progressFront) continue;
 
 			auto stencil = CCScale9Sprite::create("square02_001.png");
 			stencil->setAnchorPoint({ 0, 0.5f });

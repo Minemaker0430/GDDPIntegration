@@ -296,7 +296,7 @@ void RandomLevelPopup::loadLevelsFinished(CCArray* levels, const char*) {
 	CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, scene)); // push transition
 
     m_loadCircle->fadeAndRemove();
-    this->getChildByID("loading-bg"_spr)->removeMeAndCleanup();
+    if (auto loadingBg = this->getChildByID("loading-bg"_spr)) loadingBg->removeMeAndCleanup();
 
 	return;
 }

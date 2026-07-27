@@ -258,21 +258,21 @@ class $modify(DemonProgression, LevelInfoLayer) {
 			this->addChild(xpMenu);
 
 			//title label
-			if (Mod::get()->getSettingValue<bool>("custom-level-name") && this->getChildByID("title-label")) {
-				auto lvlName = typeinfo_cast<CCLabelBMFont*>(this->getChildByID("title-label"));
+			if (Mod::get()->getSettingValue<bool>("custom-level-name")) {
+				if (auto lvlName = typeinfo_cast<CCLabelBMFont*>(this->getChildByID("title-label"))) {
+					auto customLvlName = CustomText::create(lvlName->getString());
+					customLvlName->addEffectsFromProperties(data["main"][gddpDiff]["textEffects"]);
+					customLvlName->setPosition(lvlName->getPosition());
+					customLvlName->setAnchorPoint(lvlName->getAnchorPoint());
+					customLvlName->setScale(lvlName->getScale());
+					customLvlName->setZOrder(5);
+					customLvlName->setID("custom-level-title"_spr);
 
-				auto customLvlName = CustomText::create(lvlName->getString());
-				customLvlName->addEffectsFromProperties(data["main"][gddpDiff]["textEffects"]);
-				customLvlName->setPosition(lvlName->getPosition());
-				customLvlName->setAnchorPoint(lvlName->getAnchorPoint());
-				customLvlName->setScale(lvlName->getScale());
-				customLvlName->setZOrder(5);
-				customLvlName->setID("custom-level-title"_spr);
-
-				lvlName->setOpacity(0);
-				lvlName->setVisible(false);
-				
-				this->addChild(customLvlName);
+					lvlName->setOpacity(0);
+					lvlName->setVisible(false);
+						
+					this->addChild(customLvlName);
+				}
 			}
 
 			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) diffSpr->setOpacity(0);

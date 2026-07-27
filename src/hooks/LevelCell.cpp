@@ -144,14 +144,16 @@ class $modify(DemonProgression, LevelCell) {
 
 			//skillset badges
 			if (Mod::get()->getSettingValue<bool>("skillset-badges") && skillsets.size() > 0 && Mod::get()->getSettingValue<bool>("show-skills-in-list")) {
-				auto layer = (this->getChildByID("main-layer")) ? typeinfo_cast<CCNode*>(this->getChildByID("main-layer")) : nullptr;
-				if (layer == nullptr) return;
+				auto layer = typeinfo_cast<CCNode*>(this->getChildByID("main-layer"));
+				if (!layer) return;
 
-				GJDifficultySprite* diffSpr;
-				if (auto spr = layer->getChildByID("difficulty-container")->getChildByID("difficulty-sprite")) {
-					diffSpr = typeinfo_cast<GJDifficultySprite*>(spr);
+				GJDifficultySprite* diffSpr = nullptr;
+				if (auto difficultyContainer = typeinfo_cast<CCNode*>(layer->getChildByID("difficulty-container"))) {
+					if (auto spr = difficultyContainer->getChildByID("difficulty-sprite")) {
+						diffSpr = typeinfo_cast<GJDifficultySprite*>(spr);
+					}
 				}
-				else return;
+				if (!diffSpr) return;
 
 				//create the skillset menu
 				auto skillMenu = CCMenu::create();
@@ -160,8 +162,8 @@ class $modify(DemonProgression, LevelCell) {
 				skillLayout->setAxisReverse(true);
 				skillMenu->setLayout(skillLayout, true, false);
 				skillMenu->setID("skillset-menu"_spr);
-				if (layer->getChildByID("level-place")) {
-					if (!layer->getChildByID("level-place")->isVisible()) skillMenu->setPosition({ 25.f, -12.f });
+				if (auto levelPlace = layer->getChildByID("level-place")) {
+					if (!levelPlace->isVisible()) skillMenu->setPosition({ 25.f, -12.f });
 					else skillMenu->setPosition({ 45.f, -12.f });
 					skillMenu->setScale(0.4f);
 				}
@@ -203,108 +205,119 @@ class $modify(DemonProgression, LevelCell) {
 			}
 
 			//fancy level name
-			if (Mod::get()->getSettingValue<bool>("custom-level-name") && this->getChildByID("main-layer")->getChildByID("level-name")) {
-				auto lvlName = typeinfo_cast<CCLabelBMFont*>(this->getChildByID("main-layer")->getChildByID("level-name"));
+			if (Mod::get()->getSettingValue<bool>("custom-level-name")) {
+				auto mainLayer = typeinfo_cast<CCNode*>(this->getChildByID("main-layer"));
+				if (mainLayer && mainLayer->getChildByID("level-name")) {
+					auto lvlNameNode = mainLayer->getChildByID("level-name");
+					auto lvlName = typeinfo_cast<CCLabelBMFont*>(lvlNameNode);
+					if (lvlName) {
+						auto customLvlName = CustomText::create(lvlName->getString());
+						customLvlName->addEffectsFromProperties(data["main"][gddpDiff]["textEffects"]);
+						customLvlName->setPosition(lvlName->getPosition());
+						customLvlName->setAnchorPoint(lvlName->getAnchorPoint());
+						customLvlName->setScale(lvlName->getScale());
+						customLvlName->setZOrder(5);
+						customLvlName->setID("custom-level-name"_spr);
 
-				auto customLvlName = CustomText::create(lvlName->getString());
-				customLvlName->addEffectsFromProperties(data["main"][gddpDiff]["textEffects"]);
-				customLvlName->setPosition(lvlName->getPosition());
-				customLvlName->setAnchorPoint(lvlName->getAnchorPoint());
-				customLvlName->setScale(lvlName->getScale());
-				customLvlName->setZOrder(5);
-				customLvlName->setID("custom-level-name"_spr);
-
-				lvlName->setOpacity(0);
-				lvlName->setVisible(false);
-				
-				this->getChildByID("main-layer")->addChild(customLvlName);
+						lvlName->setOpacity(0);
+						lvlName->setVisible(false);
+						
+						mainLayer->addChild(customLvlName);
+					}
+				}
 			}
 
 			//custom difficulty faces
 			if (Mod::get()->getSettingValue<bool>("custom-difficulty-faces")) {
+				auto mainLayer = typeinfo_cast<CCNode*>(this->getChildByID("main-layer"));
+				if (mainLayer && mainLayer->getChildByID("difficulty-container")) {
+					auto difficultyContainer = typeinfo_cast<CCNode*>(mainLayer->getChildByID("difficulty-container"));
+					if (difficultyContainer) {
+						auto diffIcon = typeinfo_cast<GJDifficultySprite*>(difficultyContainer->getChildByID("difficulty-sprite"));
+						if (diffIcon) {
+							diffIcon->setOpacity(0);
 
-				if (this->getChildByID("main-layer")->getChildByID("difficulty-container")) {
-					auto layer = typeinfo_cast<CCNode*>(this->getChildByID("main-layer")->getChildByID("difficulty-container"));
-					auto diffIcon = typeinfo_cast<GJDifficultySprite*>(layer->getChildByID("difficulty-sprite"));
-					diffIcon->setOpacity(0);
+							std::string sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Unknown");
+							std::string plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_Unknown");
 
-					std::string sprite = data["main"][gddpDiff]["sprite"].asString().unwrapOr("DP_Unknown");
-					std::string plusSprite = data["main"][gddpDiff]["plusSprite"].asString().unwrapOr("DP_Unknown");
+							//fallback
+							auto unkSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 
-					//fallback
-					auto unkSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
+							std::string fullSpr = fmt::format("{}.png", sprite);
+							std::string fullPlusSpr = fmt::format("{}.png", plusSprite);
 
-					std::string fullSpr = fmt::format("{}.png", sprite);
-					std::string fullPlusSpr = fmt::format("{}.png", plusSprite);
+							if (sprite != "DP_Invisible") {
+								auto customSpr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(fullSpr).data(), unkSpr);
 
-					if (sprite != "DP_Invisible") {
-						auto customSpr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(fullSpr).data(), unkSpr);
-
-						if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible") {
-							typeinfo_cast<CCSprite*>(diffIcon->getChildren()->objectAtIndex(0))->setVisible(false);
-							customSpr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(fullPlusSpr).data(), unkSpr);
-						}
-
-						if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank && plusSprite != "DP_Invisible") {
-							customSpr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(fullPlusSpr).data(), unkSpr);
-						}
-
-						customSpr->setID("gddp-difficulty");
-						customSpr->setAnchorPoint({ 0.5f, 0.5f });
-						customSpr->setPosition({ diffIcon->getPositionX(), diffIcon->getPositionY() + 6.f });
-						customSpr->setZOrder(5);
-
-						layer->addChild(customSpr);
-						
-						//label
-						auto demonLabel = CCLabelBMFont::create("Demon", "bigFont.fnt");
-						auto customDemonLabel = CustomText::create("Demon");
-
-						demonLabel->setID("demon-label"_spr);
-						demonLabel->setAnchorPoint({ 0.5f, 0.5f });
-						demonLabel->setPosition({ diffIcon->getPositionX(), diffIcon->getPositionY() - 16.f });
-						demonLabel->setScale(0.35f);
-						demonLabel->setZOrder(5);
-
-						customDemonLabel->setID("custom-demon-label"_spr);
-						customDemonLabel->setAnchorPoint({ 0.5f, 0.5f });
-						customDemonLabel->setPosition({ diffIcon->getPositionX(), diffIcon->getPositionY() - 16.f });
-						customDemonLabel->setScale(0.35f);
-						customDemonLabel->setZOrder(5);
-
-						customDemonLabel->addEffectsFromProperties(data["main"][gddpDiff]["textEffects"]);
-
-						layer->addChild((Mod::get()->getSettingValue<bool>("custom-demon-labels")) ? (CCNode*)customDemonLabel : (CCNode*)demonLabel);
-
-						//check if the level is recommended and the effect is enabled
-						auto recommendations = Mod::get()->getSavedValue<matjson::Value>("recommended-levels");
-						if (Mod::get()->getSettingValue<bool>("enable-recommendations")) {
-							for (auto [key, value] : XPUtils::skills) {
-								if (DPUtils::containsInt(recommendations[key].as<std::vector<int>>().unwrapOrDefault(), this->m_level->m_levelID.value())) {
-									auto recommendedSpr = CCSprite::createWithSpriteFrameName("DP_RecommendGlow.png"_spr);
-									recommendedSpr->setAnchorPoint({0.f, 0.f});
-									recommendedSpr->setZOrder(6);
-									if (!Mod::get()->getSettingValue<bool>("disable-recommended-effect")) customSpr->addChild(recommendedSpr);
-
-									auto recommendedMenu = CCMenu::create();
-									recommendedMenu->setID("recommended-menu");
-									recommendedMenu->setContentSize({ 0.f, 0.f });
-									recommendedMenu->setPosition(0.f, 45.f);
-									recommendedMenu->setAnchorPoint({ 0.f, 0.f });
-									recommendedMenu->setZOrder(7);
-
-									if (Mod::get()->getSettingValue<bool>("enable-recommended-btn") && Mod::get()->getSettingValue<bool>("show-recommended-in-list")) {
-										customSpr->addChild(recommendedMenu);
-
-										auto starSpr = CCSprite::createWithSpriteFrameName("GJ_sStarsIcon_001.png");
-										starSpr->setOpacity(200);
-
-										auto recommendedBtn = CCMenuItemSpriteExtra::create(starSpr, this, menu_selector(DemonProgression::onRecommended));
-										recommendedBtn->setAnchorPoint({ 0.f, 1.f });
-										recommendedMenu->addChild(recommendedBtn);
+								if (this->m_level->m_isEpic == 1 && Mod::get()->getSettingValue<bool>("replace-epic") && plusSprite != "DP_Invisible") {
+									if (auto epicFire = typeinfo_cast<CCSprite*>(diffIcon->getChildren()->objectAtIndex(0))) {
+										epicFire->setVisible(false);
 									}
+									customSpr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(fullPlusSpr).data(), unkSpr);
+								}
 
-									break;
+								if (Mod::get()->getSettingValue<bool>("override-ratings") && type == "main" && hasRank && plusSprite != "DP_Invisible") {
+									customSpr = DPUtils::safeSpriteWithFrameName(Mod::get()->expandSpriteName(fullPlusSpr).data(), unkSpr);
+								}
+
+								customSpr->setID("gddp-difficulty");
+								customSpr->setAnchorPoint({ 0.5f, 0.5f });
+								customSpr->setPosition({ diffIcon->getPositionX(), diffIcon->getPositionY() + 6.f });
+								customSpr->setZOrder(5);
+
+								difficultyContainer->addChild(customSpr);
+								
+								//label
+								auto demonLabel = CCLabelBMFont::create("Demon", "bigFont.fnt");
+								auto customDemonLabel = CustomText::create("Demon");
+
+								demonLabel->setID("demon-label"_spr);
+								demonLabel->setAnchorPoint({ 0.5f, 0.5f });
+								demonLabel->setPosition({ diffIcon->getPositionX(), diffIcon->getPositionY() - 16.f });
+								demonLabel->setScale(0.35f);
+								demonLabel->setZOrder(5);
+
+								customDemonLabel->setID("custom-demon-label"_spr);
+								customDemonLabel->setAnchorPoint({ 0.5f, 0.5f });
+								customDemonLabel->setPosition({ diffIcon->getPositionX(), diffIcon->getPositionY() - 16.f });
+								customDemonLabel->setScale(0.35f);
+								customDemonLabel->setZOrder(5);
+
+								customDemonLabel->addEffectsFromProperties(data["main"][gddpDiff]["textEffects"]);
+
+								difficultyContainer->addChild((Mod::get()->getSettingValue<bool>("custom-demon-labels")) ? (CCNode*)customDemonLabel : (CCNode*)demonLabel);
+
+								//check if the level is recommended and the effect is enabled
+								auto recommendations = Mod::get()->getSavedValue<matjson::Value>("recommended-levels");
+								if (Mod::get()->getSettingValue<bool>("enable-recommendations")) {
+									for (auto [key, value] : XPUtils::skills) {
+										if (DPUtils::containsInt(recommendations[key].as<std::vector<int>>().unwrapOrDefault(), this->m_level->m_levelID.value())) {
+											auto recommendedSpr = CCSprite::createWithSpriteFrameName("DP_RecommendGlow.png"_spr);
+											recommendedSpr->setAnchorPoint({0.f, 0.f});
+											recommendedSpr->setZOrder(6);
+											if (!Mod::get()->getSettingValue<bool>("disable-recommended-effect")) customSpr->addChild(recommendedSpr);
+
+											auto recommendedMenu = CCMenu::create();
+											recommendedMenu->setID("recommended-menu");
+											recommendedMenu->setContentSize({ 0.f, 0.f });
+											recommendedMenu->setPosition(0.f, 45.f);
+											recommendedMenu->setAnchorPoint({ 0.f, 0.f });
+											recommendedMenu->setZOrder(7);
+
+											if (Mod::get()->getSettingValue<bool>("enable-recommended-btn") && Mod::get()->getSettingValue<bool>("show-recommended-in-list")) {
+												customSpr->addChild(recommendedMenu);
+
+												auto starSpr = CCSprite::createWithSpriteFrameName("GJ_sStarsIcon_001.png");
+												starSpr->setOpacity(200);
+
+												auto recommendedBtn = CCMenuItemSpriteExtra::create(starSpr, this, menu_selector(DemonProgression::onRecommended));
+												recommendedBtn->setAnchorPoint({ 0.f, 1.f });
+												recommendedMenu->addChild(recommendedBtn);
+											}
+
+											break;
+										}
+									}
 								}
 							}
 						}

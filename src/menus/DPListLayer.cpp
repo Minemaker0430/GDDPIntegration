@@ -227,8 +227,10 @@ void DPListLayer::updateProgressBar() {
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
 
 	auto clippingNode = typeinfo_cast<CCClippingNode*>(m_progressBar->getChildByID("clipping-node"));
-	auto front = typeinfo_cast<CCSprite*>(m_progressBar->getChildByID("clipping-node")->getChildByID("progress-bar-front"));
+	auto front = clippingNode ? typeinfo_cast<CCSprite*>(clippingNode->getChildByID("progress-bar-front")) : nullptr;
 	auto progressText = typeinfo_cast<CCLabelBMFont*>(m_progressBar->getChildByID("progress-text"));
+
+	if (!clippingNode || !front || !progressText) return;
 
 	int month = data[m_type][m_id]["month"].as<int>().unwrapOr(11);
 	int year = data[m_type][m_id]["year"].as<int>().unwrapOr(1987);
@@ -365,20 +367,20 @@ void DPListLayer::loadLevelsFinished(CCArray* levels, const char*) {
 	if ((Mod::get()->getSettingValue<bool>("custom-pack-text") && (data[m_type][m_id].contains("textEffects") || data["main"][mainPack].contains("textEffects")))
 	&& !(m_type == "bonus" && Mod::get()->getSettingValue<bool>("disable-fancy-bonus-text"))
 	&& !(m_type == "monthly" && Mod::get()->getSettingValue<bool>("disable-fancy-monthly-text"))) {
-		auto label = typeinfo_cast<CCLabelBMFont*>(m_list->getChildByID("title"));
+		if (auto label = typeinfo_cast<CCLabelBMFont*>(m_list->getChildByID("title"))) {
+			auto customText = CustomText::create(label->getString());
+			customText->addEffectsFromProperties((m_type == "legacy") ? data["main"][mainPack]["textEffects"] : data[m_type][m_id]["textEffects"]);
+			customText->setPosition(label->getPosition());
+			customText->setAnchorPoint(label->getAnchorPoint());
+			customText->setScale(label->getScale());
+			customText->setZOrder(12);
+			customText->setID("custom-pack-title"_spr);
 
-		auto customText = CustomText::create(label->getString());
-		customText->addEffectsFromProperties((m_type == "legacy") ? data["main"][mainPack]["textEffects"] : data[m_type][m_id]["textEffects"]);
-		customText->setPosition(label->getPosition());
-		customText->setAnchorPoint(label->getAnchorPoint());
-		customText->setScale(label->getScale());
-		customText->setZOrder(12);
-		customText->setID("custom-pack-title"_spr);
-
-		label->setOpacity(0);
-		label->setVisible(false);
+			label->setOpacity(0);
+			label->setVisible(false);
 				
-		m_list->addChild(customText);
+			m_list->addChild(customText);
+		}
 	}
 
 	// level pin button

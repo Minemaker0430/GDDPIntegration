@@ -763,16 +763,17 @@ void SearchPopup::onXpValue(CCObject* sender) {
 	//log::info("{}: {}", id, newValue);
 
 	//update nodes
-	auto menu = btn->getParent();
-	auto left = menu->getChildByID("value-left");
-	auto right = menu->getChildByID("value-right");
-	auto label = typeinfo_cast<CCLabelBMFont*>(menu->getChildByID("value-label"));
+	if (auto menu = btn->getParent()) {
+		auto left = menu->getChildByID("value-left");
+		auto right = menu->getChildByID("value-right");
+		auto label = typeinfo_cast<CCLabelBMFont*>(menu->getChildByID("value-label"));
 
-	std::vector<std::string> valueStrings = { "None", "Low", "Avg", "Max" };
+		std::vector<std::string> valueStrings = { "None", "Low", "Avg", "Max" };
 
-	left->setVisible(newValue > 0);
-	right->setVisible(newValue < 3);
-	label->setCString(valueStrings[newValue].c_str());
+		if (left) left->setVisible(newValue > 0);
+		if (right) right->setVisible(newValue < 3);
+		if (label) label->setCString(valueStrings[newValue].c_str());
+	}
 	
 	//save filters
 	Mod::get()->setSavedValue<matjson::Value>("search-filter", m_filter);
@@ -791,16 +792,17 @@ void SearchPopup::onXpMode(CCObject* sender) {
 	//log::info("{}: {}", id, newValue);
 
 	//update nodes
-	auto menu = btn->getParent();
-	auto left = menu->getChildByID("mode-left");
-	auto right = menu->getChildByID("mode-right");
-	auto label = typeinfo_cast<CCLabelBMFont*>(menu->getChildByID("mode-label"));
+	if (auto menu = btn->getParent()) {
+		auto left = menu->getChildByID("mode-left");
+		auto right = menu->getChildByID("mode-right");
+		auto label = typeinfo_cast<CCLabelBMFont*>(menu->getChildByID("mode-label"));
 
-	std::vector<std::string> modeStrings = { ">=", ">", "=", "<", "<=" };
+		std::vector<std::string> modeStrings = { ">=", ">", "=", "<", "<=" };
 
-	left->setVisible(newValue > 0);
-	right->setVisible(newValue < 4);
-	label->setCString(modeStrings[newValue].c_str());
+		if (left) left->setVisible(newValue > 0);
+		if (right) right->setVisible(newValue < 4);
+		if (label) label->setCString(modeStrings[newValue].c_str());
+	}
 
 	//save filters
 	Mod::get()->setSavedValue<matjson::Value>("search-filter", m_filter);

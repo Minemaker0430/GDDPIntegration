@@ -1,3 +1,8 @@
+# v1.1.15
+
+* Bumped Geode Version
+* Patched up potential crash spots
+
 # v1.1.14
 
 * Fixed "Progress to Max Level" calculations in the XP Menu

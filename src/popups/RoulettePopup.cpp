@@ -835,15 +835,15 @@ void RoulettePopup::fetchLevel(int levelID) {
 	m_loadcircle->m_parentLayer = this;
 	m_loadcircle->show();
 
-	CCLabelBMFont* lvlLabel = typeinfo_cast<CCLabelBMFont *>(m_mainLayer->getChildByID("level-label"));
-	CCLabelBMFont* creatorLabel = typeinfo_cast<CCLabelBMFont *>(m_mainLayer->getChildByID("creator-label"));
+	auto lvlLabel = typeinfo_cast<CCLabelBMFont *>(m_mainLayer->getChildByID("level-label"));
+	auto creatorLabel = typeinfo_cast<CCLabelBMFont *>(m_mainLayer->getChildByID("creator-label"));
 
-	m_mainLayer->getChildByID("actions-menu")->setVisible(false);
+	if (auto actionsMenu = m_mainLayer->getChildByID("actions-menu")) actionsMenu->setVisible(false);
 
-	lvlLabel->setVisible(false);
-	creatorLabel->setVisible(false);
+	if (lvlLabel) lvlLabel->setVisible(false);
+	if (creatorLabel) creatorLabel->setVisible(false);
 
-	if (m_mainLayer->getChildByID("difficulty-sprite")) m_mainLayer->getChildByID("difficulty-sprite")->removeMeAndCleanup();
+	if (auto difficultySprite = m_mainLayer->getChildByID("difficulty-sprite")) difficultySprite->removeMeAndCleanup();
 
 	// borrowed some stuff from integrated demon list
 	auto glm = GameLevelManager::sharedState();
@@ -866,9 +866,9 @@ void RoulettePopup::loadLevelsFinished(CCArray* levels, const char*) {
 	m_levelLoaded = true;
 	m_loadcircle->fadeAndRemove();
 
-	CCLabelBMFont* lvlLabel = typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("level-label"));
-	CCLabelBMFont* creatorLabel = typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("creator-label"));
-	CCSprite* diffSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
+	auto lvlLabel = typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("level-label"));
+	auto creatorLabel = typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("creator-label"));
+	auto diffSpr = CCSprite::createWithSpriteFrameName("DP_Unknown.png"_spr);
 
 	auto featuredSpr = CCSprite::createWithSpriteFrameName("GJ_featuredCoin_001.png");
 	featuredSpr->setPosition({0.75f, -0.25f});
@@ -900,11 +900,15 @@ void RoulettePopup::loadLevelsFinished(CCArray* levels, const char*) {
 	mythicSpr->setVisible(false);
 	// diffSpr->addChild(mythicSpr);
 
-	lvlLabel->setCString(level->m_levelName.c_str());
-	lvlLabel->setVisible(true);
+	if (lvlLabel) {
+		lvlLabel->setCString(level->m_levelName.c_str());
+		lvlLabel->setVisible(true);
+	}
 
-	creatorLabel->setCString(fmt::format("By {}", level->m_creatorName).c_str());
-	creatorLabel->setVisible(true);
+	if (creatorLabel) {
+		creatorLabel->setCString(fmt::format("By {}", level->m_creatorName).c_str());
+		creatorLabel->setVisible(true);
+	}
 
 	// find out what pack the level is part of
 	auto data = Mod::get()->getSavedValue<matjson::Value>("cached-data");
@@ -960,7 +964,7 @@ void RoulettePopup::loadLevelsFinished(CCArray* levels, const char*) {
 	diffSpr->setID("difficulty-sprite");
 	m_mainLayer->addChild(diffSpr);
 
-	m_mainLayer->getChildByID("actions-menu")->setVisible(true);
+	if (auto actionsMenu = m_mainLayer->getChildByID("actions-menu")) actionsMenu->setVisible(true);
 
 	return;
 }
@@ -1019,8 +1023,10 @@ void RoulettePopup::onSkip(CCObject *sender)
 				Mod::get()->setSavedValue<int>("roulette-progress", 0);
 
 				if (gauntletEnabled) rouletteGoal = 100;
-				progressText->setCString(fmt::format("Get to {}%\nScore: {}", rouletteGoal, save.score).c_str());
-				if (m_settings[0]) progressText->setCString(fmt::format("Get to {}%\nScore: {}\nSkips Used: {}", rouletteGoal, save.score, save.skips).c_str());
+				if (progressText) {
+					progressText->setCString(fmt::format("Get to {}%\nScore: {}", rouletteGoal, save.score).c_str());
+					if (m_settings[0]) progressText->setCString(fmt::format("Get to {}%\nScore: {}\nSkips Used: {}", rouletteGoal, save.score, save.skips).c_str());
+				}
 
 				int lvlIndex = save.score;
 				if (m_settings[0] && !m_settings[1]) lvlIndex += save.skips;
@@ -1071,7 +1077,7 @@ void RoulettePopup::onNext(CCObject *sender) {
 		auto progressText = typeinfo_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("progress-label"));
 
 		if (gauntletEnabled) rouletteGoal = 100;
-		progressText->setCString( (m_settings[0]) ? fmt::format("Get to {}%\nScore: {}\nSkips Used: {}", rouletteGoal, save.score, save.skips).c_str() : fmt::format("Get to {}%\nScore: {}", rouletteGoal, save.score).c_str());
+		if (progressText) progressText->setCString( (m_settings[0]) ? fmt::format("Get to {}%\nScore: {}\nSkips Used: {}", rouletteGoal, save.score, save.skips).c_str() : fmt::format("Get to {}%\nScore: {}", rouletteGoal, save.score).c_str());
 
 		int lvlIndex = save.score;
 		if (m_settings[0] && !m_settings[1]) lvlIndex += save.skips;

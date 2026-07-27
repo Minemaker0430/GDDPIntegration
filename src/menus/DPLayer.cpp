@@ -591,7 +591,11 @@ void DPLayer::reloadList(int type) {
 		if (type == (int)DPListType::Monthly) Mod::get()->setSavedValue<std::string>("latest-monthly", fmt::format("{}-{}", m_currentMonth, m_currentYear + 1900));
 	}
 	
-	if (auto notifSprite = static_cast<CCSprite*>(m_tabs->getChildByID("monthly")->getChildByID("monthly-notif"))) notifSprite->setVisible(Mod::get()->getSettingValue<bool>("show-monthly-notification") && Mod::get()->getSavedValue<std::string>("latest-monthly", "0-0") != fmt::format("{}-{}", m_currentMonth, m_currentYear + 1900));
+	if (auto monthlyTab = m_tabs->getChildByID("monthly")) {
+		if (auto notifSprite = static_cast<CCSprite*>(monthlyTab->getChildByID("monthly-notif"))) {
+			notifSprite->setVisible(Mod::get()->getSettingValue<bool>("show-monthly-notification") && Mod::get()->getSavedValue<std::string>("latest-monthly", "0-0") != fmt::format("{}-{}", m_currentMonth, m_currentYear + 1900));
+		}
+	}
 
 	auto pinned = Mod::get()->getSavedValue<std::vector<std::string>>("pinned-packs", std::vector<std::string>());
 
