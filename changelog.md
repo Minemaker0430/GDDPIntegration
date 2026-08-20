@@ -1,3 +1,7 @@
+# v1.1.17
+
+* Fixed another visual bug
+
 # v1.1.16
 
 * Fixed a visual bug

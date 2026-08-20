@@ -1,12 +1,12 @@
 {
-		"geode": "5.8.2",
+		"geode": "5.9.0",
 		"gd": {
 			"win": "2.2081",
 			"android": "2.2081",
 			"ios": "2.2081",
 			"mac": "2.2081"
 		},
-		"version": "v1.1.16",
+		"version": "v1.1.17",
 		"id": "minemaker0430.gddp_integration",
 		"name": "GDDP - Demon Progression",
 		"developer": "ItsMochaTheOtter",

@@ -73,17 +73,15 @@ class $modify(CreatorLayer) {
 			typeinfo_cast<CCSprite*>(dpBtn->getChildren()->objectAtIndex(0))->setPositionX(44.f);
 			menu->addChild(dpBtn);
 
-			if (auto mapPacksButton = menu->getChildByID("map-packs-button")) {
-				if (Mod::get()->getSettingValue<bool>("replace-map-packs")) {
+			if (Mod::get()->getSettingValue<bool>("replace-map-packs")) {
+				if  (auto mapPacksButton = menu->getChildByID("map-packs-button")) {
 					dpBtn->setPosition({ mapPacksButton->getPositionX(), mapPacksButton->getPositionY() });
 
 					if (Loader::get()->isModLoaded("alphalaneous.pages_api")) mapPacksButton->removeMeAndCleanup();
 					else mapPacksButton->setVisible(false);
 				}
-			}
-			
-
-			if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
+			} 
+			else if (Loader::get()->isModLoaded("capeling.goodbye_unnecessary_buttons")) {
 				if (auto questsButton = menu->getChildByID("quests-button")) questsButton->setPositionX(45.8);
 				if (auto dailyButton = menu->getChildByID("daily-button")) dailyButton->setPositionX(135.4);
 				if (auto weeklyButton = menu->getChildByID("weekly-button")) weeklyButton->setPositionX(225);
