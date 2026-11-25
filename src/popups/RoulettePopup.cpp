@@ -985,10 +985,10 @@ void RoulettePopup::loadLevelsFailed(const char *)
 
 void RoulettePopup::onPlay(CCObject *sender)
 {
-	auto scene = CCScene::create();								// creates the scene
-	auto layer = LevelInfoLayer::create(m_currentLevel, false); // creates the layer
+	auto scene = LevelInfoLayer::scene(m_currentLevel, false);								// creates the scene
+	//auto layer = LevelInfoLayer::create(m_currentLevel, false); // creates the layer
 
-	scene->addChild(layer);
+	//scene->addChild(layer);
 
 	CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, scene)); // push transition
 

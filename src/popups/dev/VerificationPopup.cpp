@@ -58,8 +58,8 @@ bool VerificationPopup::init() {
 	m_mainLayer->addChild(m_loadText);
 
 	// find access token
-	m_accessCodePath = Mod::get()->getConfigDir() += std::filesystem::path("\\access_token.txt");
-	auto clientIDPath = Mod::get()->getConfigDir() += std::filesystem::path("\\client_id.txt");
+	m_accessCodePath = Mod::get()->getConfigDir() / "access_token.txt";
+	auto clientIDPath = Mod::get()->getConfigDir() / "client_id.txt";
 	auto fileCheck = file::readDirectory(Mod::get()->getConfigDir()).unwrapOrDefault();
 	// log::info("{}, {}", fileCheck, m_accessCodePath);
 
@@ -342,7 +342,7 @@ void VerificationPopup::getContents()
 							log::info("All Data Loaded Successfully!");
 
 							// check if autosave is populated (indicates crash)
-							auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\dev_autosave.json");
+							auto path = Mod::get()->getConfigDir() / "dev_autosave.json";
 							if (file::readString(path).unwrapOrDefault().size() > 1) {
 								m_dataDev = file::readJson(path).unwrapOrDefault();
 
@@ -1141,7 +1141,7 @@ void VerificationPopup::onMove(CCObject* sender) {
 	}
 
 	// backup save
-	auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\dev_autosave.json");
+	auto path = Mod::get()->getConfigDir() / "dev_autosave.json";
 	file::writeToJson(path, m_dataDev);
 	
 	return;
@@ -1247,7 +1247,7 @@ void VerificationPopup::onDelete(CCObject* sender) {
 	}
 
 	// backup save
-	auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\dev_autosave.json");
+	auto path = Mod::get()->getConfigDir() / "dev_autosave.json";
 	file::writeToJson(path, m_dataDev);
 	
 	return;
@@ -1267,7 +1267,7 @@ void VerificationPopup::moveToLegacy(std::string id) {
 			m_dataDev["legacy"][i].set("levelIDs", lvls);
 			
 			// backup save
-			auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\dev_autosave.json");
+			auto path = Mod::get()->getConfigDir() / "dev_autosave.json";
 			file::writeToJson(path, m_dataDev);
 			
 			return;
@@ -1292,7 +1292,7 @@ void VerificationPopup::moveToLegacy(std::string id) {
 	m_dataDev.set("legacy", legacyPacks);
 
 	// backup save
-	auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\dev_autosave.json");
+	auto path = Mod::get()->getConfigDir() / "dev_autosave.json";
 	file::writeToJson(path, m_dataDev);
 	
 	return;
@@ -1365,7 +1365,7 @@ void VerificationPopup::removeObject(std::string type, std::string id, int pos) 
 	}
 
 	// backup save
-	auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\dev_autosave.json");
+	auto path = Mod::get()->getConfigDir() / "dev_autosave.json";
 	file::writeToJson(path, m_dataDev);
 	
 	return;
@@ -1457,6 +1457,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 
 			//convert text inputs
 			auto name = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-name")->getChildByID("value-menu")->getChildByID("value-input"))->getString();
+			auto showcase = typeinfo_cast<TextInput*>(m_list->getChildByIDRecursive("property-showcase")->getChildByID("value-menu")->getChildByID("value-input"))->getString();
 			matjson::Value xp;
 			if (m_list->getChildByIDRecursive("property-xp")) { //we only need to check for this since the rest can't exist without it
 				for (auto [key, value] : XPUtils::skills) {
@@ -1494,6 +1495,7 @@ void VerificationPopup::onSave(CCObject* sender) {
 				.name = name,
 				.difficulty = m_levelData["difficulty"].as<int>().unwrapOrDefault(),
 				.skillsets = m_levelData["skillsets"].as<std::vector<std::string>>().unwrapOrDefault(),
+				.showcase = showcase,
 				.xp = xp,
 				.startposCopy =	m_levelData["startpos-copy"].as<int>().unwrapOrDefault()
 			};
@@ -1575,14 +1577,14 @@ void VerificationPopup::onSave(CCObject* sender) {
 	}
 
 	// backup save
-	auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\dev_autosave.json");
+	auto path = Mod::get()->getConfigDir() / "dev_autosave.json";
 	file::writeToJson(path, m_dataDev);
 	
 	return;
 }
 
 void VerificationPopup::onDBSync(CCObject*) {
-	auto input = Mod::get()->getConfigDir() += std::filesystem::path("\\xpsync.json");
+	auto input = Mod::get()->getConfigDir() / "xpsync.json";
 	matjson::Value sData = file::readJson(input).unwrapOrDefault();
 	for (auto p : sData["list"]["collections"].as<std::vector<matjson::Value>>().unwrapOr(std::vector<matjson::Value>())) {
 		if (p["type"].asString().unwrapOrDefault() != "tiers") continue;
@@ -1596,7 +1598,7 @@ void VerificationPopup::onDBSync(CCObject*) {
 			}
 		}
 	}
-	auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\conversion.json");
+	auto path = Mod::get()->getConfigDir() / "conversion.json";
 	file::writeToJson(path, m_dataDev);
 	log::info("Finished Sync");
 }
@@ -1971,6 +1973,7 @@ void VerificationPopup::loadLevel(int id) {
 	if (m_dataDev["level-data"].contains(std::to_string(id))) data = m_dataDev["level-data"][std::to_string(id)];
 	m_levelData = data;
 
+	if (!data.contains("showcase")) data.set("showcase", GDDPLevelFormat{}.showcase);
 	if (m_index == "main" && !data.contains("xp")) data.set("xp", GDDPLevelFormat{}.xp);
 
 	//cells
@@ -2088,6 +2091,7 @@ void VerificationPopup::loadLevel(int id) {
 		}
 		else {
 			auto valueInput = TextInput::create(190.f, "...", "bigFont.fnt");
+			if (key == "showcase") valueInput = TextInput::create(375.f, "...", "bigFont.fnt");
 			if (value.isNumber()) {
 				valueInput->setString(std::to_string(value.as<int>().unwrapOr(0)));
 				valueInput->setCommonFilter(CommonFilter::Int);
@@ -2432,7 +2436,7 @@ void VerificationPopup::onClose(CCObject *sender) {
 				m_listener2.cancel();
 
 				// wipe autosave
-				auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\dev_autosave.json");
+				auto path = Mod::get()->getConfigDir() / "dev_autosave.json";
 				file::writeStringSafe(path, "");
 
 				// normal closing stuff

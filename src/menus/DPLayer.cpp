@@ -100,8 +100,8 @@ void DPLayer::reloadData(bool isInit) {
 		std::string dataURL = "https://raw.githubusercontent.com/Minemaker0430/gddp-mod-database/main/main-list.json";
 
 		auto fileCheck = file::readDirectory(Mod::get()->getConfigDir()).unwrapOrDefault();
-		auto secretFile = Mod::get()->getConfigDir() += std::filesystem::path("\\client_id.txt");
-		auto accessCodeFile = Mod::get()->getConfigDir() += std::filesystem::path("\\access_token.txt");
+		auto secretFile = Mod::get()->getConfigDir() / "client_id.txt";
+		auto accessCodeFile = Mod::get()->getConfigDir() / "access_token.txt";
 
 		if (Mod::get()->getSavedValue<bool>("dev-preview", false) && std::find(fileCheck.begin(), fileCheck.end(), secretFile) != fileCheck.end()) {
 			std::string accessCode;
@@ -458,7 +458,7 @@ bool DPLayer::init() {
 	this->addChild(m_databaseVer);
 
 	// mod/dev stuff
-	auto secretFile = Mod::get()->getConfigDir() += std::filesystem::path("\\client_id.txt");
+	auto secretFile = Mod::get()->getConfigDir() / "client_id.txt";
 	auto fileCheck = file::readDirectory(Mod::get()->getConfigDir()).unwrapOrDefault();
 
 	if (std::find(fileCheck.begin(), fileCheck.end(), secretFile) != fileCheck.end()) {

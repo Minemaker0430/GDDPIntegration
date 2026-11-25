@@ -1,6 +1,7 @@
 //geode header
 #include <Geode/Geode.hpp>
 #include <Geode/utils/JsonValidation.hpp>
+#include <random>
 
 #include "RouletteUtils.hpp"
 #include "DPUtils.hpp"

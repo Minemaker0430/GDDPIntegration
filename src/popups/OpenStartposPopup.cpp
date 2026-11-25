@@ -41,10 +41,10 @@ void OpenStartposPopup::loadLevelsFinished(CCArray* levels, const char*) {
 
 	auto lvl = typeinfo_cast<GJGameLevel*>(levels->objectAtIndex(0));
 
-    auto scene = CCScene::create();								// creates the scene
-	auto layer = LevelInfoLayer::create(lvl, false); // creates the layer
+    auto scene = LevelInfoLayer::scene(lvl, false);	// creates the scene
+	//auto layer =  // creates the layer
 
-	scene->addChild(layer);
+	//scene->addChild(layer);
 
 	CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, scene)); // push transition
 
@@ -56,7 +56,7 @@ void OpenStartposPopup::loadLevelsFinished(CCArray* levels, const char*) {
 
 void OpenStartposPopup::loadLevelsFailed(const char*) {
 
-	auto alert = FLAlertLayer::create("ERROR", fmt::format("Failed to load StartPos copy with ID {}. Please try again later.", m_levelID), "OK");
+	auto alert = FLAlertLayer::create("ERROR", fmt::format("Failed to load StartPos copy with ID <cy>{}</c>. Please try again later.", m_levelID), "OK");
 	alert->setParent(this);
 	alert->show();
 

@@ -6,6 +6,8 @@
 #include "RandomLevelPopup.hpp"
 #include "../DPUtils.hpp"
 
+#include <random>
+
 // geode namespace
 using namespace geode::prelude;
 
@@ -288,10 +290,10 @@ void RandomLevelPopup::loadLevelsFinished(CCArray* levels, const char*) {
 
 	auto lvl = typeinfo_cast<GJGameLevel*>(levels->objectAtIndex(0));
 
-    auto scene = CCScene::create();								// creates the scene
-	auto layer = LevelInfoLayer::create(lvl, false); // creates the layer
+    auto scene = LevelInfoLayer::scene(lvl, false);	// creates the scene
+	//auto layer =  // creates the layer
 
-	scene->addChild(layer);
+	//scene->addChild(layer);
 
 	CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, scene)); // push transition
 

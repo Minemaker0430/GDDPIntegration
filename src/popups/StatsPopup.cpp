@@ -492,6 +492,7 @@ void StatsPopup::loadTab(int id) {
 		{
 			auto scrollLayer = ScrollLayer::create({ 400.f, 175.f }, true, true);
 			scrollLayer->setPosition({ 10.25f, 10.f });
+			scrollLayer->setAnchorPoint({ 0.f, 0.f });
 			scrollLayer->setID("scroll-layer");
 			m_mainLayer->addChild(scrollLayer);
 
@@ -596,6 +597,7 @@ void StatsPopup::loadTab(int id) {
 		{
 			auto scrollLayer = ScrollLayer::create({ 400.f, 175.f }, true, true);
 			scrollLayer->setPosition({ 10.25f, 10.f });
+			scrollLayer->setAnchorPoint({ 0.f, 0.f });
 			scrollLayer->setID("scroll-layer");
 			m_mainLayer->addChild(scrollLayer);
 

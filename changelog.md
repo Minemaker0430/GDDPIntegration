@@ -1,3 +1,10 @@
+# 1.1.18
+
+* Bumped to Geode on 2.209
+* Added Showcase Buttons
+* Improved Visuals of Recommended Levels
+* Fixed a few minor bugs
+
 # v1.1.17
 
 * Fixed another visual bug

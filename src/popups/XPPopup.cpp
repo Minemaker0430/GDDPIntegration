@@ -119,9 +119,12 @@ bool XPPopup::init() {
 
 	//Least Improved Skill
 	std::string leastImproved = "null";
-	auto skillRev = XPUtils::skills;
+	std::vector<std::string> skillRev;
+
+	for (auto [key, value] : XPUtils::skills) { skillRev.push_back(key);}
 	std::reverse(skillRev.begin(), skillRev.end());
-	for (auto [key, value] : skillRev) {
+
+	for (auto key : skillRev) {
 		auto xp = Mod::get()->getSavedValue<matjson::Value>("xp")[key].as<float>().unwrapOr(0.f);
 		auto liXP = Mod::get()->getSavedValue<matjson::Value>("xp")[leastImproved].as<float>().unwrapOr(1.f);
 		if (xp < liXP) leastImproved = key;

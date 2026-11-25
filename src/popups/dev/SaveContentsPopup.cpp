@@ -555,7 +555,7 @@ void SaveContentsPopup::finalizePush(web::WebResponse& value) {
 		)->show();
 
         // wipe autosave
-		auto path = Mod::get()->getConfigDir() += std::filesystem::path("\\dev_autosave.json");
+		auto path = Mod::get()->getConfigDir() / "dev_autosave.json";
 		file::writeStringSafe(path, "");
 
         popup->removeMeAndCleanup();

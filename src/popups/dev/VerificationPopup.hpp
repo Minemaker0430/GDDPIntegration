@@ -24,7 +24,7 @@ class VerificationPopup : public Popup {
         std::string m_verificationCode = "XXXX-XXXX";
         matjson::Value m_responseValues;
 
-        std::filesystem::path m_accessCodePath;
+        asp::fs::Path m_accessCodePath;
         std::string m_accessCode;
 
         matjson::Value m_dataMain;
@@ -441,6 +441,7 @@ struct GDDPLevelFormat
     std::string name = "Level Name";
     int difficulty = 0;
     std::vector<std::string> skillsets;
+    std::string showcase = "";
     matjson::Value xp; //Will always initialize blank since not all levels will have XP.
     int startposCopy;
 };
@@ -454,6 +455,7 @@ struct matjson::Serialize<GDDPLevelFormat>
             .name = value["name"].as<std::string>().unwrapOr("Name"),
             .difficulty = value["difficulty"].as<int>().unwrapOr(0),
             .skillsets = value["skillsets"].as<std::vector<std::string>>().unwrapOrDefault(),
+            .showcase = value["showcase"].as<std::string>().unwrapOr(""),
             .xp = value["xp"].as<matjson::Value>().unwrapOrDefault(),
             .startposCopy = value["startpos-copy"].as<int>().unwrapOr(0)
         };
@@ -465,8 +467,10 @@ struct matjson::Serialize<GDDPLevelFormat>
         auto obj = matjson::makeObject({{"name", value.name},
                                         {"difficulty", value.difficulty},
                                         {"skillsets", value.skillsets},
+                                        {"showcase", value.showcase},
                                         {"xp", value.xp},
-                                        {"startpos-copy", value.startposCopy}});
+                                        {"startpos-copy", value.startposCopy}
+                                    });
         return obj;
     }
 };
