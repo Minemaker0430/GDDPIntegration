@@ -52,15 +52,15 @@ CCSprite* DPUtils::safeSpriteWithFrameName(std::string name, CCSprite* fallback)
 	return CCSprite::createWithSpriteFrameName(name.c_str());
 };
 
-std::vector<int>::iterator DPUtils::findInt(std::vector<int> v, int t) {
+std::vector<int>::const_iterator DPUtils::findInt(std::vector<int> v, int t) {
 	return std::find(v.begin(), v.end(), t);
 };
 
-std::vector<std::string>::iterator DPUtils::findString(std::vector<std::string> v, std::string t) {
+std::vector<std::string>::const_iterator DPUtils::findString(std::vector<std::string> v, std::string t) {
 	return std::find(v.begin(), v.end(), t);
 };
 
-std::vector<matjson::Value>::iterator DPUtils::findJson(std::vector<matjson::Value> v, matjson::Value t) {
+std::vector<matjson::Value>::const_iterator DPUtils::findJson(std::vector<matjson::Value> v, matjson::Value t) {
 	return std::find(v.begin(), v.end(), t);
 };
 

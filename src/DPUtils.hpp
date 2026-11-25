@@ -12,9 +12,9 @@ public:
 	static CCSprite* safeSprite(std::string name, CCSprite* fallback);
 	static CCSprite* safeSpriteWithFrameName(std::string name, CCSprite* fallback);
 
-	static std::vector<int>::iterator findInt(std::vector<int>, int);
-	static std::vector<std::string>::iterator findString(std::vector<std::string>, std::string);
-	static std::vector<matjson::Value>::iterator findJson(std::vector<matjson::Value>, matjson::Value);
+	static std::vector<int>::const_iterator findInt(std::vector<int>, int);
+	static std::vector<std::string>::const_iterator findString(std::vector<std::string>, std::string);
+	static std::vector<matjson::Value>::const_iterator findJson(std::vector<matjson::Value>, matjson::Value);
 
 	static bool containsInt(std::vector<int>, int);
 	static bool containsString(std::vector<std::string>, std::string);
