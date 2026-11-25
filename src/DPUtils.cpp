@@ -53,15 +53,18 @@ CCSprite* DPUtils::safeSpriteWithFrameName(std::string name, CCSprite* fallback)
 };
 
 std::vector<int>::const_iterator DPUtils::findInt(std::vector<int> v, int t) {
-	return std::find(v.begin(), v.end(), t);
+	auto ret = std::find(v.begin(), v.end(), t);
+    return ret;
 };
 
 std::vector<std::string>::const_iterator DPUtils::findString(std::vector<std::string> v, std::string t) {
-	return std::find(v.begin(), v.end(), t);
+	auto ret = std::find(v.begin(), v.end(), t);
+    return ret;
 };
 
 std::vector<matjson::Value>::const_iterator DPUtils::findJson(std::vector<matjson::Value> v, matjson::Value t) {
-	return std::find(v.begin(), v.end(), t);
+	auto ret = std::find(v.begin(), v.end(), t);
+    return ret;
 };
 
 bool DPUtils::containsInt(std::vector<int> v, int t) {
