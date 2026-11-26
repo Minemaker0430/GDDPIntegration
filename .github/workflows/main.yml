@@ -10,8 +10,8 @@ jobs:
       matrix:
         config:
         - target: win
-        #- target: mac
-        #- target: ios
+        - target: mac
+        - target: ios
         - target: android32
         - target: android64
 

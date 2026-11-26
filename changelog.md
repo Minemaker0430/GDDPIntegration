@@ -7,7 +7,6 @@
 
 Known Issues:
 * The "Reset" Buttons in the Mod Settings currently do not work, will fix them later.
-* Mac + iOS support is broken for now
 
 # v1.1.17
 
